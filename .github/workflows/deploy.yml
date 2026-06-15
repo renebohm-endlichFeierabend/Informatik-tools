@@ -24,8 +24,9 @@ jobs:
       - name: Build site
         run: |
           mkdir -p dist
-          cp java_analyse_tool.html dist/index.html
-          sed -i "s|__MISTRAL_API_KEY__|${{ secrets.MISTRAL_KEY }}|g" dist/index.html
+          cp index.html dist/index.html
+          cp java_analyse_tool.html dist/java_analyse_tool.html
+          sed -i "s|__MISTRAL_API_KEY__|${{ secrets.MISTRAL_KEY }}|g" dist/java_analyse_tool.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

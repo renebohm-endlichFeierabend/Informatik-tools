@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informatik-Tools – Übersicht</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2335;
+    --border: #2a3050;
+    --accent: #4f9cf9;
+    --accent2: #a78bfa;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1f35 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .header-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: rgba(79,156,249,0.12); color: var(--accent); border-color: rgba(79,156,249,0.4); }
+
+  /* Main */
+  .main { max-width: 1040px; margin: 0 auto; padding: 40px 24px 60px; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 52px 0 44px;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    letter-spacing: -1.5px;
+    line-height: 1.15;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 0 0 36px; }
+
+  /* Section Label */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .section-label h2 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Tool Grid */
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 44px;
+  }
+
+  /* Tool Card */
+  .tool-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 18px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,156,249,0.04), rgba(167,139,250,0.04));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .tool-card:hover {
+    border-color: rgba(79,156,249,0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+  }
+  .tool-card:hover::before { opacity: 1; }
+  .tool-card.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .card-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .icon-blue  { background: rgba(79,156,249,0.15); }
+  .icon-purple { background: rgba(167,139,250,0.15); }
+  .icon-green { background: rgba(74,222,128,0.15); }
+  .icon-yellow { background: rgba(251,191,36,0.15); }
+
+  .card-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .badge {
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-oberstufe { background: rgba(79,156,249,0.12); color: var(--accent); border: 1px solid rgba(79,156,249,0.25); }
+  .badge-klasse6   { background: rgba(74,222,128,0.12); color: var(--green);  border: 1px solid rgba(74,222,128,0.25); }
+  .badge-klasse7   { background: rgba(251,191,36,0.12); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+  .badge-soon { background: rgba(100,116,139,0.12); color: var(--muted); border: 1px solid rgba(100,116,139,0.2); }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+  .card-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+  .card-tag {
+    font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+  .card-arrow {
+    color: var(--accent);
+    font-size: 1rem;
+    transition: transform 0.2s;
+  }
+  .tool-card:hover .card-arrow { transform: translateX(3px); }
+
+  .coming-soon-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* Filter behavior */
+  .tool-section { transition: opacity 0.2s; }
+  .tool-section.hidden { display: none; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tool-card { animation: fadeUp 0.3s ease both; }
+  .tool-card:nth-child(2) { animation-delay: 0.04s; }
+  .tool-card:nth-child(3) { animation-delay: 0.08s; }
+  .tool-card:nth-child(4) { animation-delay: 0.12s; }
+
+  @media (max-width: 600px) {
+    .header { padding: 14px 18px; }
+    .filter-bar { display: none; }
+    .hero h1 { font-size: 1.7rem; }
+    .tool-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">&#x1F4BB;</div>
+    <div>
+      Informatik-Tools
+      <div class="header-sub">Lernwerkzeuge für den Schulunterricht</div>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterSection('alle', this)">Alle</button>
+    <button class="filter-btn" onclick="filterSection('oberstufe', this)">Oberstufe</button>
+    <button class="filter-btn" onclick="filterSection('klasse6', this)">Klasse 6</button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="hero">
+    <h1>Lernwerkzeuge<br>für Informatik</h1>
+    <p>KI-gestützte Übungstools für den Informatikunterricht — vom Einstieg in Klasse 6 bis zur Abiturprüfung.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Oberstufe -->
+  <div class="tool-section" id="section-oberstufe">
+    <div class="section-label"><h2>&#x1F393; Oberstufe (EF / Q1 / Q2)</h2></div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="java_analyse_tool.html">
+        <div class="card-top">
+          <div class="card-icon icon-blue">&#x2615;</div>
+          <div class="card-badges">
+            <span class="badge badge-oberstufe">EF</span>
+          </div>
+        </div>
+        <div>
+          <div class="card-title">Java Methoden-Analyse</div>
+          <div class="card-desc">Eine KI generiert Java-Methoden auf verschiedenen Niveaus. Analysiere sie wie im Abitur und erhalte strukturiertes Feedback.</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag">Analyse &middot; Schleifen &middot; OOP</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+      </a>
+
+      <div class="tool-card disabled">
+        <div class="card-top">
+          <div class="card-icon icon-purple">&#x1F9E9;</div>
+          <div class="card-badges">
+            <span class="badge badge-oberstufe">Q1</span>
+            <span class="badge badge-soon">Bald</span>
+          </div>
+        </div>
+        <div>
+          <div class="card-title">UML &amp; Klassendiagramme</div>
+          <div class="card-desc">Klassendiagramme lesen, ergänzen und in Java-Code übersetzen — typische Abituraufgaben interaktiv üben.</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag">UML &middot; Vererbung &middot; Assoziation</span>
+          <span class="coming-soon-label">// coming soon</span>
+        </div>
+      </div>
+
+      <div class="tool-card disabled">
+        <div class="card-top">
+          <div class="card-icon icon-purple">&#x1F500;</div>
+          <div class="card-badges">
+            <span class="badge badge-oberstufe">Q2</span>
+            <span class="badge badge-soon">Bald</span>
+          </div>
+        </div>
+        <div>
+          <div class="card-title">Sortieralgorithmen</div>
+          <div class="card-desc">Bubble Sort, Selection Sort und Co. visuell nachvollziehen und Trace-Tabellen üben.</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag">Algorithmen &middot; Komplexität</span>
+          <span class="coming-soon-label">// coming soon</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Klasse 6 -->
+  <div class="tool-section" id="section-klasse6">
+    <div class="section-label"><h2>&#x1F331; Klasse 6</h2></div>
+    <div class="tool-grid">
+
+      <div class="tool-card disabled">
+        <div class="card-top">
+          <div class="card-icon icon-green">&#x1F5FA;&#xFE0F;</div>
+          <div class="card-badges">
+            <span class="badge badge-klasse6">Klasse 6</span>
+            <span class="badge badge-soon">Bald</span>
+          </div>
+        </div>
+        <div>
+          <div class="card-title">Scratch Erklär-Trainer</div>
+          <div class="card-desc">Scratch-Skripte analysieren und in eigenen Worten beschreiben — mit KI-Feedback zur Formulierung.</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag">Scratch &middot; Blockcode &middot; Erklären</span>
+          <span class="coming-soon-label">// coming soon</span>
+        </div>
+      </div>
+
+      <div class="tool-card disabled">
+        <div class="card-top">
+          <div class="card-icon icon-yellow">&#x1F511;</div>
+          <div class="card-badges">
+            <span class="badge badge-klasse6">Klasse 6</span>
+            <span class="badge badge-soon">Bald</span>
+          </div>
+        </div>
+        <div>
+          <div class="card-title">Verschlüsselung entdecken</div>
+          <div class="card-desc">Caesar-Chiffre, Substitution und Grundlagen der Datensicherheit spielerisch erkunden.</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag">Kryptographie &middot; Logik</span>
+          <span class="coming-soon-label">// coming soon</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script>
+function filterSection(target, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const sections = {
+    oberstufe: document.getElementById('section-oberstufe'),
+    klasse6:   document.getElementById('section-klasse6'),
+  };
+
+  if (target === 'alle') {
+    Object.values(sections).forEach(s => s.classList.remove('hidden'));
+  } else {
+    Object.entries(sections).forEach(([key, el]) => {
+      el.classList.toggle('hidden', key !== target);
+    });
+  }
+}
+</script>
+</body>
+</html>

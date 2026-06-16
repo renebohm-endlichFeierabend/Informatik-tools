@@ -154,12 +154,17 @@
     font-size: 0.82rem;
     line-height: 1.7;
     color: #c9d1d9;
+    white-space: pre;
   }
-  .line { display: flex; }
-  .line-num { color: var(--muted); min-width: 30px; user-select: none; }
-  .kw { color: #ff79c6; }
-  .str { color: #f1fa8c; }
-  .num { color: #bd93f9; }
+  .line-num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .kw      { color: #ff79c6; }
+  .str     { color: #f1fa8c; }
+  .num     { color: #bd93f9; }
   .comment { color: #6272a4; font-style: italic; }
 
   .context-block {
@@ -531,31 +536,19 @@ BEWERTUNGSGRUNDLAGE (NRW Abitur-Standard für "Methode analysieren"):
 
 Gib dein Feedback als JSON zurück (kein Markdown, kein Zusatztext):
 {
-  "rueckgabewert": {
-    "status": "ok",
-    "text": "Kurzes Feedback (2-4 Sätze). Nenne konkrete Beispielwerte falls nötig."
-  },
-  "funktionsweise": {
-    "status": "ok",
-    "text": "Feedback zur Erklärung von Schleife, Bedingung, Variablen."
-  },
-  "sachkontext": {
-    "status": "ok",
-    "text": "Feedback zum Sachkontextbezug."
-  },
-  "grenzfaelle": {
-    "status": "ok",
-    "text": "Welche Grenzfälle hätten genannt werden sollen?"
-  }
+  "rueckgabewert": { "status": "ok", "text": "Kurzes Feedback (2-4 Sätze)." },
+  "funktionsweise": { "status": "ok", "text": "Feedback zu Schleife, Bedingung, Variablen." },
+  "sachkontext":   { "status": "ok", "text": "Feedback zum Sachkontextbezug." },
+  "grenzfaelle":   { "status": "ok", "text": "Welche Grenzfälle hätten genannt werden sollen?" }
 }
 Mögliche Werte für status: "ok", "teilweise", "fehlt"`;
 
 // ===================== USER MESSAGES =====================
 function buildGenerateMessage(niveau, thema) {
   const niveauMap = {
-    einfach: "Nur: Variablen, einfache for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
-    mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe (nur eine Ebene: obj.getX()).",
-    schwer:  "Zwei Klassen mit Attributen und Methoden, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe (obj.getX().getY() verboten)."
+    einfach: "Nur: Variablen, for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
+    mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe.",
+    schwer:  "Zwei Klassen, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe (obj.getX().getY() verboten)."
   };
   const themaMap = {
     schule: "Schule – Klassen wie Schueler (name: String, note: int), Klausur (punkte: int, bestanden: boolean)",
@@ -572,15 +565,21 @@ function buildFeedbackMessage(code, kontext, analyse) {
 }
 
 // ===================== SYNTAX HIGHLIGHT =====================
+// Zeilenumbrüche kommen vom \n-Join — <pre> rendert sie nativ.
+// Kein display:flex, um Browser-Kompatibilitätsprobleme zu vermeiden.
 function highlight(code) {
   return code.split('\n').map((line, i) => {
+    const lineNum = '<span class="line-num">' + String(i + 1).padStart(2, ' ') + ' </span>';
     const hl = line
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\b(public|private|static|void|return|if|else|for|while|int|boolean|double|String|new|true|false|null)\b/g, '<span class="kw">$1</span>')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\b(public|private|static|void|return|if|else|for|while|int|boolean|double|String|new|true|false|null)\b/g,
+               '<span class="kw">$1</span>')
       .replace(/(".*?")/g, '<span class="str">$1</span>')
       .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
-      .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>');
-    return '<span class="line"><span class="line-num">' + String(i+1).padStart(2,' ') + ' </span>' + hl + '</span>';
+      .replace(/(\/\/.*$)/, '<span class="comment">$1</span>');
+    return lineNum + hl;
   }).join('\n');
 }
 

@@ -69,8 +69,6 @@
     text-transform: uppercase;
   }
   .badge-level { background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
-  .badge-quota { background: rgba(79,156,249,0.12); color: var(--accent); border: 1px solid rgba(79,156,249,0.25); }
-
   .main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
   .controls {
@@ -286,9 +284,6 @@
     display: inline-block;
   }
 
-  .quota-msg { text-align: center; padding: 32px; color: var(--muted); font-size: 0.88rem; display: none; }
-  .quota-msg.visible { display: block; }
-
   .error-banner {
     background: rgba(248,113,113,0.1);
     border: 1px solid rgba(248,113,113,0.35);
@@ -348,7 +343,6 @@
   </div>
   <div class="badge-container">
     <span class="badge badge-level" id="badgeLevel">EF</span>
-    <span class="badge badge-quota" id="badgeQuota">10 Anfragen</span>
   </div>
 </header>
 
@@ -416,10 +410,6 @@
     <div id="feedbackContent"></div>
   </div>
 
-  <div class="quota-msg" id="quotaMsg">
-    &#x1F6AB; Alle Anfragen f&#xFC;r diese Sitzung aufgebraucht. Lade die Seite neu, um fortzufahren.
-  </div>
-
   <button class="btn-new" id="btnNew" onclick="resetRound()">
     &#x21A9; Neue Methode &#8211; n&#xE4;chste Runde
   </button>
@@ -429,28 +419,10 @@
 // ===================== KONFIGURATION =====================
 const MISTRAL_API_KEY = "Ro7ZuZOuDhvilkxbQ5aNkcuCMZ4tomWQ";
 const MISTRAL_MODEL   = "mistral-large-latest";
-const MAX_REQUESTS    = 10;
 
 // ===================== STATE =====================
-let requestsUsed      = parseInt(localStorage.getItem('jat_requests') || '0');
 let currentMethodCode = "";
 let currentMethodContext = "";
-
-updateQuotaBadge();
-
-function updateQuotaBadge() {
-  const remaining = MAX_REQUESTS - requestsUsed;
-  const el = document.getElementById('badgeQuota');
-  el.textContent = remaining + " Anfragen";
-  if (remaining <= 2) el.style.color = '#f87171';
-  else if (remaining <= 5) el.style.color = '#fbbf24';
-}
-function isQuotaExceeded() { return requestsUsed >= MAX_REQUESTS; }
-function incrementQuota() {
-  requestsUsed++;
-  localStorage.setItem('jat_requests', requestsUsed);
-  updateQuotaBadge();
-}
 
 // ===================== FEHLERANZEIGE =====================
 function showError(msg) {
@@ -644,7 +616,6 @@ function tokenizeLine(line) {
 // ===================== GENERATE =====================
 async function generateMethod() {
   clearError();
-  if (isQuotaExceeded()) { showQuotaMsg(); return; }
 
   var niveau = document.getElementById('selectNiveau').value;
   var thema  = document.getElementById('selectThema').value;
@@ -657,7 +628,6 @@ async function generateMethod() {
 
   try {
     var raw    = await callMistral(SYSTEM_GENERATE, buildGenerateMessage(niveau, thema));
-    incrementQuota();
     var parsed = parseJson(raw);
 
     currentMethodCode    = parsed.code;
@@ -684,7 +654,6 @@ async function generateMethod() {
 // ===================== SUBMIT ANALYSIS =====================
 async function submitAnalysis() {
   clearError();
-  if (isQuotaExceeded()) { showQuotaMsg(); return; }
 
   var analyse = document.getElementById('analysisInput').value.trim();
   if (analyse.length < 20) {
@@ -697,7 +666,6 @@ async function submitAnalysis() {
 
   try {
     var raw = await callMistral(SYSTEM_FEEDBACK, buildFeedbackMessage(currentMethodCode, currentMethodContext, analyse));
-    incrementQuota();
     renderFeedback(parseJson(raw));
     document.getElementById('btnNew').classList.add('visible');
 
@@ -740,12 +708,6 @@ function renderFeedback(fb) {
 }
 
 // ===================== HELPERS =====================
-function showQuotaMsg() {
-  document.getElementById('quotaMsg').classList.add('visible');
-  document.getElementById('btnGenerate').disabled = true;
-  document.getElementById('btnSubmit').disabled   = true;
-}
-
 function resetRound() {
   ['codePanel','contextBlock','analysisSection','feedbackPanel','btnNew'].forEach(function(id) {
     document.getElementById(id).classList.remove('visible');
@@ -754,8 +716,6 @@ function resetRound() {
   currentMethodCode = currentMethodContext = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-if (isQuotaExceeded()) showQuotaMsg();
 </script>
 </body>
 </html>

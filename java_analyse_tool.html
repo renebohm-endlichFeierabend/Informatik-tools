@@ -154,7 +154,6 @@
     font-size: 0.82rem;
     line-height: 1.7;
     color: #c9d1d9;
-    white-space: pre;
   }
   .line-num {
     display: inline-block;
@@ -512,11 +511,11 @@ ANFORDERUNGEN:
 SCHLEIFENREGELN — STRIKT EINHALTEN:
 - NUR klassische for-Schleife mit Zähler: for (int i = 0; i < n; i++)
 - ODER while-Schleife
-- ABSOLUT VERBOTEN: for-each / enhanced for  —  for (Typ x : kollektion)  — diese Syntax wird im Unterricht nicht verwendet!
+- ABSOLUT VERBOTEN: for-each / enhanced for  —  for (Typ x : kollektion)
 - Arrays werden ausschließlich per Indexzugriff gelesen: array[i]
 
 WEITERE VERBOTE:
-- KEINE verketteten Methodenaufrufe wie obj.getX().getY() — höchstens eine Ebene tief: obj.getX()
+- KEINE verketteten Methodenaufrufe wie obj.getX().getY() — höchstens eine Ebene: obj.getX()
 - KEINE Streams, Lambda-Ausdrücke, ArrayList, Iterator, var
 
 AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
@@ -548,7 +547,7 @@ function buildGenerateMessage(niveau, thema) {
   const niveauMap = {
     einfach: "Nur: Variablen, for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
     mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe.",
-    schwer:  "Zwei Klassen, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe (obj.getX().getY() verboten)."
+    schwer:  "Zwei Klassen, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe."
   };
   const themaMap = {
     schule: "Schule – Klassen wie Schueler (name: String, note: int), Klausur (punkte: int, bestanden: boolean)",
@@ -564,23 +563,82 @@ function buildFeedbackMessage(code, kontext, analyse) {
   return "KONTEXT DES PROGRAMMS:\n" + kontext + "\n\nJAVA-METHODE:\n" + code + "\n\nANALYSE DES SCHÜLERS:\n" + analyse;
 }
 
-// ===================== SYNTAX HIGHLIGHT =====================
-// Zeilenumbrüche kommen vom \n-Join — <pre> rendert sie nativ.
-// Kein display:flex, um Browser-Kompatibilitätsprobleme zu vermeiden.
-function highlight(code) {
-  return code.split('\n').map((line, i) => {
-    const lineNum = '<span class="line-num">' + String(i + 1).padStart(2, ' ') + ' </span>';
-    const hl = line
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\b(public|private|static|void|return|if|else|for|while|int|boolean|double|String|new|true|false|null)\b/g,
-               '<span class="kw">$1</span>')
-      .replace(/(".*?")/g, '<span class="str">$1</span>')
-      .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
-      .replace(/(\/\/.*$)/, '<span class="comment">$1</span>');
-    return lineNum + hl;
-  }).join('\n');
+// ===================== SYNTAX HIGHLIGHT (DOM-basiert, kein innerHTML) =====================
+const KEYWORDS = new Set(['public','private','static','void','return','if','else','for',
+                           'while','int','boolean','double','String','new','true','false','null']);
+
+function renderCode(code) {
+  const pre = document.getElementById('codeDisplay');
+  // Alten Inhalt leeren
+  while (pre.firstChild) pre.removeChild(pre.firstChild);
+
+  code.split('\n').forEach(function(line, i) {
+    // Zeilennummer
+    var numEl = document.createElement('span');
+    numEl.className = 'line-num';
+    numEl.textContent = String(i + 1).padStart(2, ' ') + ' ';
+    pre.appendChild(numEl);
+
+    // Zeile tokenisieren und als DOM-Elemente einfügen
+    tokenizeLine(line).forEach(function(token) {
+      if (token.cls) {
+        var span = document.createElement('span');
+        span.className = token.cls;
+        span.textContent = token.text;
+        pre.appendChild(span);
+      } else {
+        pre.appendChild(document.createTextNode(token.text));
+      }
+    });
+
+    // Zeilenumbruch
+    pre.appendChild(document.createTextNode('\n'));
+  });
+}
+
+function tokenizeLine(line) {
+  var tokens = [];
+  var i = 0;
+  while (i < line.length) {
+    // Kommentar ab //
+    if (line[i] === '/' && line[i+1] === '/') {
+      tokens.push({ cls: 'comment', text: line.slice(i) });
+      break;
+    }
+    // String-Literal
+    if (line[i] === '"') {
+      var end = line.indexOf('"', i + 1);
+      if (end === -1) end = line.length - 1;
+      tokens.push({ cls: 'str', text: line.slice(i, end + 1) });
+      i = end + 1;
+      continue;
+    }
+    // Zahl
+    if (/[0-9]/.test(line[i]) && (i === 0 || /\W/.test(line[i-1]))) {
+      var j = i;
+      while (j < line.length && /[0-9.]/.test(line[j])) j++;
+      tokens.push({ cls: 'num', text: line.slice(i, j) });
+      i = j;
+      continue;
+    }
+    // Bezeichner / Keyword
+    if (/[a-zA-Z_]/.test(line[i])) {
+      var k = i;
+      while (k < line.length && /[a-zA-Z0-9_]/.test(line[k])) k++;
+      var word = line.slice(i, k);
+      tokens.push({ cls: KEYWORDS.has(word) ? 'kw' : null, text: word });
+      i = k;
+      continue;
+    }
+    // Einzelnes Zeichen als Text
+    // Ggf. aufeinanderfolgende Nicht-Bezeichner zusammenfassen
+    var m = i;
+    while (m < line.length && !/[a-zA-Z0-9_"\/]/.test(line[m])) m++;
+    if (m === i) m = i + 1;
+    tokens.push({ cls: null, text: line.slice(i, m) });
+    i = m;
+  }
+  return tokens;
 }
 
 // ===================== GENERATE =====================
@@ -588,8 +646,8 @@ async function generateMethod() {
   clearError();
   if (isQuotaExceeded()) { showQuotaMsg(); return; }
 
-  const niveau = document.getElementById('selectNiveau').value;
-  const thema  = document.getElementById('selectThema').value;
+  var niveau = document.getElementById('selectNiveau').value;
+  var thema  = document.getElementById('selectThema').value;
 
   document.getElementById('btnGenerate').disabled = true;
   document.getElementById('genBtnText').innerHTML = '<span class="spinner"></span> KI generiert Methode...';
@@ -598,9 +656,9 @@ async function generateMethod() {
   document.getElementById('btnNew').classList.remove('visible');
 
   try {
-    const raw    = await callMistral(SYSTEM_GENERATE, buildGenerateMessage(niveau, thema));
+    var raw    = await callMistral(SYSTEM_GENERATE, buildGenerateMessage(niveau, thema));
     incrementQuota();
-    const parsed = parseJson(raw);
+    var parsed = parseJson(raw);
 
     currentMethodCode    = parsed.code;
     currentMethodContext = parsed.kontext;
@@ -608,11 +666,11 @@ async function generateMethod() {
     document.getElementById('contextBlock').innerHTML = '<strong>&#x1F4CB; Kontext:</strong> ' + parsed.kontext;
     document.getElementById('contextBlock').classList.add('visible');
     document.getElementById('contextInfo').textContent = parsed.klassenname + '.java';
-    document.getElementById('codeDisplay').innerHTML = highlight(parsed.code);
+    renderCode(parsed.code);
     document.getElementById('codePanel').classList.add('visible');
     document.getElementById('analysisSection').classList.add('visible');
 
-    const labels = { einfach: 'Einfach', mittel: 'Mittel', schwer: 'Anspruchsvoll' };
+    var labels = { einfach: 'Einfach', mittel: 'Mittel', schwer: 'Anspruchsvoll' };
     document.getElementById('badgeLevel').textContent = labels[niveau];
 
   } catch (err) {
@@ -628,7 +686,7 @@ async function submitAnalysis() {
   clearError();
   if (isQuotaExceeded()) { showQuotaMsg(); return; }
 
-  const analyse = document.getElementById('analysisInput').value.trim();
+  var analyse = document.getElementById('analysisInput').value.trim();
   if (analyse.length < 20) {
     alert('Bitte schreibe eine ausführlichere Analyse (mindestens ein paar Sätze).');
     return;
@@ -638,7 +696,7 @@ async function submitAnalysis() {
   document.getElementById('submitBtnText').innerHTML = '<span class="spinner"></span> KI bewertet...';
 
   try {
-    const raw = await callMistral(SYSTEM_FEEDBACK, buildFeedbackMessage(currentMethodCode, currentMethodContext, analyse));
+    var raw = await callMistral(SYSTEM_FEEDBACK, buildFeedbackMessage(currentMethodCode, currentMethodContext, analyse));
     incrementQuota();
     renderFeedback(parseJson(raw));
     document.getElementById('btnNew').classList.add('visible');
@@ -653,26 +711,26 @@ async function submitAnalysis() {
 
 // ===================== RENDER FEEDBACK =====================
 function renderFeedback(fb) {
-  const cats = [
+  var cats = [
     { key: 'rueckgabewert', icon: '&#x1F522;', title: 'Rückgabewert ermitteln' },
     { key: 'funktionsweise', icon: '&#x2699;&#xFE0F;', title: 'Funktionsweise erklären' },
     { key: 'sachkontext',   icon: '&#x1F30D;', title: 'Sachkontextbezug' },
     { key: 'grenzfaelle',   icon: '&#x26A0;&#xFE0F;', title: 'Grenzfälle nennen' }
   ];
-  const statusMap = {
+  var statusMap = {
     ok:        ['status-ok',   '✓ Gut'],
     teilweise: ['status-warn', '~ Teilweise'],
     fehlt:     ['status-err',  '✗ Fehlt / Unvollständig']
   };
 
-  let html = '';
-  cats.forEach(cat => {
-    const data = fb[cat.key] || { status: 'fehlt', text: '–' };
-    const [css, label] = statusMap[data.status] || statusMap['fehlt'];
+  var html = '';
+  cats.forEach(function(cat) {
+    var data = fb[cat.key] || { status: 'fehlt', text: '–' };
+    var sm   = statusMap[data.status] || statusMap['fehlt'];
     html += '<div class="feedback-category"><div class="cat-header">'
           + '<span class="cat-icon">' + cat.icon + '</span>'
           + '<span class="cat-title">' + cat.title + '</span>'
-          + '<span class="cat-status ' + css + '">' + label + '</span>'
+          + '<span class="cat-status ' + sm[0] + '">' + sm[1] + '</span>'
           + '</div><div class="cat-body">' + data.text + '</div></div>';
   });
 
@@ -689,8 +747,9 @@ function showQuotaMsg() {
 }
 
 function resetRound() {
-  ['codePanel','contextBlock','analysisSection','feedbackPanel','btnNew'].forEach(id =>
-    document.getElementById(id).classList.remove('visible'));
+  ['codePanel','contextBlock','analysisSection','feedbackPanel','btnNew'].forEach(function(id) {
+    document.getElementById(id).classList.remove('visible');
+  });
   document.getElementById('analysisInput').value = '';
   currentMethodCode = currentMethodContext = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });

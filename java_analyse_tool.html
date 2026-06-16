@@ -423,7 +423,7 @@
 
 <script>
 // ===================== KONFIGURATION =====================
-const MISTRAL_API_KEY = "__MISTRAL_API_KEY__";
+const MISTRAL_API_KEY = "Ro7ZuZOuDhvilkxbQ5aNkcuCMZ4tomWQ";
 const MISTRAL_MODEL   = "mistral-large-latest";
 const MAX_REQUESTS    = 10;
 
@@ -455,14 +455,6 @@ function showError(msg) {
   el.classList.add('visible');
 }
 function clearError() { document.getElementById('errorBanner').classList.remove('visible'); }
-
-function checkConfig() {
-  if (!MISTRAL_API_KEY || MISTRAL_API_KEY.startsWith('__')) {
-    showError('Kein Mistral-API-Key konfiguriert. Bitte MISTRAL_KEY als Repository-Secret hinterlegen (Settings → Secrets).');
-    return false;
-  }
-  return true;
-}
 
 // ===================== MISTRAL CHAT API =====================
 async function callMistral(systemPrompt, userMessage) {
@@ -596,7 +588,6 @@ function highlight(code) {
 async function generateMethod() {
   clearError();
   if (isQuotaExceeded()) { showQuotaMsg(); return; }
-  if (!checkConfig()) return;
 
   const niveau = document.getElementById('selectNiveau').value;
   const thema  = document.getElementById('selectThema').value;
@@ -637,7 +628,6 @@ async function generateMethod() {
 async function submitAnalysis() {
   clearError();
   if (isQuotaExceeded()) { showQuotaMsg(); return; }
-  if (!checkConfig()) return;
 
   const analyse = document.getElementById('analysisInput').value.trim();
   if (analyse.length < 20) {

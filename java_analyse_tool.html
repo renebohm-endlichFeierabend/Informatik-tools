@@ -512,6 +512,16 @@ ANFORDERUNGEN:
 - Keine Kommentare im Code
 - Verwende deutsche Variablennamen
 
+SCHLEIFENREGELN — STRIKT EINHALTEN:
+- NUR klassische for-Schleife mit Zähler: for (int i = 0; i < n; i++)
+- ODER while-Schleife
+- ABSOLUT VERBOTEN: for-each / enhanced for  —  for (Typ x : kollektion)  — diese Syntax wird im Unterricht nicht verwendet!
+- Arrays werden ausschließlich per Indexzugriff gelesen: array[i]
+
+WEITERE VERBOTE:
+- KEINE verketteten Methodenaufrufe wie obj.getX().getY() — höchstens eine Ebene tief: obj.getX()
+- KEINE Streams, Lambda-Ausdrücke, ArrayList, Iterator, var
+
 AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
 {
   "kontext": "1-2 Sätze: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es?",
@@ -551,9 +561,9 @@ Mögliche Werte für status: "ok", "teilweise", "fehlt"`;
 // ===================== USER MESSAGES =====================
 function buildGenerateMessage(niveau, thema) {
   const niveauMap = {
-    einfach: "Nur: Variablen, einfache Schleifen (for/while), if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, keine Arrays.",
-    mittel:  "Instanzvariablen, Methoden von Objekten (z.B. getName(), getWert()), einfache Arrays (int[]), Schleifen, Bedingungen.",
-    schwer:  "Zwei Klassen mit Attributen und Methoden, Arrays von Objekten, verschachtelte Bedingungen, Rückgabe von Objekten oder Arrays."
+    einfach: "Nur: Variablen, einfache for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
+    mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe (nur eine Ebene: obj.getX()).",
+    schwer:  "Zwei Klassen mit Attributen und Methoden, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe (obj.getX().getY() verboten)."
   };
   const themaMap = {
     schule: "Schule – Klassen wie Schueler (name: String, note: int), Klausur (punkte: int, bestanden: boolean)",

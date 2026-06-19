@@ -107,7 +107,7 @@
 
   .controls {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 20px;
   }
@@ -466,7 +466,7 @@
     Java Methoden-Trainer
   </div>
   <div class="badge-container">
-    <span class="badge badge-level" id="badgeLevel">EF</span>
+    <span class="badge badge-level" id="badgeLevel">Oberstufe</span>
   </div>
 </header>
 
@@ -490,27 +490,19 @@
     <div class="control-group">
       <label>Niveau</label>
       <select id="selectNiveau">
-        <option value="einfach">Einfach &#8211; Schleifen &amp; Bedingungen</option>
-        <option value="mittel" selected>Mittel &#8211; Objekte &amp; Arrays</option>
-        <option value="schwer">Anspruchsvoll &#8211; Mehrere Klassen</option>
-      </select>
-    </div>
-    <div class="control-group">
-      <label>Sachkontext</label>
-      <select id="selectThema">
-        <option value="schule">Schule &amp; Noten</option>
-        <option value="sport">Sport &amp; Training</option>
-        <option value="gaming">Gaming &amp; Highscore</option>
-        <option value="social">Social Media &amp; Likes</option>
-        <option value="shop">Online-Shop &amp; Preise</option>
+        <option value="einfach">Einfach</option>
+        <option value="mittel" selected>Mittel</option>
+        <option value="schwer">Anspruchsvoll</option>
       </select>
     </div>
   </div>
 
   <!-- Datenstruktur-Auswahl (NRW-Klassen) -->
   <div class="ds-section">
-    <label>Datenstrukturen <span class="ds-hint">&#8211; offizielle NRW-Klassen einbeziehen (optional, mehrere m&#xF6;glich)</span></label>
+    <label>Datenstrukturen &amp; Konzepte <span class="ds-hint">&#8211; optional einbeziehen (NRW-Klassen bzw. Arrays, mehrere m&#xF6;glich)</span></label>
     <div class="ds-grid" id="dsGrid">
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="arr1d"><span class="ds-box">&#x2713;</span>Array (1D)</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="arr2d"><span class="ds-box">&#x2713;</span>Array (2D)</label>
       <label class="ds-chip"><input type="checkbox" class="ds-check" value="liste"><span class="ds-box">&#x2713;</span>Lineare Liste</label>
       <label class="ds-chip"><input type="checkbox" class="ds-check" value="queue"><span class="ds-box">&#x2713;</span>Queue</label>
       <label class="ds-chip"><input type="checkbox" class="ds-check" value="stack"><span class="ds-box">&#x2713;</span>Stack</label>
@@ -574,6 +566,8 @@ const MISTRAL_MODEL   = "mistral-large-latest";
 // Offizielle Klassen des Landes NRW (Zentralabitur Informatik). Diese werden
 // der KI sowohl beim Generieren als auch beim Prüfen mitgeschickt.
 const NRW_LABELS = {
+  arr1d:      "Array (1D)",
+  arr2d:      "Array (2D)",
   liste:      "Lineare Liste (List<ContentType>)",
   queue:      "Queue<ContentType>",
   stack:      "Stack<ContentType>",
@@ -585,6 +579,20 @@ const NRW_LABELS = {
 };
 
 const NRW_KLASSEN = {
+  arr1d:
+`Eindimensionales Array (z.B. int[], double[], boolean[] oder Objekt-Array wie Schueler[]):
+  - Zugriff ausschließlich per Index: arr[i]
+  - Länge über arr.length
+  - Durchlauf mit klassischer Zählschleife: for (int i = 0; i < arr.length; i++) oder while
+  - KEIN for-each (kein "for (Typ x : arr)"), KEINE java.util-Listen`,
+
+  arr2d:
+`Zweidimensionales Array (z.B. int[][], double[][]):
+  - Zugriff per Doppelindex: matrix[zeile][spalte]
+  - Dimensionen: matrix.length (Anzahl Zeilen), matrix[i].length (Anzahl Spalten)
+  - Durchlauf mit zwei verschachtelten Zählschleifen
+  - KEIN for-each, KEINE java.util-Listen`,
+
   liste:
 `Klasse List<ContentType> — lineare Liste mit interner Positionsanzeige ("aktuelles Objekt"):
   List() — erzeugt eine leere Liste
@@ -769,34 +777,39 @@ function getSelectedStructures() {
 // Baut den Textblock mit den offiziellen NRW-Klassen für die ausgewählten Strukturen.
 function buildNRWBlock(selected) {
   if (!selected || selected.length === 0) return "";
-  let block = "\n\nVERWENDE ZWINGEND die folgenden offiziellen NRW-Datenstruktur-Klassen. "
-            + "Es dürfen ausschließlich die hier aufgeführten öffentlichen Methoden (mit exakt diesen Namen und Signaturen) genutzt werden:\n\n";
+  let block = "\n\nVERWENDE ZWINGEND die folgenden Datenstrukturen/Konzepte. "
+            + "Bei den NRW-Klassen dürfen ausschließlich die hier aufgeführten öffentlichen Methoden "
+            + "(mit exakt diesen Namen und Signaturen) genutzt werden:\n\n";
   selected.forEach(function(k) { block += NRW_KLASSEN[k] + "\n\n"; });
-  block += "REGELN für diese Klassen:\n"
+  block += "REGELN:\n"
         +  "- Durchlaufe NRW-Listen mit toFirst(), hasAccess(), getContent(), next() — NIEMALS mit for-each oder Index.\n"
-        +  "- Erfinde KEINE zusätzlichen Methoden. Nutze nur die oben dokumentierten.\n"
-        +  "- Verwende KEINE java.util-Klassen (ArrayList, LinkedList, Stack, Queue, HashMap, ...) als Ersatz.";
+        +  "- Bei den NRW-Klassen: erfinde KEINE zusätzlichen Methoden, nutze nur die oben dokumentierten.\n"
+        +  "- Verwende KEINE java.util-Klassen (ArrayList, LinkedList, Stack, Queue, HashMap, ...) als Ersatz.\n"
+        +  "- Kein for-each / enhanced for; Arrays werden per Index durchlaufen.";
   return block;
 }
 
 // ===================== SYSTEM PROMPTS =====================
-const SYSTEM_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (NRW, EF/Q1). Erstelle eine einzelne Java-Methode für eine Analyse-Übung.
+const SYSTEM_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (NRW, Oberstufe EF/Q1/Q2). Erstelle eine einzelne Java-Methode für eine Analyse-Übung.
 
 ANFORDERUNGEN:
 - Methode hat 1-2 Parameter
 - Methode hat einen sinnvollen Rückgabewert (kein void), außer es werden Datenstrukturen verwendet, die das nicht zulassen
 - Länge: 8-18 Zeilen Methoden-Body
 - Die Methode soll eine klar erkennbare, aber nicht triviale Aufgabe erfüllen
-- Realistischer Sachkontext passend zum angegebenen Thema und Niveau
+- Wähle SELBST einen realistischen, abwechslungsreichen Sachkontext (z.B. Schule, Sport, Gaming, Shop, Bibliothek, Verkehr, …) passend zum Niveau
 - Name der Methode: generisch wie "ermittleEtwas" oder "berechneWert" (NICHT beschreibend)
 - Keine Kommentare im Code
 - Verwende deutsche Variablennamen
 
-SCHLEIFENREGELN — STRIKT EINHALTEN (wenn KEINE NRW-Datenstruktur vorgegeben ist):
+OBJEKTBEZUG — IMMER ERFÜLLEN:
+- Es gibt IMMER objektorientierten Kontext: mindestens eine Klasse mit Attributen, üblicherweise zwei Klassen mit einer Beziehung (Assoziation).
+- Die Methode arbeitet mit Objekten und deren Attributen/Beziehungen (z.B. obj.getX()), nicht nur mit primitiven Einzelwerten.
+
+SCHLEIFENREGELN — STRIKT EINHALTEN (wenn KEINE NRW-Datenstruktur/Array vorgegeben ist):
 - NUR klassische for-Schleife mit Zähler: for (int i = 0; i < n; i++)
 - ODER while-Schleife
 - ABSOLUT VERBOTEN: for-each / enhanced for  —  for (Typ x : kollektion)
-- Arrays werden ausschließlich per Indexzugriff gelesen: array[i]
 
 WEITERE VERBOTE:
 - KEINE verketteten Methodenaufrufe wie obj.getX().getY() — höchstens eine Ebene: obj.getX()
@@ -804,12 +817,12 @@ WEITERE VERBOTE:
 
 AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
 {
-  "kontext": "1-2 Sätze: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es?",
+  "kontext": "1-2 Sätze: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es und wie hängen sie zusammen?",
   "klassenname": "NameDerKlasse",
   "code": "vollständiger Java-Methoden-Code als String (Zeilenumbrüche als \\n)"
 }`;
 
-const SYSTEM_FEEDBACK = `Du bist ein erfahrener Informatiklehrer an einem NRW-Gymnasium. Du bewertest die Analyse einer Java-Methode durch einen Schüler der EF (Einführungsphase).
+const SYSTEM_FEEDBACK = `Du bist ein erfahrener Informatiklehrer an einem NRW-Gymnasium. Du bewertest die Analyse einer Java-Methode durch einen Schüler der Oberstufe (EF/Q1/Q2).
 
 BEWERTUNGSGRUNDLAGE (NRW Abitur-Standard für "Methode analysieren"):
 1. RÜCKGABEWERT: Schüler soll konkrete Rückgabewerte für Beispieleingaben ermitteln und korrekt nachvollziehen.
@@ -828,14 +841,15 @@ Gib dein Feedback als JSON zurück (kein Markdown, kein Zusatztext):
 }
 Mögliche Werte für status: "ok", "teilweise", "fehlt"`;
 
-const SYSTEM_IMPLEMENT_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (NRW, EF/Q1/Q2). Erstelle eine Implementierungsaufgabe: Der Schüler soll EINE Java-Methode selbst schreiben.
+const SYSTEM_IMPLEMENT_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (NRW, Oberstufe EF/Q1/Q2). Erstelle eine Implementierungsaufgabe: Der Schüler soll EINE Java-Methode selbst schreiben.
 
 ANFORDERUNGEN:
 - Beschreibe klar und eindeutig, WAS die Methode tun soll (Aufgabenstellung in 2-4 Sätzen).
-- Gib eine konkrete Methodensignatur vor (z.B. "public double berechneDurchschnitt(int[] noten)").
-- Wähle einen realistischen Sachkontext passend zu Thema und Niveau.
+- Gib eine konkrete Methodensignatur vor (z.B. "public double berechneDurchschnitt(Schueler[] schuelerListe)").
+- Wähle SELBST einen realistischen, abwechslungsreichen Sachkontext passend zum Niveau.
 - Die Aufgabe muss lösbar und eindeutig sein, aber nicht trivial.
-- Falls NRW-Datenstruktur-Klassen vorgegeben sind, MUSS die zu implementierende Methode genau diese Klassen verwenden.
+- OBJEKTBEZUG IMMER: Es gibt immer einen objektorientierten Kontext (mindestens eine Klasse mit Attributen, üblicherweise zwei Klassen mit einer Beziehung/Assoziation). Die Methode arbeitet mit Objekten und ihren Beziehungen.
+- Falls NRW-Datenstruktur-Klassen oder Arrays vorgegeben sind, MUSS die zu implementierende Methode genau diese verwenden.
 - Gib bei Bedarf knappe Vorgaben (vorhandene Attribute/Hilfsklassen) als Kontext an, damit die Aufgabe lösbar ist.
 - Nenne in der Signatur den Methodennamen so, dass er zur Aufgabe passt.
 
@@ -869,32 +883,16 @@ Mögliche Werte für status: "ok", "teilweise", "fehlt"`;
 
 // ===================== USER MESSAGES =====================
 const NIVEAU_MAP = {
-  einfach: "Nur: Variablen, for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
-  mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe.",
-  schwer:  "Zwei Klassen, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe."
-};
-const THEMA_MAP = {
-  schule: "Schule – Klassen wie Schueler (name: String, note: int), Klausur (punkte: int, bestanden: boolean)",
-  sport:  "Sport – Klassen wie Athlet (name: String, punkte: int), Training (dauer: int, intensitaet: double)",
-  gaming: "Gaming – Klassen wie Spieler (name: String, score: int), Level (nummer: int, schwierigkeit: int)",
-  social: "Social Media – Klassen wie Post (likes: int, autor: String), Nutzer (follower: int, name: String)",
-  shop:   "Online-Shop – Klassen wie Produkt (preis: double, name: String), Bestellung (anzahl: int, rabatt: boolean)"
+  einfach: "Einfach: eine Klasse mit Attributen; einfache for-/while-Schleife, if/else, einfache Berechnung oder Bedingung auf Objektattributen.",
+  mittel:  "Mittel: zwei Klassen mit einer Assoziation; Durchlauf einer Sammlung (Array oder NRW-Liste), verschachtelte Bedingungen, Akkumulator/Zähler.",
+  schwer:  "Anspruchsvoll: mehrere Klassen mit Beziehungen; anspruchsvollerer Algorithmus (z.B. Suche, Min/Max, Aggregation über verschachtelte Strukturen) mit mehreren Sonderfällen."
 };
 
-function buildGenerateMessage(niveau, thema, structures) {
-  // Bei vorgegebenen Datenstrukturen entfällt die Array-/Schleifen-Beschränkung,
-  // da der Durchlauf über die NRW-Klassen-API erfolgt.
-  let niveauHinweis = structures.length > 0
-    ? "Setze ein Niveau passend zur Oberstufe (EF/Q1/Q2). Die Aufgabe dreht sich um die unten genannten Datenstrukturen."
-    : NIVEAU_MAP[niveau];
-  return "THEMA: " + THEMA_MAP[thema] + "\nNIVEAU: " + niveauHinweis + buildNRWBlock(structures);
-}
-
-function buildImplementMessage(niveau, thema, structures) {
-  let niveauHinweis = structures.length > 0
-    ? "Niveau passend zur Oberstufe (EF/Q1/Q2), die Aufgabe nutzt die unten genannten Datenstrukturen."
-    : NIVEAU_MAP[niveau];
-  return "THEMA: " + THEMA_MAP[thema] + "\nNIVEAU: " + niveauHinweis + buildNRWBlock(structures);
+// Sachkontext wählt die KI selbst; die Zufallszahl sorgt für Abwechslung.
+function buildTaskMessage(niveau, structures) {
+  return "NIVEAU: " + NIVEAU_MAP[niveau]
+       + "\nVARIATION: Wähle einen frischen, eher ungewöhnlichen Sachkontext (Variationsschlüssel " + Math.floor(Math.random() * 100000) + ")."
+       + buildNRWBlock(structures);
 }
 
 function buildFeedbackMessage(code, kontext, analyse, structures) {
@@ -990,14 +988,13 @@ async function generate() {
 async function generateAnalyse() {
   clearError();
   var niveau = document.getElementById('selectNiveau').value;
-  var thema  = document.getElementById('selectThema').value;
   currentStructures = getSelectedStructures();
 
   setGenerating(true, 'KI generiert Methode...');
   hideRoundOutputs();
 
   try {
-    var raw    = await callMistral(SYSTEM_GENERATE, buildGenerateMessage(niveau, thema, currentStructures));
+    var raw    = await callMistral(SYSTEM_GENERATE, buildTaskMessage(niveau, currentStructures));
     var parsed = parseJson(raw);
 
     currentMethodCode    = parsed.code;
@@ -1027,14 +1024,13 @@ async function generateAnalyse() {
 async function generateImplement() {
   clearError();
   var niveau = document.getElementById('selectNiveau').value;
-  var thema  = document.getElementById('selectThema').value;
   currentStructures = getSelectedStructures();
 
   setGenerating(true, 'KI erstellt Aufgabe...');
   hideRoundOutputs();
 
   try {
-    var raw    = await callMistral(SYSTEM_IMPLEMENT_GENERATE, buildImplementMessage(niveau, thema, currentStructures));
+    var raw    = await callMistral(SYSTEM_IMPLEMENT_GENERATE, buildTaskMessage(niveau, currentStructures));
     var parsed = parseJson(raw);
 
     currentTask = parsed;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Java Methoden-Analyse Trainer</title>
+<title>Java Methoden-Trainer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap');
 
@@ -71,11 +71,45 @@
   .badge-level { background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
   .main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
+  /* Mode toggle (segmented control) */
+  .mode-toggle {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+    gap: 4px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 11px;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .mode-btn:hover { color: var(--text); }
+  .mode-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 14px rgba(79,156,249,0.25);
+  }
+
   .controls {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
   }
   .control-group label {
     display: block;
@@ -103,6 +137,60 @@
     transition: border-color 0.2s;
   }
   select:focus { outline: none; border-color: var(--accent); }
+
+  /* Datenstruktur-Checkboxen */
+  .ds-section { margin-bottom: 24px; }
+  .ds-section > label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .ds-hint { color: var(--accent2); font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .ds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 8px;
+  }
+  .ds-chip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .ds-chip:hover { border-color: rgba(79,156,249,0.4); }
+  .ds-chip input { display: none; }
+  .ds-box {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: transparent;
+  }
+  .ds-chip input:checked + .ds-box {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: transparent;
+    color: white;
+  }
+  .ds-chip:has(input:checked) {
+    border-color: rgba(79,156,249,0.5);
+    background: rgba(79,156,249,0.08);
+    color: var(--text);
+  }
 
   .btn-generate {
     width: 100%;
@@ -178,9 +266,39 @@
   .context-block.visible { display: block; animation: slideIn 0.3s ease; }
   .context-block strong { color: var(--accent); }
 
-  .analysis-section { display: none; }
-  .analysis-section.visible { display: block; animation: slideIn 0.3s ease; }
-  .analysis-section label {
+  /* Aufgabenstellung (Implementieren) */
+  .task-block {
+    background: rgba(167,139,250,0.07);
+    border: 1px solid rgba(167,139,250,0.25);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: #c2cce0;
+  }
+  .task-block.visible { display: block; animation: slideIn 0.3s ease; }
+  .task-block .task-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--accent2); margin-bottom: 8px;
+  }
+  .task-block .task-sig {
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--green);
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .work-section { display: none; }
+  .work-section.visible { display: block; animation: slideIn 0.3s ease; }
+  .work-section label {
     display: block;
     font-size: 0.72rem;
     font-weight: 600;
@@ -211,6 +329,7 @@
     line-height: 1.6;
     resize: vertical;
     transition: border-color 0.2s;
+    tab-size: 4;
   }
   textarea:focus { outline: none; border-color: var(--accent); }
   textarea::placeholder { color: var(--muted); }
@@ -274,6 +393,11 @@
   .status-warn{ background: rgba(251,191,36,0.12);  color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
   .status-err { background: rgba(248,113,113,0.12); color: var(--red);    border: 1px solid rgba(248,113,113,0.25); }
   .cat-body { font-size: 0.84rem; line-height: 1.65; color: #a0b4cc; padding-left: 2px; }
+  .cat-body pre {
+    padding: 12px 14px; margin-top: 8px;
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.78rem; line-height: 1.6;
+  }
 
   .spinner {
     width: 16px; height: 16px;
@@ -319,7 +443,7 @@
   @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .intro { text-align: center; padding: 48px 0 32px; }
+  .intro { text-align: center; padding: 40px 0 28px; }
   .intro h1 {
     font-size: 2rem;
     font-weight: 800;
@@ -330,7 +454,7 @@
     margin-bottom: 10px;
     letter-spacing: -1px;
   }
-  .intro p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+  .intro p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; max-width: 520px; margin: 0 auto; }
   .divider { height: 1px; background: var(--border); margin: 24px 0; }
 </style>
 </head>
@@ -339,7 +463,7 @@
 <header class="header">
   <div class="logo">
     <div class="logo-icon">&#x2615;</div>
-    Java Analyse Trainer
+    Java Methoden-Trainer
   </div>
   <div class="badge-container">
     <span class="badge badge-level" id="badgeLevel">EF</span>
@@ -348,13 +472,19 @@
 
 <main class="main">
   <div class="intro">
-    <h1>Methoden analysieren</h1>
-    <p>Eine KI generiert eine Java-Methode. Analysiere sie wie im Abitur &#8212; und erhalte strukturiertes Feedback zu deiner Analyse.</p>
+    <h1 id="introTitle">Methoden analysieren</h1>
+    <p id="introText">Eine KI generiert eine Java-Methode. Analysiere sie wie im Abitur &#8212; und erhalte strukturiertes Feedback zu deiner Analyse.</p>
   </div>
 
   <div class="divider"></div>
 
   <div class="error-banner" id="errorBanner"></div>
+
+  <!-- Modus-Umschalter -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeAnalyse" onclick="setMode('analyse')">&#x1F50D; Analysieren</button>
+    <button class="mode-btn" id="modeImplement" onclick="setMode('implement')">&#x1F6E0;&#xFE0F; Implementieren</button>
+  </div>
 
   <div class="controls">
     <div class="control-group">
@@ -366,7 +496,7 @@
       </select>
     </div>
     <div class="control-group">
-      <label>Thema</label>
+      <label>Sachkontext</label>
       <select id="selectThema">
         <option value="schule">Schule &amp; Noten</option>
         <option value="sport">Sport &amp; Training</option>
@@ -377,12 +507,31 @@
     </div>
   </div>
 
-  <button class="btn-generate" id="btnGenerate" onclick="generateMethod()">
+  <!-- Datenstruktur-Auswahl (NRW-Klassen) -->
+  <div class="ds-section">
+    <label>Datenstrukturen <span class="ds-hint">&#8211; offizielle NRW-Klassen einbeziehen (optional, mehrere m&#xF6;glich)</span></label>
+    <div class="ds-grid" id="dsGrid">
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="liste"><span class="ds-box">&#x2713;</span>Lineare Liste</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="queue"><span class="ds-box">&#x2713;</span>Queue</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="stack"><span class="ds-box">&#x2713;</span>Stack</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="binarytree"><span class="ds-box">&#x2713;</span>BinaryTree</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="bst"><span class="ds-box">&#x2713;</span>BinarySearchTree</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="graph"><span class="ds-box">&#x2713;</span>Graph</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="datenbank"><span class="ds-box">&#x2713;</span>Datenbanken</label>
+      <label class="ds-chip"><input type="checkbox" class="ds-check" value="netzwerk"><span class="ds-box">&#x2713;</span>Netzwerke</label>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btnGenerate" onclick="generate()">
     <span id="genBtnText">&#x26A1; Neue Methode generieren</span>
   </button>
 
   <div class="context-block" id="contextBlock"></div>
 
+  <!-- Aufgabenstellung (nur Implementieren-Modus) -->
+  <div class="task-block" id="taskBlock"></div>
+
+  <!-- Generierte Methode (nur Analyse-Modus) -->
   <div class="code-panel" id="codePanel">
     <div class="code-header">
       <span class="code-title">&#x2615; Java</span>
@@ -391,38 +540,165 @@
     <pre id="codeDisplay"></pre>
   </div>
 
-  <div class="analysis-section" id="analysisSection">
-    <label>Deine Analyse</label>
-    <div class="hints">
+  <div class="work-section" id="workSection">
+    <label id="workLabel">Deine Analyse</label>
+    <div class="hints" id="hintRow">
       <span class="hint-chip">&#x1F4A1; Was macht die Methode?</span>
       <span class="hint-chip">&#x1F522; R&#xFC;ckgabewert f&#xFC;r Beispielwerte?</span>
       <span class="hint-chip">&#x1F504; Wie funktioniert die Schleife/Bedingung?</span>
       <span class="hint-chip">&#x26A0;&#xFE0F; Grenzf&#xE4;lle?</span>
     </div>
-    <textarea id="analysisInput" placeholder="Schreibe hier deine Analyse der Methode..."></textarea>
-    <button class="btn-submit" id="btnSubmit" onclick="submitAnalysis()">
+    <textarea id="workInput" placeholder="Schreibe hier deine Analyse der Methode..."></textarea>
+    <button class="btn-submit" id="btnSubmit" onclick="submitWork()">
       <span id="submitBtnText">&#x1F4E4; Feedback erhalten</span>
     </button>
   </div>
 
   <div class="feedback-panel" id="feedbackPanel">
-    <div class="feedback-header">&#x1F4CB; Feedback zu deiner Analyse</div>
+    <div class="feedback-header">&#x1F4CB; Feedback</div>
     <div id="feedbackContent"></div>
   </div>
 
   <button class="btn-new" id="btnNew" onclick="resetRound()">
-    &#x21A9; Neue Methode &#8211; n&#xE4;chste Runde
+    &#x21A9; Neue Aufgabe &#8211; n&#xE4;chste Runde
   </button>
 </main>
 
 <script>
 // ===================== KONFIGURATION =====================
-const MISTRAL_API_KEY = "Ro7ZuZOuDhvilkxbQ5aNkcuCMZ4tomWQ";
+// Wird beim Deploy per GitHub Actions aus dem Secret MISTRAL_KEY eingesetzt.
+const MISTRAL_API_KEY = "__MISTRAL_API_KEY__";
 const MISTRAL_MODEL   = "mistral-large-latest";
 
+// ===================== NRW-DATENSTRUKTUR-KLASSEN =====================
+// Offizielle Klassen des Landes NRW (Zentralabitur Informatik). Diese werden
+// der KI sowohl beim Generieren als auch beim Prüfen mitgeschickt.
+const NRW_LABELS = {
+  liste:      "Lineare Liste (List<ContentType>)",
+  queue:      "Queue<ContentType>",
+  stack:      "Stack<ContentType>",
+  binarytree: "BinaryTree<ContentType>",
+  bst:        "BinarySearchTree<ContentType>",
+  graph:      "Graph (mit Vertex, Edge)",
+  datenbank:  "DatabaseConnection",
+  netzwerk:   "Server / Client (Netzwerk)"
+};
+
+const NRW_KLASSEN = {
+  liste:
+`Klasse List<ContentType> — lineare Liste mit interner Positionsanzeige ("aktuelles Objekt"):
+  List() — erzeugt eine leere Liste
+  boolean isEmpty() — true, wenn die Liste leer ist
+  boolean hasAccess() — true, wenn es ein aktuelles Objekt gibt
+  void next() — rückt die Positionsanzeige um eins weiter
+  void toFirst() — erstes Objekt wird zum aktuellen Objekt
+  void toLast() — letztes Objekt wird zum aktuellen Objekt
+  ContentType getContent() — liefert das Inhaltsobjekt des aktuellen Objekts
+  void setContent(ContentType pContent) — überschreibt das aktuelle Objekt
+  void insert(ContentType pContent) — fügt vor dem aktuellen Objekt ein
+  void append(ContentType pContent) — hängt am Ende an
+  void concat(List<ContentType> pList) — hängt pList an diese Liste an
+  void remove() — entfernt das aktuelle Objekt`,
+
+  queue:
+`Klasse Queue<ContentType> — Warteschlange nach dem FIFO-Prinzip:
+  Queue() — erzeugt eine leere Schlange
+  boolean isEmpty() — true, wenn die Schlange leer ist
+  void enqueue(ContentType pContent) — fügt hinten an
+  void dequeue() — entfernt das vorderste Objekt
+  ContentType front() — liefert das vorderste Objekt (ohne Entfernen)`,
+
+  stack:
+`Klasse Stack<ContentType> — Stapel nach dem LIFO-Prinzip:
+  Stack() — erzeugt einen leeren Stapel
+  boolean isEmpty() — true, wenn der Stapel leer ist
+  void push(ContentType pContent) — legt oben auf
+  void pop() — entfernt das oberste Objekt
+  ContentType top() — liefert das oberste Objekt (ohne Entfernen)`,
+
+  binarytree:
+`Klasse BinaryTree<ContentType> — Binärbaum:
+  BinaryTree() — erzeugt einen leeren Baum
+  BinaryTree(ContentType pContent) — Baum mit Wurzelinhalt, leeren Teilbäumen
+  BinaryTree(ContentType pContent, BinaryTree<ContentType> pLeftTree, BinaryTree<ContentType> pRightTree)
+  boolean isEmpty() — true, wenn der Baum leer ist
+  ContentType getContent() — liefert das Inhaltsobjekt der Wurzel
+  void setContent(ContentType pContent) — setzt das Inhaltsobjekt der Wurzel
+  BinaryTree<ContentType> getLeftTree() — liefert den linken Teilbaum
+  BinaryTree<ContentType> getRightTree() — liefert den rechten Teilbaum
+  void setLeftTree(BinaryTree<ContentType> pTree) — setzt den linken Teilbaum
+  void setRightTree(BinaryTree<ContentType> pTree) — setzt den rechten Teilbaum`,
+
+  bst:
+`Klasse BinarySearchTree<ContentType extends ComparableContent<ContentType>> — binärer Suchbaum:
+  BinarySearchTree() — erzeugt einen leeren Suchbaum
+  boolean isEmpty() — true, wenn der Suchbaum leer ist
+  void insert(ContentType pContent) — fügt einsortiert ein
+  void remove(ContentType pContent) — entfernt das passende Objekt
+  ContentType search(ContentType pContent) — sucht und liefert das Objekt (oder null)
+  ContentType getContent() — liefert das Inhaltsobjekt der Wurzel
+  BinarySearchTree<ContentType> getLeftTree() — liefert den linken Teilbaum
+  BinarySearchTree<ContentType> getRightTree() — liefert den rechten Teilbaum
+Interface ComparableContent<ContentType> (vom Inhaltstyp zu implementieren):
+  boolean isGreater(ContentType pContent)
+  boolean isEqual(ContentType pContent)
+  boolean isLess(ContentType pContent)`,
+
+  graph:
+`Klassen für Graphen (ungerichtet, gewichtet):
+Klasse Vertex (Knoten):
+  Vertex(String pID); String getID(); void setMark(boolean pMark); boolean isMarked()
+Klasse Edge (Kante):
+  Edge(Vertex pVertex, Vertex pAnotherVertex, double pWeight)
+  Vertex[] getVertices(); double getWeight(); void setWeight(double pWeight)
+  void setMark(boolean pMark); boolean isMarked()
+Klasse Graph:
+  Graph(); boolean isEmpty()
+  void addVertex(Vertex pVertex); void addEdge(Edge pEdge)
+  void removeVertex(Vertex pVertex); void removeEdge(Edge pEdge)
+  Vertex getVertex(String pID)
+  List<Vertex> getVertices(); List<Edge> getEdges()
+  List<Vertex> getNeighbours(Vertex pVertex); List<Edge> getEdges(Vertex pVertex)
+  Edge getEdge(Vertex pVertex, Vertex pAnotherVertex)
+  void setAllVertexMarks(boolean pMark); void setAllEdgeMarks(boolean pMark)
+  boolean allVerticesMarked(); boolean allEdgesMarked()
+(Hinweis: getVertices()/getNeighbours() liefern eine NRW-List<...>, die mit toFirst()/hasAccess()/getContent()/next() durchlaufen wird.)`,
+
+  datenbank:
+`Klassen für Datenbankzugriff (SQL über JDBC-Wrapper):
+Klasse DatabaseConnection:
+  DatabaseConnection(String pIP, int pPort, String pDatabase, String pUsername, String pPassword)
+  void executeStatement(String pSQLStatement) — führt ein SQL-Statement aus
+  QueryResult getCurrentQueryResult() — Ergebnis der letzten SELECT-Abfrage (null bei keinem Ergebnis/Fehler)
+  String getErrorMessage() — Fehlermeldung der letzten Operation (null, falls fehlerfrei)
+  void close() — schließt die Verbindung
+Klasse QueryResult:
+  String[][] getData(); String[] getColumnNames(); String[] getColumnTypes()
+  int getRowCount(); int getColumnCount()`,
+
+  netzwerk:
+`Klassen für Netzwerkkommunikation (NRW):
+Klasse Client:
+  Client(String pServerIP, int pServerPort)
+  boolean isConnected(); void send(String pMessage); void close()
+  void processMessage(String pMessage) — zu überschreiben: Reaktion auf eingehende Nachricht
+  void connectionLost() — zu überschreiben: Reaktion auf Verbindungsabbruch
+Klasse Server:
+  Server(int pPort)
+  boolean isOpen(); boolean isConnectedTo(String pClientIP, int pClientPort)
+  void send(String pClientIP, int pClientPort, String pMessage); void sendToAll(String pMessage)
+  void closeConnection(String pClientIP, int pClientPort); void close()
+  void processNewConnection(String pClientIP, int pClientPort) — zu überschreiben
+  void processMessage(String pClientIP, int pClientPort, String pMessage) — zu überschreiben
+  void processClosingConnection(String pClientIP, int pClientPort) — zu überschreiben`
+};
+
 // ===================== STATE =====================
-let currentMethodCode = "";
-let currentMethodContext = "";
+let currentMode = 'analyse';        // 'analyse' | 'implement'
+let currentMethodCode = "";         // Analyse-Modus: generierte Methode
+let currentMethodContext = "";      // Sachkontext
+let currentTask = null;             // Implementieren-Modus: { aufgabe, signatur, vorgaben, kontext, klassenname }
+let currentStructures = [];         // ausgewählte Datenstruktur-Keys
 
 // ===================== FEHLERANZEIGE =====================
 function showError(msg) {
@@ -431,6 +707,24 @@ function showError(msg) {
   el.classList.add('visible');
 }
 function clearError() { document.getElementById('errorBanner').classList.remove('visible'); }
+
+// ===================== MODUS-UMSCHALTUNG =====================
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeAnalyse').classList.toggle('active', mode === 'analyse');
+  document.getElementById('modeImplement').classList.toggle('active', mode === 'implement');
+
+  if (mode === 'analyse') {
+    document.getElementById('introTitle').textContent = 'Methoden analysieren';
+    document.getElementById('introText').textContent = 'Eine KI generiert eine Java-Methode. Analysiere sie wie im Abitur — und erhalte strukturiertes Feedback zu deiner Analyse.';
+    document.getElementById('genBtnText').innerHTML = '⚡ Neue Methode generieren';
+  } else {
+    document.getElementById('introTitle').textContent = 'Methoden implementieren';
+    document.getElementById('introText').textContent = 'Eine KI stellt dir eine Implementierungsaufgabe. Schreibe die Methode in Java — und erhalte strukturiertes Feedback zu deinem Code.';
+    document.getElementById('genBtnText').innerHTML = '⚡ Neue Aufgabe generieren';
+  }
+  resetRound();
+}
 
 // ===================== MISTRAL CHAT API =====================
 async function callMistral(systemPrompt, userMessage) {
@@ -467,12 +761,30 @@ function parseJson(raw) {
   catch (e) { throw new Error('Antwort konnte nicht als JSON gelesen werden: ' + cleaned.slice(0, 300)); }
 }
 
+// ===================== AUSGEWÄHLTE DATENSTRUKTUREN =====================
+function getSelectedStructures() {
+  return Array.from(document.querySelectorAll('.ds-check:checked')).map(cb => cb.value);
+}
+
+// Baut den Textblock mit den offiziellen NRW-Klassen für die ausgewählten Strukturen.
+function buildNRWBlock(selected) {
+  if (!selected || selected.length === 0) return "";
+  let block = "\n\nVERWENDE ZWINGEND die folgenden offiziellen NRW-Datenstruktur-Klassen. "
+            + "Es dürfen ausschließlich die hier aufgeführten öffentlichen Methoden (mit exakt diesen Namen und Signaturen) genutzt werden:\n\n";
+  selected.forEach(function(k) { block += NRW_KLASSEN[k] + "\n\n"; });
+  block += "REGELN für diese Klassen:\n"
+        +  "- Durchlaufe NRW-Listen mit toFirst(), hasAccess(), getContent(), next() — NIEMALS mit for-each oder Index.\n"
+        +  "- Erfinde KEINE zusätzlichen Methoden. Nutze nur die oben dokumentierten.\n"
+        +  "- Verwende KEINE java.util-Klassen (ArrayList, LinkedList, Stack, Queue, HashMap, ...) als Ersatz.";
+  return block;
+}
+
 // ===================== SYSTEM PROMPTS =====================
-const SYSTEM_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (EF). Erstelle eine einzelne Java-Methode für eine Analyse-Übung.
+const SYSTEM_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (NRW, EF/Q1). Erstelle eine einzelne Java-Methode für eine Analyse-Übung.
 
 ANFORDERUNGEN:
 - Methode hat 1-2 Parameter
-- Methode hat einen sinnvollen Rückgabewert (kein void)
+- Methode hat einen sinnvollen Rückgabewert (kein void), außer es werden Datenstrukturen verwendet, die das nicht zulassen
 - Länge: 8-18 Zeilen Methoden-Body
 - Die Methode soll eine klar erkennbare, aber nicht triviale Aufgabe erfüllen
 - Realistischer Sachkontext passend zum angegebenen Thema und Niveau
@@ -480,7 +792,7 @@ ANFORDERUNGEN:
 - Keine Kommentare im Code
 - Verwende deutsche Variablennamen
 
-SCHLEIFENREGELN — STRIKT EINHALTEN:
+SCHLEIFENREGELN — STRIKT EINHALTEN (wenn KEINE NRW-Datenstruktur vorgegeben ist):
 - NUR klassische for-Schleife mit Zähler: for (int i = 0; i < n; i++)
 - ODER while-Schleife
 - ABSOLUT VERBOTEN: for-each / enhanced for  —  for (Typ x : kollektion)
@@ -505,6 +817,8 @@ BEWERTUNGSGRUNDLAGE (NRW Abitur-Standard für "Methode analysieren"):
 3. SACHKONTEXT: Schüler soll erklären, was die Methode im Kontext des Programms leistet.
 4. GRENZFÄLLE: Schüler soll Sonderfälle nennen (leere Liste, Wert nicht gefunden, Bedingung nie erfüllt, etc.).
 
+Falls NRW-Datenstruktur-Klassen verwendet wurden, beziehe deren korrekten Einsatz in die Bewertung der Funktionsweise mit ein.
+
 Gib dein Feedback als JSON zurück (kein Markdown, kein Zusatztext):
 {
   "rueckgabewert": { "status": "ok", "text": "Kurzes Feedback (2-4 Sätze)." },
@@ -514,25 +828,89 @@ Gib dein Feedback als JSON zurück (kein Markdown, kein Zusatztext):
 }
 Mögliche Werte für status: "ok", "teilweise", "fehlt"`;
 
+const SYSTEM_IMPLEMENT_GENERATE = `Du bist ein Java-Lehrer an einem deutschen Gymnasium (NRW, EF/Q1/Q2). Erstelle eine Implementierungsaufgabe: Der Schüler soll EINE Java-Methode selbst schreiben.
+
+ANFORDERUNGEN:
+- Beschreibe klar und eindeutig, WAS die Methode tun soll (Aufgabenstellung in 2-4 Sätzen).
+- Gib eine konkrete Methodensignatur vor (z.B. "public double berechneDurchschnitt(int[] noten)").
+- Wähle einen realistischen Sachkontext passend zu Thema und Niveau.
+- Die Aufgabe muss lösbar und eindeutig sein, aber nicht trivial.
+- Falls NRW-Datenstruktur-Klassen vorgegeben sind, MUSS die zu implementierende Methode genau diese Klassen verwenden.
+- Gib bei Bedarf knappe Vorgaben (vorhandene Attribute/Hilfsklassen) als Kontext an, damit die Aufgabe lösbar ist.
+- Nenne in der Signatur den Methodennamen so, dass er zur Aufgabe passt.
+
+AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
+{
+  "kontext": "1-2 Sätze: In welchem Programm/welcher Klasse befindet sich die Methode?",
+  "klassenname": "NameDerKlasse",
+  "aufgabe": "Präzise Aufgabenstellung, was die Methode leisten soll (inkl. Verhalten bei Sonderfällen).",
+  "signatur": "die vorgegebene Methodensignatur als eine Zeile",
+  "vorgaben": "optionaler vorhandener Code/Attribute als Kontext, Zeilenumbrüche als \\n (leerer String, falls nicht nötig)"
+}`;
+
+const SYSTEM_IMPLEMENT_FEEDBACK = `Du bist ein erfahrener Informatiklehrer an einem NRW-Gymnasium. Du bewertest eine Java-Methode, die ein Schüler selbst implementiert hat, anhand der gestellten Aufgabe.
+
+BEWERTUNGSKRITERIEN:
+1. KORREKTHEIT: Löst der Code die Aufgabe? Liefert er für Beispieleingaben die richtigen Ergebnisse? Nenne konkrete Fehler bzw. bestätige die Korrektheit.
+2. DATENSTRUKTUR: Falls NRW-Datenstruktur-Klassen vorgegeben sind — werden ausschließlich deren dokumentierte Methoden korrekt verwendet (z.B. Listendurchlauf mit toFirst()/hasAccess()/getContent()/next())? Falls keine vorgegeben sind, bewerte hier die allgemeine Verwendung von Sprachmitteln (Schleifen, Bedingungen, Arrays).
+3. STIL: Java-Syntax, Lesbarkeit, sinnvolle Variablennamen, keine unnötige Komplexität.
+4. VOLLSTÄNDIGKEIT: Werden Sonderfälle/Grenzfälle behandelt (leere Liste, nichts gefunden, null, Division durch 0, ...)?
+
+Sei konkret und konstruktiv. Wenn der Code Fehler hat, erkläre sie und gib einen Hinweis zur Korrektur (kein vollständiger Lösungscode).
+
+Gib dein Feedback als JSON zurück (kein Markdown, kein Zusatztext):
+{
+  "korrektheit":     { "status": "ok", "text": "..." },
+  "datenstruktur":   { "status": "ok", "text": "..." },
+  "stil":            { "status": "ok", "text": "..." },
+  "vollstaendigkeit":{ "status": "ok", "text": "..." }
+}
+Mögliche Werte für status: "ok", "teilweise", "fehlt"`;
+
 // ===================== USER MESSAGES =====================
-function buildGenerateMessage(niveau, thema) {
-  const niveauMap = {
-    einfach: "Nur: Variablen, for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
-    mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe.",
-    schwer:  "Zwei Klassen, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe."
-  };
-  const themaMap = {
-    schule: "Schule – Klassen wie Schueler (name: String, note: int), Klausur (punkte: int, bestanden: boolean)",
-    sport:  "Sport – Klassen wie Athlet (name: String, punkte: int), Training (dauer: int, intensitaet: double)",
-    gaming: "Gaming – Klassen wie Spieler (name: String, score: int), Level (nummer: int, schwierigkeit: int)",
-    social: "Social Media – Klassen wie Post (likes: int, autor: String), Nutzer (follower: int, name: String)",
-    shop:   "Online-Shop – Klassen wie Produkt (preis: double, name: String), Bestellung (anzahl: int, rabatt: boolean)"
-  };
-  return "THEMA: " + themaMap[thema] + "\nNIVEAU: " + niveauMap[niveau];
+const NIVEAU_MAP = {
+  einfach: "Nur: Variablen, for-Schleife mit Zähler (for (int i=0; i<n; i++)) oder while-Schleife, if/else, Parameter und Rückgabewerte (int, boolean, double). KEINE Objekte, KEINE Arrays, KEIN for-each.",
+  mittel:  "Instanzvariablen einfacher Objekte (z.B. schueler.getNote()), int-Array mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife. KEIN for-each. KEINE verketteten Methodenaufrufe.",
+  schwer:  "Zwei Klassen, Array von Objekten mit Indexzugriff arr[i], for-Schleife mit Zähler oder while-Schleife, verschachtelte Bedingungen. KEIN for-each. KEINE verketteten Methodenaufrufe."
+};
+const THEMA_MAP = {
+  schule: "Schule – Klassen wie Schueler (name: String, note: int), Klausur (punkte: int, bestanden: boolean)",
+  sport:  "Sport – Klassen wie Athlet (name: String, punkte: int), Training (dauer: int, intensitaet: double)",
+  gaming: "Gaming – Klassen wie Spieler (name: String, score: int), Level (nummer: int, schwierigkeit: int)",
+  social: "Social Media – Klassen wie Post (likes: int, autor: String), Nutzer (follower: int, name: String)",
+  shop:   "Online-Shop – Klassen wie Produkt (preis: double, name: String), Bestellung (anzahl: int, rabatt: boolean)"
+};
+
+function buildGenerateMessage(niveau, thema, structures) {
+  // Bei vorgegebenen Datenstrukturen entfällt die Array-/Schleifen-Beschränkung,
+  // da der Durchlauf über die NRW-Klassen-API erfolgt.
+  let niveauHinweis = structures.length > 0
+    ? "Setze ein Niveau passend zur Oberstufe (EF/Q1/Q2). Die Aufgabe dreht sich um die unten genannten Datenstrukturen."
+    : NIVEAU_MAP[niveau];
+  return "THEMA: " + THEMA_MAP[thema] + "\nNIVEAU: " + niveauHinweis + buildNRWBlock(structures);
 }
 
-function buildFeedbackMessage(code, kontext, analyse) {
-  return "KONTEXT DES PROGRAMMS:\n" + kontext + "\n\nJAVA-METHODE:\n" + code + "\n\nANALYSE DES SCHÜLERS:\n" + analyse;
+function buildImplementMessage(niveau, thema, structures) {
+  let niveauHinweis = structures.length > 0
+    ? "Niveau passend zur Oberstufe (EF/Q1/Q2), die Aufgabe nutzt die unten genannten Datenstrukturen."
+    : NIVEAU_MAP[niveau];
+  return "THEMA: " + THEMA_MAP[thema] + "\nNIVEAU: " + niveauHinweis + buildNRWBlock(structures);
+}
+
+function buildFeedbackMessage(code, kontext, analyse, structures) {
+  return "KONTEXT DES PROGRAMMS:\n" + kontext
+       + buildNRWBlock(structures)
+       + "\n\nJAVA-METHODE:\n" + code
+       + "\n\nANALYSE DES SCHÜLERS:\n" + analyse;
+}
+
+function buildImplementFeedbackMessage(task, code, structures) {
+  return "AUFGABENSTELLUNG:\n" + task.aufgabe
+       + "\n\nVORGEGEBENE SIGNATUR:\n" + task.signatur
+       + (task.vorgaben ? "\n\nVORGABEN/KONTEXT:\n" + task.vorgaben : "")
+       + "\n\nSACHKONTEXT:\n" + task.kontext
+       + buildNRWBlock(structures)
+       + "\n\nABGEGEBENER CODE DES SCHÜLERS:\n" + code;
 }
 
 // ===================== SYNTAX HIGHLIGHT (DOM-basiert, kein innerHTML) =====================
@@ -541,17 +919,14 @@ const KEYWORDS = new Set(['public','private','static','void','return','if','else
 
 function renderCode(code) {
   const pre = document.getElementById('codeDisplay');
-  // Alten Inhalt leeren
   while (pre.firstChild) pre.removeChild(pre.firstChild);
 
   code.split('\n').forEach(function(line, i) {
-    // Zeilennummer
     var numEl = document.createElement('span');
     numEl.className = 'line-num';
     numEl.textContent = String(i + 1).padStart(2, ' ') + ' ';
     pre.appendChild(numEl);
 
-    // Zeile tokenisieren und als DOM-Elemente einfügen
     tokenizeLine(line).forEach(function(token) {
       if (token.cls) {
         var span = document.createElement('span');
@@ -563,7 +938,6 @@ function renderCode(code) {
       }
     });
 
-    // Zeilenumbruch
     pre.appendChild(document.createTextNode('\n'));
   });
 }
@@ -572,12 +946,10 @@ function tokenizeLine(line) {
   var tokens = [];
   var i = 0;
   while (i < line.length) {
-    // Kommentar ab //
     if (line[i] === '/' && line[i+1] === '/') {
       tokens.push({ cls: 'comment', text: line.slice(i) });
       break;
     }
-    // String-Literal
     if (line[i] === '"') {
       var end = line.indexOf('"', i + 1);
       if (end === -1) end = line.length - 1;
@@ -585,7 +957,6 @@ function tokenizeLine(line) {
       i = end + 1;
       continue;
     }
-    // Zahl
     if (/[0-9]/.test(line[i]) && (i === 0 || /\W/.test(line[i-1]))) {
       var j = i;
       while (j < line.length && /[0-9.]/.test(line[j])) j++;
@@ -593,7 +964,6 @@ function tokenizeLine(line) {
       i = j;
       continue;
     }
-    // Bezeichner / Keyword
     if (/[a-zA-Z_]/.test(line[i])) {
       var k = i;
       while (k < line.length && /[a-zA-Z0-9_]/.test(line[k])) k++;
@@ -602,8 +972,6 @@ function tokenizeLine(line) {
       i = k;
       continue;
     }
-    // Einzelnes Zeichen als Text
-    // Ggf. aufeinanderfolgende Nicht-Bezeichner zusammenfassen
     var m = i;
     while (m < line.length && !/[a-zA-Z0-9_"\/]/.test(line[m])) m++;
     if (m === i) m = i + 1;
@@ -613,78 +981,152 @@ function tokenizeLine(line) {
   return tokens;
 }
 
-// ===================== GENERATE =====================
-async function generateMethod() {
-  clearError();
+// ===================== GENERATE (je nach Modus) =====================
+async function generate() {
+  if (currentMode === 'analyse') return generateAnalyse();
+  return generateImplement();
+}
 
+async function generateAnalyse() {
+  clearError();
   var niveau = document.getElementById('selectNiveau').value;
   var thema  = document.getElementById('selectThema').value;
+  currentStructures = getSelectedStructures();
 
-  document.getElementById('btnGenerate').disabled = true;
-  document.getElementById('genBtnText').innerHTML = '<span class="spinner"></span> KI generiert Methode...';
-  document.getElementById('feedbackPanel').classList.remove('visible');
-  document.getElementById('analysisInput').value = '';
-  document.getElementById('btnNew').classList.remove('visible');
+  setGenerating(true, 'KI generiert Methode...');
+  hideRoundOutputs();
 
   try {
-    var raw    = await callMistral(SYSTEM_GENERATE, buildGenerateMessage(niveau, thema));
+    var raw    = await callMistral(SYSTEM_GENERATE, buildGenerateMessage(niveau, thema, currentStructures));
     var parsed = parseJson(raw);
 
     currentMethodCode    = parsed.code;
     currentMethodContext = parsed.kontext;
 
-    document.getElementById('contextBlock').innerHTML = '<strong>&#x1F4CB; Kontext:</strong> ' + parsed.kontext;
+    document.getElementById('contextBlock').innerHTML = '<strong>📋 Kontext:</strong> ' + escapeHtml(parsed.kontext) + structuresInfoHtml();
     document.getElementById('contextBlock').classList.add('visible');
     document.getElementById('contextInfo').textContent = parsed.klassenname + '.java';
     renderCode(parsed.code);
     document.getElementById('codePanel').classList.add('visible');
-    document.getElementById('analysisSection').classList.add('visible');
 
-    var labels = { einfach: 'Einfach', mittel: 'Mittel', schwer: 'Anspruchsvoll' };
-    document.getElementById('badgeLevel').textContent = labels[niveau];
+    // Arbeitsbereich: Analyse-Textarea
+    document.getElementById('workLabel').textContent = 'Deine Analyse';
+    document.getElementById('workInput').placeholder = 'Schreibe hier deine Analyse der Methode...';
+    document.getElementById('hintRow').style.display = 'flex';
+    document.getElementById('workInput').value = '';
+    document.getElementById('workSection').classList.add('visible');
 
+    updateBadge(niveau);
   } catch (err) {
     showError('Generieren fehlgeschlagen: ' + err.message);
   } finally {
-    document.getElementById('btnGenerate').disabled = false;
-    document.getElementById('genBtnText').innerHTML = '&#x26A1; Neue Methode generieren';
+    setGenerating(false);
   }
 }
 
-// ===================== SUBMIT ANALYSIS =====================
-async function submitAnalysis() {
+async function generateImplement() {
   clearError();
+  var niveau = document.getElementById('selectNiveau').value;
+  var thema  = document.getElementById('selectThema').value;
+  currentStructures = getSelectedStructures();
 
-  var analyse = document.getElementById('analysisInput').value.trim();
+  setGenerating(true, 'KI erstellt Aufgabe...');
+  hideRoundOutputs();
+
+  try {
+    var raw    = await callMistral(SYSTEM_IMPLEMENT_GENERATE, buildImplementMessage(niveau, thema, currentStructures));
+    var parsed = parseJson(raw);
+
+    currentTask = parsed;
+    currentMethodContext = parsed.kontext;
+
+    document.getElementById('contextBlock').innerHTML = '<strong>📋 Kontext:</strong> ' + escapeHtml(parsed.kontext) + structuresInfoHtml();
+    document.getElementById('contextBlock').classList.add('visible');
+
+    var taskHtml = '<div class="task-label">🛠️ Aufgabe</div>' + escapeHtml(parsed.aufgabe);
+    if (parsed.vorgaben && parsed.vorgaben.trim()) {
+      taskHtml += '<div class="task-sig">' + escapeHtml(parsed.vorgaben) + '</div>';
+    }
+    taskHtml += '<div class="task-sig">' + escapeHtml(parsed.signatur) + '</div>';
+    document.getElementById('taskBlock').innerHTML = taskHtml;
+    document.getElementById('taskBlock').classList.add('visible');
+
+    // Arbeitsbereich: Code-Editor
+    document.getElementById('workLabel').textContent = 'Deine Implementierung';
+    document.getElementById('hintRow').style.display = 'none';
+    document.getElementById('workInput').value = parsed.signatur + ' {\n    \n}';
+    document.getElementById('workInput').placeholder = 'Schreibe hier deine Java-Methode...';
+    document.getElementById('workSection').classList.add('visible');
+
+    updateBadge(niveau);
+  } catch (err) {
+    showError('Aufgabe erstellen fehlgeschlagen: ' + err.message);
+  } finally {
+    setGenerating(false);
+  }
+}
+
+// ===================== SUBMIT (je nach Modus) =====================
+async function submitWork() {
+  if (currentMode === 'analyse') return submitAnalyse();
+  return submitImplement();
+}
+
+async function submitAnalyse() {
+  clearError();
+  var analyse = document.getElementById('workInput').value.trim();
   if (analyse.length < 20) {
     alert('Bitte schreibe eine ausführlichere Analyse (mindestens ein paar Sätze).');
     return;
   }
 
-  document.getElementById('btnSubmit').disabled = true;
-  document.getElementById('submitBtnText').innerHTML = '<span class="spinner"></span> KI bewertet...';
-
+  setSubmitting(true, 'KI bewertet...');
   try {
-    var raw = await callMistral(SYSTEM_FEEDBACK, buildFeedbackMessage(currentMethodCode, currentMethodContext, analyse));
-    renderFeedback(parseJson(raw));
+    var raw = await callMistral(SYSTEM_FEEDBACK, buildFeedbackMessage(currentMethodCode, currentMethodContext, analyse, currentStructures));
+    renderFeedback(parseJson(raw), ANALYSE_CATS);
     document.getElementById('btnNew').classList.add('visible');
-
   } catch (err) {
     showError('Feedback fehlgeschlagen: ' + err.message);
   } finally {
-    document.getElementById('btnSubmit').disabled = false;
-    document.getElementById('submitBtnText').innerHTML = '&#x1F4E4; Feedback erhalten';
+    setSubmitting(false);
+  }
+}
+
+async function submitImplement() {
+  clearError();
+  var code = document.getElementById('workInput').value.trim();
+  if (code.length < 20) {
+    alert('Bitte schreibe eine vollständige Methode.');
+    return;
+  }
+
+  setSubmitting(true, 'KI prüft Code...');
+  try {
+    var raw = await callMistral(SYSTEM_IMPLEMENT_FEEDBACK, buildImplementFeedbackMessage(currentTask, code, currentStructures));
+    renderFeedback(parseJson(raw), IMPLEMENT_CATS);
+    document.getElementById('btnNew').classList.add('visible');
+  } catch (err) {
+    showError('Prüfung fehlgeschlagen: ' + err.message);
+  } finally {
+    setSubmitting(false);
   }
 }
 
 // ===================== RENDER FEEDBACK =====================
-function renderFeedback(fb) {
-  var cats = [
-    { key: 'rueckgabewert', icon: '&#x1F522;', title: 'Rückgabewert ermitteln' },
-    { key: 'funktionsweise', icon: '&#x2699;&#xFE0F;', title: 'Funktionsweise erklären' },
-    { key: 'sachkontext',   icon: '&#x1F30D;', title: 'Sachkontextbezug' },
-    { key: 'grenzfaelle',   icon: '&#x26A0;&#xFE0F;', title: 'Grenzfälle nennen' }
-  ];
+const ANALYSE_CATS = [
+  { key: 'rueckgabewert',  icon: '🔢', title: 'Rückgabewert ermitteln' },
+  { key: 'funktionsweise', icon: '⚙️', title: 'Funktionsweise erklären' },
+  { key: 'sachkontext',    icon: '🌍', title: 'Sachkontextbezug' },
+  { key: 'grenzfaelle',    icon: '⚠️', title: 'Grenzfälle nennen' }
+];
+const IMPLEMENT_CATS = [
+  { key: 'korrektheit',      icon: '✅', title: 'Korrektheit' },
+  { key: 'datenstruktur',    icon: '🧩', title: 'Datenstruktur / Sprachmittel' },
+  { key: 'stil',             icon: '✨', title: 'Syntax & Stil' },
+  { key: 'vollstaendigkeit', icon: '⚠️', title: 'Vollständigkeit / Grenzfälle' }
+];
+
+function renderFeedback(fb, cats) {
   var statusMap = {
     ok:        ['status-ok',   '✓ Gut'],
     teilweise: ['status-warn', '~ Teilweise'],
@@ -699,7 +1141,7 @@ function renderFeedback(fb) {
           + '<span class="cat-icon">' + cat.icon + '</span>'
           + '<span class="cat-title">' + cat.title + '</span>'
           + '<span class="cat-status ' + sm[0] + '">' + sm[1] + '</span>'
-          + '</div><div class="cat-body">' + data.text + '</div></div>';
+          + '</div><div class="cat-body">' + escapeHtml(data.text || '–') + '</div></div>';
   });
 
   document.getElementById('feedbackContent').innerHTML = html;
@@ -707,13 +1149,54 @@ function renderFeedback(fb) {
   document.getElementById('feedbackPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ===================== HELPERS =====================
+// ===================== UI-HELFER =====================
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function structuresInfoHtml() {
+  if (!currentStructures.length) return '';
+  var names = currentStructures.map(function(k) { return NRW_LABELS[k]; }).join(', ');
+  return '<br><strong>🧩 NRW-Datenstrukturen:</strong> ' + escapeHtml(names);
+}
+
+function updateBadge(niveau) {
+  var labels = { einfach: 'Einfach', mittel: 'Mittel', schwer: 'Anspruchsvoll' };
+  document.getElementById('badgeLevel').textContent = labels[niveau];
+}
+
+function setGenerating(on, text) {
+  document.getElementById('btnGenerate').disabled = on;
+  if (on) {
+    document.getElementById('genBtnText').innerHTML = '<span class="spinner"></span> ' + text;
+  } else {
+    document.getElementById('genBtnText').innerHTML = currentMode === 'analyse'
+      ? '⚡ Neue Methode generieren' : '⚡ Neue Aufgabe generieren';
+  }
+}
+
+function setSubmitting(on, text) {
+  document.getElementById('btnSubmit').disabled = on;
+  document.getElementById('submitBtnText').innerHTML = on
+    ? '<span class="spinner"></span> ' + text
+    : '📤 Feedback erhalten';
+}
+
+function hideRoundOutputs() {
+  document.getElementById('feedbackPanel').classList.remove('visible');
+  document.getElementById('btnNew').classList.remove('visible');
+  document.getElementById('taskBlock').classList.remove('visible');
+  document.getElementById('codePanel').classList.remove('visible');
+}
+
+// ===================== RESET =====================
 function resetRound() {
-  ['codePanel','contextBlock','analysisSection','feedbackPanel','btnNew'].forEach(function(id) {
+  ['codePanel','contextBlock','taskBlock','workSection','feedbackPanel','btnNew'].forEach(function(id) {
     document.getElementById(id).classList.remove('visible');
   });
-  document.getElementById('analysisInput').value = '';
+  document.getElementById('workInput').value = '';
   currentMethodCode = currentMethodContext = '';
+  currentTask = null;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>

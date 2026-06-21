@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/java-visual-learning-env-rq8enz
+      - claude/java-dev-environment-setup-31kxg4
       # Wenn der Stand auf den Hauptbranch gemergt wird, hier ergaenzen:
       # - main
   workflow_dispatch:

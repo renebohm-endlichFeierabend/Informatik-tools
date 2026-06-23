@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JavaWelt – visuelle Lernumgebung</title>
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>JavaWelt</h1>
+        <span class="untertitel">visuelle Lernumgebung für Java · Prototyp</span>
+        <div class="rechts">
+          <label class="schalter">
+            <input type="checkbox" id="klassencode-an" />
+            Klassen-Quelltext
+          </label>
+          <label class="schalter">
+            <input type="checkbox" id="cheerpj" />
+            echtes Java (CheerpJ)
+          </label>
+          <span id="status">Mock-Laufzeit</span>
+        </div>
+      </header>
+
+      <main>
+        <div class="box" id="buehne">
+          <h2>Welt</h2>
+          <canvas id="canvas" width="720" height="480"></canvas>
+          <div class="werkzeuge">
+            <button id="platzieren" class="sekundaer">Platzieren: aus</button>
+            <button id="leeren" class="sekundaer">Welt leeren</button>
+            <span class="leer">Figur antippen zum Auswählen · ziehen zum Bewegen</span>
+          </div>
+        </div>
+
+        <div class="box" id="objektbank-box">
+          <h2>Klassen</h2>
+          <div id="klassen"></div>
+          <h2 style="margin-top: 10px">Objekte</h2>
+          <div id="objekte"></div>
+          <h2 style="margin-top: 10px">Methoden aufrufen</h2>
+          <div id="methoden"></div>
+        </div>
+
+        <div class="box" id="editor-box">
+          <h2>Spielcode</h2>
+          <textarea id="editor" spellcheck="false">
+Figur bello = new Figur("Bello");
+bello.sage("Hallo Welt!");
+bello.geheVor(160);
+bello.dreheDich(90);
+bello.geheVor(120);</textarea
+          >
+          <div class="werkzeuge">
+            <button id="ausfuehren">▶ Ausführen</button>
+          </div>
+          <h2 style="margin-top: 10px">Konsole</h2>
+          <div id="konsole"></div>
+        </div>
+
+        <div class="box" id="klassencode-box" hidden>
+          <div class="box-kopf">
+            <h2>Klassen-Quelltext</h2>
+            <button id="klassencode-zu" class="sekundaer mini" title="schließen">✕</button>
+          </div>
+          <div id="klassen-tabs" class="tabs"></div>
+          <textarea id="klassen-code" spellcheck="false"></textarea>
+          <p class="leer">
+            Tipp: Hier kannst du den Quelltext der Klassen ansehen und ändern.
+            Mit „echtes Java (CheerpJ)" werden die Änderungen beim Ausführen
+            mitkompiliert.
+          </p>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

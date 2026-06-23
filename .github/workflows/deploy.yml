@@ -21,12 +21,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build site
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/javawelt/package-lock.json
+
+      - name: Build static tools
         run: |
           mkdir -p dist
           cp index.html dist/index.html
           cp java_analyse_tool.html dist/java_analyse_tool.html
           sed -i "s|__MISTRAL_API_KEY__|${{ secrets.MISTRAL_KEY }}|g" dist/java_analyse_tool.html
+
+      - name: Build JavaWelt (Vite-App)
+        working-directory: apps/javawelt
+        run: |
+          npm ci
+          npm run build
+
+      - name: Bundle JavaWelt into site
+        run: |
+          mkdir -p dist/javawelt
+          cp -r apps/javawelt/dist/. dist/javawelt/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

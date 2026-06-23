@@ -13,6 +13,13 @@ export interface JavaLaufzeit {
   readonly name: string;
   /** Einmalige Initialisierung (CheerpJ laden, Natives registrieren ...). */
   init(welt: Welt, ausgabe: Ausgabe): Promise<void>;
+  /**
+   * Optional: zusätzliche, von Schülerinnen und Schülern editierbare
+   * Klassen-Quelltexte (voll qualifizierter Name → Java-Quelltext, z. B.
+   * `"de.schule.jle.Figur"`). Werden beim nächsten `fuehreAus` mitkompiliert
+   * und überlagern die Klassen aus dem Framework-Jar.
+   */
+  setzeKlassen?(klassen: Record<string, string>): void;
   /** Kompiliert und führt den Schüler-Quelltext aus. */
   fuehreAus(quelltext: string): Promise<void>;
 }

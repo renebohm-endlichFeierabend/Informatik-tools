@@ -1,6 +1,7 @@
 import { Welt } from "./engine/welt";
 import { Eingabe } from "./engine/eingabe";
 import { Objektbank } from "./ui/objektbank";
+import { KlassenEditor } from "./ui/klassenEditor";
 import { JavaLaufzeit } from "./java/laufzeit";
 import { MockLaufzeit } from "./java/mockLaufzeit";
 import { CheerpJLaufzeit } from "./java/cheerpjLaufzeit";
@@ -19,6 +20,25 @@ const objektbank = new Objektbank(
   $("methoden"),
 );
 eingabe.onAuswahl = (f) => objektbank.waehleAktiv(f);
+
+// --- Klassen-Quelltext (Fenster unten rechts, optional) ------------------
+const klassencodeBox = $("klassencode-box");
+const klassencodeAn = $<HTMLInputElement>("klassencode-an");
+const klassenEditor = new KlassenEditor(
+  klassencodeBox,
+  $("klassen-tabs"),
+  $<HTMLTextAreaElement>("klassen-code"),
+  (sichtbar) => {
+    klassencodeAn.checked = sichtbar;
+  },
+);
+// Klick auf „Quelltext" in der Objektbank öffnet das Fenster für die Klasse.
+objektbank.onKlasseOeffnen = (anzeige) => klassenEditor.oeffne(anzeige);
+// Kopfzeilen-Schalter zum optionalen Ein-/Ausblenden des Fensters.
+klassencodeAn.addEventListener("change", () =>
+  klassenEditor.zeige(klassencodeAn.checked),
+);
+$("klassencode-zu").addEventListener("click", () => klassenEditor.zeige(false));
 
 // --- Konsole -------------------------------------------------------------
 const konsole = $("konsole");
@@ -65,6 +85,9 @@ $("ausfuehren").addEventListener("click", async () => {
   const code = $<HTMLTextAreaElement>("editor").value;
   try {
     await initVersprechen;
+    // Editierte Klassen (Figur, Welt) mitgeben – die echte Laufzeit
+    // kompiliert sie mit; die Mock-Laufzeit ignoriert sie.
+    laufzeit.setzeKlassen?.(klassenEditor.quelltexte());
     await laufzeit.fuehreAus(code);
   } catch (e) {
     log("Fehler: " + (e as Error).message);

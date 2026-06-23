@@ -5,6 +5,7 @@ on:
     branches:
       - claude/java-visual-learning-env-rq8enz
       - claude/java-dev-environment-setup-31kxg4
+      - claude/cheerpl-character-editor-i1awd2
       # Wenn der Stand auf den Hauptbranch gemergt wird, hier ergaenzen:
       # - main
   workflow_dispatch:

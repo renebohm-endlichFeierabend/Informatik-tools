@@ -26,29 +26,37 @@ Funktioniert ohne Internet und auf dem iPad.
 - **Objektbank im BlueJ-Stil**: „neue Figur" erzeugt ein Objekt; Methoden
   (`geheVor`, `dreheDich`, `sage`) per Knopf interaktiv aufrufen — **ohne Code**.
 - **Platzieren per Klick** auf die Welt; Figuren ziehen.
-- **Code-Editor + „Ausführen"** (mit Mock: klar gekennzeichnete Demo-Animation).
+- **Spielcode-Editor + „Ausführen"** (mit Mock: klar gekennzeichnete Demo-Animation).
+- **Klassen-Quelltext** (Fenster unten rechts, optional): Quelltext von `Figur`
+  und `Welt` ansehen/ändern. Die Bewegung (`geheVor`) ist jetzt echter,
+  lesbarer Java-Code (Trigonometrie) statt einer Black Box.
 - Sauberer Build (`npm run build`) und Framework-Jar (`npm run build:framework`).
 
 ## Was noch zu validieren ist (CheerpJ-Pfad)
 
 Der echte Java-Pfad (`src/java/cheerpjLaufzeit.ts`) ist **vollständig
-geschrieben**, konnte aber im Build-Sandbox **nicht ausgeführt** werden, weil
-dort das CheerpJ-CDN blockiert ist und kein Browser läuft. Bitte bei euch testen:
+geschrieben**. Der Eclipse-Compiler liegt jetzt als **`public/ecj.jar`** bei
+(Eclipse Compiler for Java, Version 3.33.0), die größte Lücke ist also
+geschlossen. CheerpJ selbst konnte im Build-Sandbox trotzdem **nicht
+ausgeführt** werden, weil dort das CheerpJ-CDN blockiert ist und kein Browser
+läuft. Darum bitte **im Browser bei euch** testen:
 
 1. **Checkbox „echtes Java (CheerpJ)"** oben rechts aktivieren. Dann sollte
-   CheerpJ vom CDN laden und „CheerpJ bereit." erscheinen.
-2. **Interop prüfen**: Figuren werden von Java über die `nativ*`-Methoden
+   CheerpJ vom CDN laden und „CheerpJ bereit." erscheinen. Klappt das nicht,
+   blockiert vermutlich das (Schul-)Netz das CDN `cjrtnc.leaningtech.com`
+   → dann CheerpJ selbst hosten (siehe „Warum CheerpJ?").
+2. **Kompilieren + Ausführen**: „▶ Ausführen" kompiliert den Spielcode (und die
+   editierten Klassen `Figur`/`Welt`) im Browser mit ECJ und startet ihn.
+   Fehlermeldung wie „Codeversion" oder „UnsupportedClassVersion"? → die
+   `ecj.jar`-Version oder die CheerpJ-Loader-Version in `cheerpjLaufzeit.ts`
+   (`LOADER_URL`) aufeinander abstimmen (CheerpJ-Runtime ist Java 8/11).
+3. **Interop prüfen**: Figuren werden von Java über die `nativ*`-Methoden
    bewegt (Bridge in `cheerpjLaufzeit.ts`, Java-Seite in
    `java-framework/de/schule/jle/Figur.java`).
-3. **In-Browser-Kompilierung**: benötigt den Eclipse-Compiler `ecj.jar`.
-   - Lade eine `ecj-*.jar` (Eclipse Compiler for Java) herunter und lege sie
-     als `public/ecj.jar` ab. (Kein Download im Sandbox möglich.)
-   - Der Code ruft `org.eclipse.jdt.internal.compiler.batch.Main` via
-     `cheerpjRunMain` auf und lädt das Ergebnis mit `cheerpjRunLibrary`.
-   - Loader-Version/Pfade in `cheerpjLaufzeit.ts` ggf. an die genutzte
-     CheerpJ-Version anpassen (`LOADER_URL`, `cheerpjAddStringFile`-Signatur).
 
-Wenn CheerpJ nicht lädt, fällt die App automatisch auf die Mock-Laufzeit zurück.
+Wenn CheerpJ nicht lädt, fällt die App automatisch auf die Mock-Laufzeit
+zurück. Die `ecj.jar` (~3 MB) liegt absichtlich im Repo, damit GitHub Pages sie
+mit ausliefert.
 
 ## Architektur
 

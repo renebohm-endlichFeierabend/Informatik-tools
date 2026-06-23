@@ -59,17 +59,37 @@ header .rechts {
 
 main {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1fr 380px;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "welt objekte"
+    "spielcode klassencode";
+  align-items: start;
   gap: 12px;
   padding: 12px;
   min-height: 0;
+  overflow-y: auto;
 }
 
-.spalte {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
+#buehne {
+  grid-area: welt;
+}
+#objektbank-box {
+  grid-area: objekte;
+}
+#editor-box {
+  grid-area: spielcode;
+}
+#klassencode-box {
+  grid-area: klassencode;
+}
+
+/* Ist das Klassen-Quelltext-Fenster ausgeblendet, nimmt der Spielcode die
+   volle Breite ein. */
+main:has(#klassencode-box[hidden]) {
+  grid-template-areas:
+    "welt objekte"
+    "spielcode spielcode";
 }
 
 .box {
@@ -156,8 +176,13 @@ label.schalter {
   font-weight: 600;
 }
 
-.klasse button {
+.klasse .aktionen {
   margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.klasse .aktionen button {
   padding: 4px 10px;
   font-size: 12px;
 }
@@ -250,9 +275,80 @@ label.schalter {
   white-space: pre-wrap;
 }
 
+/* --- Klassen-Quelltext-Fenster (unten rechts) -------------------------- */
+/* :not([hidden]), damit das hidden-Attribut die Box wirklich ausblendet. */
+#klassencode-box:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+}
+
+.box-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+button.mini {
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.tabs .tab {
+  background: var(--panel2);
+  border: 1px solid var(--rand);
+  color: var(--gedimmt);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.tabs .tab.aktiv {
+  color: var(--text);
+  border-color: var(--akzent);
+}
+
+#klassen-code {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  background: #0f1525;
+  color: var(--text);
+  border: 1px solid var(--rand);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: ui-monospace, "SF Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 320px;
+}
+
+/* "Quelltext"-Knopf auf den Klassenkarten der Objektbank. */
+.klasse .quelltext {
+  background: var(--panel2);
+  border: 1px solid var(--rand);
+}
+
 @media (max-width: 820px) {
   main {
     grid-template-columns: 1fr;
-    overflow-y: auto;
+    grid-template-areas:
+      "welt"
+      "objekte"
+      "spielcode"
+      "klassencode";
+  }
+  main:has(#klassencode-box[hidden]) {
+    grid-template-areas:
+      "welt"
+      "objekte"
+      "spielcode";
   }
 }

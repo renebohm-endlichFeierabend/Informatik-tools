@@ -32,6 +32,12 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   private ausgabe!: Ausgabe;
   private bereit = false;
   private laufNr = 0;
+  /** Editierbare Klassen-Quelltexte (z. B. de.schule.jle.Figur → Quelltext). */
+  private klassen: Record<string, string> = {};
+
+  setzeKlassen(klassen: Record<string, string>): void {
+    this.klassen = klassen;
+  }
 
   async init(welt: Welt, ausgabe: Ausgabe): Promise<void> {
     this.welt = welt;
@@ -65,25 +71,26 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   private natives(): Record<string, (...a: any[]) => unknown> {
     const welt = () => this.welt;
     return {
-      Java_de_schule_jle_Figur_nativErzeuge: async (_lib: unknown, name: unknown) =>
+      Java_de_schule_jle_Figur_nativErzeuge: (_lib: unknown, name: unknown) =>
         welt().erzeugeFigur(String(name)),
-      Java_de_schule_jle_Figur_nativGeheVor: async (
+      Java_de_schule_jle_Figur_nativVerschiebe: (
         _lib: unknown,
         id: number,
-        n: number,
-      ) => welt().geheVor(id, n),
-      Java_de_schule_jle_Figur_nativDreheDich: async (
+        dx: number,
+        dy: number,
+      ) => welt().verschiebe(id, dx, dy),
+      Java_de_schule_jle_Figur_nativDrehe: (
         _lib: unknown,
         id: number,
         grad: number,
       ) => welt().dreheDich(id, grad),
-      Java_de_schule_jle_Figur_nativSetzePosition: async (
+      Java_de_schule_jle_Figur_nativSetzePosition: (
         _lib: unknown,
         id: number,
         x: number,
         y: number,
       ) => welt().setzePosition(id, x, y),
-      Java_de_schule_jle_Figur_nativSage: async (
+      Java_de_schule_jle_Figur_nativSage: (
         _lib: unknown,
         id: number,
         text: unknown,
@@ -104,6 +111,16 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     const ausgabeDir = `/files/${paket}`;
 
     cheerpjAddStringFile(javaPfad, quelle);
+
+    // Editierte Klassen (z. B. Figur, Welt) mitkompilieren. Sie liegen in
+    // ihrem eigenen Paket und überlagern beim Ausführen das Framework-Jar.
+    const javaPfade = [javaPfad];
+    for (const [vollName, inhalt] of Object.entries(this.klassen)) {
+      const pfad = `/str/${vollName.replace(/\./g, "/")}.java`;
+      cheerpjAddStringFile(pfad, inhalt);
+      javaPfade.push(pfad);
+    }
+
     this.ausgabe("Kompiliere mit ECJ …");
     const rc = await cheerpjRunMain(
       "org.eclipse.jdt.internal.compiler.batch.Main",
@@ -116,7 +133,7 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       FRAMEWORK_JAR,
       "-d",
       ausgabeDir,
-      javaPfad,
+      ...javaPfade,
     );
     if (rc !== 0) {
       this.ausgabe(`Kompilierung fehlgeschlagen (Code ${rc}).`);

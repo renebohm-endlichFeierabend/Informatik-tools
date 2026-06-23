@@ -43,6 +43,16 @@ export class Figur {
     this.zielY += Math.sin(radian(this.zielWinkel)) * n;
   }
 
+  /**
+   * Verschiebt die Figur um (dx, dy) – die Richtung wurde bereits anderswo
+   * berechnet (z. B. im Java-Code der Figur). Anders als `geheVor` rechnet
+   * diese Methode selbst nichts aus, sie bewegt nur.
+   */
+  verschiebe(dx: number, dy: number): void {
+    this.zielX += dx;
+    this.zielY += dy;
+  }
+
   dreheDich(grad: number): void {
     this.zielWinkel += grad;
   }

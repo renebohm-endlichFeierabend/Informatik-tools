@@ -13,6 +13,9 @@ import { Figur } from "../engine/figur";
 export class Objektbank {
   private aktiv: Figur | null = null;
 
+  /** Wird aufgerufen, wenn der Quelltext einer Klasse geöffnet werden soll. */
+  onKlasseOeffnen: ((anzeige: string) => void) | null = null;
+
   constructor(
     private readonly welt: Welt,
     private readonly klassenEl: HTMLElement,
@@ -33,20 +36,43 @@ export class Objektbank {
 
   private zeichneKlassen(): void {
     this.klassenEl.innerHTML = "";
-    const karte = document.createElement("div");
-    karte.className = "klasse";
-    karte.innerHTML = `<span class="klasse-name">Figur</span>`;
-    const btn = document.createElement("button");
-    btn.textContent = "neue Figur";
-    btn.onclick = () => {
+
+    // Klasse Figur: Objekte erzeugen UND Quelltext ansehen/ändern.
+    const [figurKarte, figurAktionen] = this.klassenKarte("Figur");
+    const neu = document.createElement("button");
+    neu.textContent = "neue Figur";
+    neu.onclick = () => {
       const id = this.welt.erzeugeFigur("Figur");
       this.welt.waehle(id);
       this.aktiv = this.welt.alleFiguren().find((f) => f.id === id) ?? null;
       this.zeichneObjekte();
       this.zeichneMethoden();
     };
-    karte.appendChild(btn);
-    this.klassenEl.appendChild(karte);
+    figurAktionen.prepend(neu);
+    this.klassenEl.appendChild(figurKarte);
+
+    // Klasse Welt: existiert bereits als Bühne – hier nur Quelltext ansehen.
+    const [weltKarte] = this.klassenKarte("Welt");
+    this.klassenEl.appendChild(weltKarte);
+  }
+
+  /** Baut eine Klassenkarte mit Namen und „Quelltext"-Knopf; gibt Karte + Aktionsleiste zurück. */
+  private klassenKarte(name: string): [HTMLDivElement, HTMLSpanElement] {
+    const karte = document.createElement("div");
+    karte.className = "klasse";
+    karte.innerHTML = `<span class="klasse-name">${name}</span>`;
+
+    const aktionen = document.createElement("span");
+    aktionen.className = "aktionen";
+
+    const quelltext = document.createElement("button");
+    quelltext.className = "quelltext";
+    quelltext.textContent = "Quelltext";
+    quelltext.onclick = () => this.onKlasseOeffnen?.(name);
+    aktionen.appendChild(quelltext);
+
+    karte.appendChild(aktionen);
+    return [karte, aktionen];
   }
 
   private zeichneObjekte(): void {

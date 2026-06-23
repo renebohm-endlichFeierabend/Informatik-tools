@@ -50,6 +50,10 @@ export class Welt {
     this.figuren.get(id)?.geheVor(n);
   }
 
+  verschiebe(id: number, dx: number, dy: number): void {
+    this.figuren.get(id)?.verschiebe(dx, dy);
+  }
+
   dreheDich(id: number, grad: number): void {
     this.figuren.get(id)?.dreheDich(grad);
   }

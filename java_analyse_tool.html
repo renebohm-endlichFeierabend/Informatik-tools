@@ -535,7 +535,7 @@
   <div class="work-section" id="workSection">
     <label id="workLabel">Deine Analyse</label>
     <div class="hints" id="hintRow">
-      <span class="hint-chip">&#x1F4A1; Was macht die Methode?</span>
+      <span class="hint-chip">&#x1F4A1; Aufgabe der Methode im Sachkontext beschreiben</span>
       <span class="hint-chip">&#x1F522; R&#xFC;ckgabewert f&#xFC;r Beispielwerte?</span>
       <span class="hint-chip">&#x1F504; Wie funktioniert die Schleife/Bedingung?</span>
       <span class="hint-chip">&#x26A0;&#xFE0F; Grenzf&#xE4;lle?</span>
@@ -814,10 +814,15 @@ SCHLEIFENREGELN — STRIKT EINHALTEN (wenn KEINE NRW-Datenstruktur/Array vorgege
 WEITERE VERBOTE:
 - KEINE verketteten Methodenaufrufe wie obj.getX().getY() — höchstens eine Ebene: obj.getX()
 - KEINE Streams, Lambda-Ausdrücke, ArrayList, Iterator, var
+- NIEMALS die this.-Notation verwenden (z.B. this.attribut oder this.getX()) — das ist in der Schule nicht üblich. Greife direkt über den Attribut-/Parameternamen zu.
+
+WICHTIG ZUM KONTEXT:
+- Der Kontext beschreibt NUR das Programm und die beteiligten Klassen/Beziehungen — NICHT, was die Methode tut.
+- Verrate im Kontext AUF KEINEN FALL die Aufgabe, das Ziel oder das Ergebnis der Methode. Das herauszufinden ist Teil der Analyse-Aufgabe des Schülers.
 
 AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
 {
-  "kontext": "1-2 Sätze: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es und wie hängen sie zusammen?",
+  "kontext": "1-2 Sätze NUR zum Setting: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es und wie hängen sie zusammen? KEINE Beschreibung der Aufgabe/Funktion der Methode!",
   "klassenname": "NameDerKlasse",
   "code": "vollständiger Java-Methoden-Code als String (Zeilenumbrüche als \\n)"
 }`;
@@ -827,7 +832,7 @@ const SYSTEM_FEEDBACK = `Du bist ein erfahrener Informatiklehrer an einem NRW-Gy
 BEWERTUNGSGRUNDLAGE (NRW Abitur-Standard für "Methode analysieren"):
 1. RÜCKGABEWERT: Schüler soll konkrete Rückgabewerte für Beispieleingaben ermitteln und korrekt nachvollziehen.
 2. FUNKTIONSWEISE: Schüler soll Schleifen, Bedingungen, Variablen zeilenweise erklären.
-3. SACHKONTEXT: Schüler soll erklären, was die Methode im Kontext des Programms leistet.
+3. SACHKONTEXT: Der Schüler soll selbst die Aufgabe der Methode im Sachkontext beschreiben (was leistet die Methode im Programm?). Diese Aufgabe wird NICHT vorgegeben, sondern muss aus dem Code erschlossen werden — bewerte, ob der Schüler sie korrekt erkannt und im Sachkontext formuliert hat.
 4. GRENZFÄLLE: Schüler soll Sonderfälle nennen (leere Liste, Wert nicht gefunden, Bedingung nie erfüllt, etc.).
 
 Falls NRW-Datenstruktur-Klassen verwendet wurden, beziehe deren korrekten Einsatz in die Bewertung der Funktionsweise mit ein.

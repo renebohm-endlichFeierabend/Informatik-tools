@@ -535,7 +535,7 @@
   <div class="work-section" id="workSection">
     <label id="workLabel">Deine Analyse</label>
     <div class="hints" id="hintRow">
-      <span class="hint-chip">&#x1F4A1; Was macht die Methode?</span>
+      <span class="hint-chip">&#x1F4A1; Beschreiben Sie die Aufgabe der Methode im Sachkontext</span>
       <span class="hint-chip">&#x1F522; R&#xFC;ckgabewert f&#xFC;r Beispielwerte?</span>
       <span class="hint-chip">&#x1F504; Wie funktioniert die Schleife/Bedingung?</span>
       <span class="hint-chip">&#x26A0;&#xFE0F; Grenzf&#xE4;lle?</span>
@@ -814,10 +814,15 @@ SCHLEIFENREGELN — STRIKT EINHALTEN (wenn KEINE NRW-Datenstruktur/Array vorgege
 WEITERE VERBOTE:
 - KEINE verketteten Methodenaufrufe wie obj.getX().getY() — höchstens eine Ebene: obj.getX()
 - KEINE Streams, Lambda-Ausdrücke, ArrayList, Iterator, var
+- NIEMALS die this-Notation verwenden (kein this.attribut, kein this.methode()). Greife auf Attribute direkt über ihren Namen zu. Das wird im Schulunterricht nicht gelehrt.
+
+KONTEXT-TEXT — WICHTIG:
+- Der "kontext" beschreibt NUR das umgebende Programm und die Klassen/Beziehungen.
+- Er darf NICHT verraten, was die Methode tut oder welche Aufgabe sie erfüllt — das soll der Schüler selbst analysieren.
 
 AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
 {
-  "kontext": "1-2 Sätze: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es und wie hängen sie zusammen?",
+  "kontext": "1-2 Sätze: In welchem Programm befindet sich diese Methode? Welche Klassen gibt es und wie hängen sie zusammen? (NICHT verraten, was die Methode leistet!)",
   "klassenname": "NameDerKlasse",
   "code": "vollständiger Java-Methoden-Code als String (Zeilenumbrüche als \\n)"
 }`;
@@ -827,7 +832,7 @@ const SYSTEM_FEEDBACK = `Du bist ein erfahrener Informatiklehrer an einem NRW-Gy
 BEWERTUNGSGRUNDLAGE (NRW Abitur-Standard für "Methode analysieren"):
 1. RÜCKGABEWERT: Schüler soll konkrete Rückgabewerte für Beispieleingaben ermitteln und korrekt nachvollziehen.
 2. FUNKTIONSWEISE: Schüler soll Schleifen, Bedingungen, Variablen zeilenweise erklären.
-3. SACHKONTEXT: Schüler soll erklären, was die Methode im Kontext des Programms leistet.
+3. SACHKONTEXT: Der Schüler soll die Aufgabe der Methode im Sachkontext beschreiben — also was die Methode im Kontext des Programms leistet. Dies ist ausdrücklich Teil der Analyseleistung und wurde NICHT vorgegeben.
 4. GRENZFÄLLE: Schüler soll Sonderfälle nennen (leere Liste, Wert nicht gefunden, Bedingung nie erfüllt, etc.).
 
 Falls NRW-Datenstruktur-Klassen verwendet wurden, beziehe deren korrekten Einsatz in die Bewertung der Funktionsweise mit ein.
@@ -852,6 +857,7 @@ ANFORDERUNGEN:
 - Falls NRW-Datenstruktur-Klassen oder Arrays vorgegeben sind, MUSS die zu implementierende Methode genau diese verwenden.
 - Gib bei Bedarf knappe Vorgaben (vorhandene Attribute/Hilfsklassen) als Kontext an, damit die Aufgabe lösbar ist.
 - Nenne in der Signatur den Methodennamen so, dass er zur Aufgabe passt.
+- In Vorgaben/Beispielcode NIEMALS die this-Notation verwenden (kein this.attribut). Das wird im Schulunterricht nicht gelehrt; greife direkt über den Attributnamen zu.
 
 AUSGABE: Gib NUR folgendes JSON zurück (kein Markdown, keine Erklärung):
 {
@@ -870,7 +876,7 @@ BEWERTUNGSKRITERIEN:
 3. STIL: Java-Syntax, Lesbarkeit, sinnvolle Variablennamen, keine unnötige Komplexität.
 4. VOLLSTÄNDIGKEIT: Werden Sonderfälle/Grenzfälle behandelt (leere Liste, nichts gefunden, null, Division durch 0, ...)?
 
-Sei konkret und konstruktiv. Wenn der Code Fehler hat, erkläre sie und gib einen Hinweis zur Korrektur (kein vollständiger Lösungscode).
+Sei konkret und konstruktiv. Wenn der Code Fehler hat, erkläre sie und gib einen Hinweis zur Korrektur (kein vollständiger Lösungscode). Verwende in Beispielen/Hinweisen NIEMALS die this-Notation — das wird im Schulunterricht nicht gelehrt.
 
 Gib dein Feedback als JSON zurück (kein Markdown, kein Zusatztext):
 {

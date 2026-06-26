@@ -27,8 +27,8 @@ apps/javawelt/           Unterprojekt: JavaWelt (Vite + TypeScript)
 
 Der Workflow `.github/workflows/deploy.yml` läuft bei jedem Push auf `main`:
 
-1. Die statischen HTML-Tools werden nach `dist/` kopiert (der Mistral-API-Key
-   wird aus dem Secret `MISTRAL_KEY` eingesetzt).
+1. Die statischen HTML-Tools werden nach `dist/` kopiert (der OpenRouter-API-Key
+   wird aus dem Secret `OPENROUTER_KEY` eingesetzt).
 2. Das Unterprojekt `apps/javawelt` wird mit `npm ci && npm run build` gebaut
    und nach `dist/javawelt/` gelegt.
 3. `dist/` wird auf GitHub Pages veröffentlicht.

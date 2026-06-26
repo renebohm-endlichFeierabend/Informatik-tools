@@ -33,7 +33,7 @@ jobs:
           mkdir -p dist
           cp index.html dist/index.html
           cp java_analyse_tool.html dist/java_analyse_tool.html
-          sed -i "s|__MISTRAL_API_KEY__|${{ secrets.MISTRAL_KEY }}|g" dist/java_analyse_tool.html
+          sed -i "s|__OPENROUTER_API_KEY__|${{ secrets.OPENROUTER_KEY }}|g" dist/java_analyse_tool.html
 
       - name: Build JavaWelt (Vite-App)
         working-directory: apps/javawelt

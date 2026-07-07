@@ -348,6 +348,71 @@ const LIST_WELT = `public class MeineWelt extends Welt {
 `;
 
 // ---------------------------------------------------------------------------
+// Datenbanken (Q1): SQL-Abfragen bevölkern die Welt
+// ---------------------------------------------------------------------------
+
+const ZOOTIER = `public class Zootier extends Figur {
+}
+`;
+
+const DATENBANK_WELT = `public class MeineWelt extends Welt {
+
+    DatabaseConnector db;
+
+    public void bereiteVor() {
+        // Verbindungsdaten wie im Abitur - die Datenbank läuft hier aber
+        // direkt im Browser. Sie enthält die Tabellen
+        //   gehege(id, name, klima)
+        //   tier(id, name, art, geburtsjahr, gehege_id -> gehege.id)
+        // und wird bei jedem "Übernehmen" auf den Anfang zurückgesetzt.
+        db = new DatabaseConnector("localhost", 3306, "zoo", "schule", "geheim");
+        zeigeTiere("SELECT name, art FROM tier");
+    }
+
+    public void spiele() {
+    }
+
+    // Führt die Abfrage aus und stellt pro Ergebnis-Zeile ein Zootier auf
+    // die Welt. Erwartet werden zwei Spalten: zuerst der Name (steht unter
+    // der Figur), dann ein Text für die Sprechblase.
+    public void zeigeTiere(String sql) {
+        db.executeStatement(sql);
+        if (db.getErrorMessage() != null) {
+            Zootier warnschild = new Zootier();
+            warnschild.nenne("SQL-Fehler");
+            warnschild.setzePosition(360, 240);
+            warnschild.sage(db.getErrorMessage());
+            return;
+        }
+        QueryResult ergebnis = db.getCurrentQueryResult();
+        if (ergebnis == null) {
+            return;
+        }
+        String[][] daten = ergebnis.getData();
+        for (int i = 0; i < daten.length; i++) {
+            Zootier tier = new Zootier();
+            tier.nenne(daten[i][0]);
+            tier.setzePosition(110 + (i % 5) * 130, 130 + (i / 5) * 160);
+            tier.sage(daten[i][1]);
+        }
+    }
+
+    // AUFGABE 1: Zeige nur die Pinguine.
+    //            (WHERE art = 'Pinguin')
+    // AUFGABE 2: Sortiere die Tiere nach Geburtsjahr, das jüngste zuerst.
+    //            (ORDER BY geburtsjahr DESC)
+    // AUFGABE 3: Zeige zu jedem Tier den Namen seines Geheges:
+    //            SELECT tier.name, gehege.name FROM tier
+    //            JOIN gehege ON tier.gehege_id = gehege.id
+    // AUFGABE 4: Füge mit INSERT ein eigenes Tier hinzu und starte neu.
+    // AUFGABE 5 (Modellierung): Zeichne das ER-Diagramm zu gehege und
+    //            tier. Warum wäre eine einzige Tabelle mit den Spalten
+    //            (tiername, art, gehegename, klima) eine schlechte Idee?
+    //            (Stichworte: Redundanz, Änderungsanomalie, Normalformen)
+}
+`;
+
+// ---------------------------------------------------------------------------
 
 export const SZENARIEN: Szenario[] = [
   {
@@ -407,6 +472,21 @@ export const SZENARIEN: Szenario[] = [
     hinweis: "läuft nicht im Notbetrieb",
     klassen: { MeineWelt: LIST_WELT, Waggon: WAGGON, List: nrwKlasse("List") },
     emojis: { Waggon: "🚃" },
+  },
+  {
+    id: "datenbank",
+    titel: "Datenbank: der Zoo",
+    stufe: "Q1 · Datenbanken",
+    beschreibung:
+      "SQL-Abfragen bevölkern die Welt: SELECT/WHERE/ORDER BY/JOIN auf den Tabellen gehege und tier (NRW-Klassen DatabaseConnector und QueryResult, editierbar). Mit ER-/Normalformen-Aufgabe.",
+    hinweis: "läuft nicht im Notbetrieb",
+    klassen: {
+      MeineWelt: DATENBANK_WELT,
+      Zootier: ZOOTIER,
+      DatabaseConnector: nrwKlasse("DatabaseConnector"),
+      QueryResult: nrwKlasse("QueryResult"),
+    },
+    emojis: { Zootier: "🦁" },
   },
 ];
 

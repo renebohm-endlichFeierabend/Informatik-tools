@@ -84,8 +84,21 @@ Filter im Schulnetz), springt automatisch ein klar gekennzeichneter
   automatisch mitinstalliert (Graph → List/Vertex/Edge, BST →
   ComparableContent). Die Semantik aller Klassen ist mit einer echten JVM
   getestet (inkl. aller `remove`-Fälle im Suchbaum). Die
-  Netzwerk-/Datenbankklassen der Vorgaben sind bewusst außen vor
-  (kein Socket-/JDBC-Zugriff im Browser).
+  Netzwerkklassen der Vorgaben sind bewusst außen vor (kein
+  Socket-Zugriff im Browser).
+
+- **Datenbanken & SQL (Q1):** Eine **echte SQLite-Datenbank** läuft per
+  WebAssembly im Browser (sql.js, selbst gehostet unter
+  `public/sql-wasm.{js,wasm}` — kein CDN, kein Server). Die NRW-Klassen
+  `DatabaseConnector` und `QueryResult` sind in der Bibliothek
+  (editierbar) und sprechen sie über die interne `DatenbankBruecke` an.
+  Beispiel-Schema: `gehege(id, name, klima)` und
+  `tier(id, name, art, geburtsjahr, gehege_id)` — eine 1:n-Beziehung für
+  ER-Diagramm, Schema-Diskussion, Normalformen und JOINs. Beim
+  ✓ Übernehmen wird die Datenbank (wie die Welt) auf den Seed
+  zurückgesetzt, damit alle reproduzierbar mit denselben Daten starten.
+  SQL-Verhalten und String-Protokoll sind mit echter SQLite und echter
+  JVM getestet.
 
 - **Projekt speichern/öffnen (⬇/⬆):** Der Arbeitsstand (alle Klassen +
   Bilder) lässt sich als JSON-Datei sichern und wieder öffnen — auf dem
@@ -107,6 +120,7 @@ Filter im Schulnetz), springt automatisch ein klar gekennzeichneter
   | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein |
   | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein |
   | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein |
+  | Datenbank: der Zoo (SQL, JOIN, ER/Normalformen) | Q1 · Datenbanken | nein |
 
 - **Sichtbare Abläufe:** Bewegungen wandern in eine Aktions-Warteschlange
   und werden nacheinander animiert — ein `laufeQuadrat(100)` ist als
@@ -185,13 +199,15 @@ Quelltexten passt.
 2. Weitere Szenarien entlang des KLP NRW:
    - **Suchen & Sortieren auf linearen Strukturen** (Q1): Säulen-Figuren
      nach Größe sortieren (Bubble-/Selectionsort sichtbar animiert).
-   - **BinaryTree / BinarySearchTree** (Q1/Q2) in der Bibliothek ergänzen,
-     Szenario „Baum pflanzen“: Knoten-Figuren, die sich beim `insert`
-     als Baum anordnen; Traversierungen ablaufen lassen.
-   - **Graphen** (Q2, LK): Vertex/Edge/Graph aus den NRW-Materialien,
-     Szenario Wegsuche (Tiefensuche/Breitensuche mit Markierung).
+   - **Baum-Szenario** (Q1/Q2): Knoten-Figuren, die sich beim `insert`
+     in den BinarySearchTree als Baum anordnen; Traversierungen.
+   - **Graph-Szenario** (Q2, LK): Wegsuche (Tiefen-/Breitensuche mit
+     Markierung) auf den vorhandenen Graph-Klassen.
    - **Automaten** (Q2): Zustands-Figuren, ein Eingabewort läuft als
      Figur durch den Automaten.
+   - **Datenbank-Ausbau**: eigene Seeds pro Lerngruppe (z. B. Schulmensa,
+     Fußballliga), Highscore-Tabelle, in die das Spiel per INSERT
+     schreibt; ER-Diagramm-Ansicht in der Oberfläche.
 3. Monaco-Editor mit Java-Syntaxfarben statt `textarea`.
 4. Tastatur-/Touch-Eingabe für Spiele (`istTasteGedrueckt(...)`),
    Kollisionen (`beruehrt(...)`).

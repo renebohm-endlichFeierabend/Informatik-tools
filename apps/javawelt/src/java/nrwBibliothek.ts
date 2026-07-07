@@ -1052,6 +1052,125 @@ public class Graph {
 }
 `;
 
+const QUERYRESULT_QUELLE = `/**
+ * Klasse QueryResult (NRW-Abiturvorgaben)
+ *
+ * Ein Objekt der Klasse QueryResult stellt das Ergebnis einer
+ * SQL-Abfrage dar: die Daten als Zeilen/Spalten-Feld sowie die
+ * Spaltennamen und Spaltentypen.
+ */
+public class QueryResult {
+
+    private String[][] data;
+    private String[] columnNames;
+    private String[] columnTypes;
+
+    /**
+     * Ein neues Abfrage-Ergebnis wird erzeugt. (In den Original-Vorgaben
+     * erzeugt nur DatabaseConnector solche Objekte.)
+     */
+    public QueryResult(String[][] pData, String[] pColumnNames, String[] pColumnTypes) {
+        data = pData;
+        columnNames = pColumnNames;
+        columnTypes = pColumnTypes;
+    }
+
+    /** Liefert die Daten: ein Feld von Zeilen, jede Zeile ein String-Feld. */
+    public String[][] getData() {
+        return data;
+    }
+
+    /** Liefert die Namen der Spalten. */
+    public String[] getColumnNames() {
+        return columnNames;
+    }
+
+    /** Liefert die Typen der Spalten (z. B. TEXT, INTEGER). */
+    public String[] getColumnTypes() {
+        return columnTypes;
+    }
+
+    /** Liefert die Anzahl der Zeilen. */
+    public int getRowCount() {
+        return data.length;
+    }
+
+    /** Liefert die Anzahl der Spalten. */
+    public int getColumnCount() {
+        return columnNames.length;
+    }
+}
+`;
+
+const DATABASECONNECTOR_QUELLE = `/**
+ * Klasse DatabaseConnector (NRW-Abiturvorgaben, Browser-Fassung)
+ *
+ * Ein Objekt der Klasse ermöglicht SQL auf einer Datenbank. In der
+ * JavaWelt läuft die Datenbank (SQLite) direkt im Browser – die
+ * Verbindungsdaten werden wie im Abitur entgegengenommen, aber nicht
+ * benötigt. Die Beispiel-Datenbank enthält die Tabellen
+ *   gehege(id, name, klima)
+ *   tier(id, name, art, geburtsjahr, gehege_id → gehege.id)
+ * und wird bei jedem ✓ Übernehmen auf den Anfang zurückgesetzt.
+ */
+public class DatabaseConnector {
+
+    private QueryResult currentQueryResult = null;
+    private String message = null;
+
+    /** Baut die "Verbindung" auf (Parameter nur zur Abitur-Kompatibilität). */
+    public DatabaseConnector(String pIP, int pPort, String pDatabase,
+            String pUsername, String pPassword) {
+    }
+
+    /**
+     * Der Auftrag schickt das SQL-Statement an die Datenbank.
+     * Ein Abfrage-Ergebnis ist danach über getCurrentQueryResult()
+     * abrufbar, ein Fehler über getErrorMessage().
+     */
+    public void executeStatement(String pSQLStatement) {
+        currentQueryResult = null;
+        message = null;
+        String antwort = DatenbankBruecke.fuehreAus(pSQLStatement);
+        String[] teile = antwort.split("\\u001E", -1);
+        if (teile[0].equals("fehler")) {
+            message = teile.length > 1 ? teile[1] : "Unbekannter Datenbankfehler.";
+            return;
+        }
+        if (teile.length < 3) {
+            return; // kein Abfrage-Ergebnis (INSERT, UPDATE, CREATE, ...)
+        }
+        String[] spalten = teile[1].split("\\u001F", -1);
+        String[] typen = teile[2].split("\\u001F", -1);
+        String[][] daten = new String[teile.length - 3][];
+        for (int i = 3; i < teile.length; i++) {
+            daten[i - 3] = teile[i].split("\\u001F", -1);
+        }
+        currentQueryResult = new QueryResult(daten, spalten, typen);
+    }
+
+    /**
+     * Liefert das Ergebnis der letzten SELECT-Abfrage – oder null, wenn
+     * die letzte Anweisung kein Ergebnis hatte oder fehlschlug.
+     */
+    public QueryResult getCurrentQueryResult() {
+        return currentQueryResult;
+    }
+
+    /**
+     * Liefert die Fehlermeldung der letzten Anweisung – oder null,
+     * wenn sie fehlerfrei war.
+     */
+    public String getErrorMessage() {
+        return message;
+    }
+
+    /** Schließt die Verbindung (im Browser: nichts zu tun). */
+    public void close() {
+    }
+}
+`;
+
 export const NRW_BIBLIOTHEK: BibliothekEintrag[] = [
   {
     name: "Stack",
@@ -1113,6 +1232,20 @@ export const NRW_BIBLIOTHEK: BibliothekEintrag[] = [
     titel: "Edge — gewichtete Kante eines Graphen",
     beschreibung: "Edge(v1, v2, gewicht) · getVertices() · getWeight()/setWeight() · setMark()/isMarked().",
     code: EDGE_QUELLE,
+  },
+  {
+    name: "DatabaseConnector",
+    titel: "DatabaseConnector — SQL-Zugriff",
+    beschreibung:
+      "executeStatement(sql) · getCurrentQueryResult() · getErrorMessage() · close(). Spricht die eingebaute SQLite-Datenbank im Browser an (Beispiel: Tabellen gehege und tier). QueryResult wird mitinstalliert.",
+    code: DATABASECONNECTOR_QUELLE,
+    benoetigt: ["QueryResult"],
+  },
+  {
+    name: "QueryResult",
+    titel: "QueryResult — Ergebnis einer SQL-Abfrage",
+    beschreibung: "getData() · getColumnNames() · getColumnTypes() · getRowCount() · getColumnCount().",
+    code: QUERYRESULT_QUELLE,
   },
 ];
 

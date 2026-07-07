@@ -14,9 +14,10 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-Läuft sofort im **Übungsmodus** (kein Download, kein Server, offline).
-Für vollständiges Java den Schalter **„Echtes Java“** aktivieren (CheerpJ,
-siehe unten).
+Es läuft **immer echtes Java** (Compiler + JVM im Browser, CheerpJ) —
+ohne Modus-Schalter. Nur wenn CheerpJ nicht geladen werden kann (offline,
+Filter im Schulnetz), springt automatisch ein klar gekennzeichneter
+**Notbetrieb** ein (eingeschränkter Interpreter, siehe unten).
 
 ## Das Unterrichts-Modell
 
@@ -82,9 +83,9 @@ siehe unten).
   `ComparableContent`), `Graph`/`Vertex`/`Edge`. Abhängigkeiten werden
   automatisch mitinstalliert (Graph → List/Vertex/Edge, BST →
   ComparableContent). Die Semantik aller Klassen ist mit einer echten JVM
-  getestet (inkl. aller `remove`-Fälle im Suchbaum). Ausführen braucht
-  „Echtes Java“, s. u. — die Netzwerk-/Datenbankklassen der Vorgaben sind
-  bewusst außen vor (kein Socket-/JDBC-Zugriff im Browser).
+  getestet (inkl. aller `remove`-Fälle im Suchbaum). Die
+  Netzwerk-/Datenbankklassen der Vorgaben sind bewusst außen vor
+  (kein Socket-/JDBC-Zugriff im Browser).
 
 - **Projekt speichern/öffnen (⬇/⬆):** Der Arbeitsstand (alle Klassen +
   Bilder) lässt sich als JSON-Datei sichern und wieder öffnen — auf dem
@@ -98,14 +99,14 @@ siehe unten).
 
 - **Lernszenarien (Kernlehrplan NRW):** Der „Szenarien“-Knopf lädt fertige
   Klassensätze mit Aufgaben-Kommentaren:
-  | Szenario | Stufe / KLP-Bezug | läuft im Übungsmodus? |
+  | Szenario | Stufe / KLP-Bezug | läuft auch im Notbetrieb? |
   |---|---|---|
   | Erste Schritte: Objekte & Klassen | EF · Einstieg OOP | ja |
   | Vererbung & Polymorphie (Tier/Hund/Katze) | Q1 · Wiederholung | ja |
-  | Arrays & Zählschleifen (Roboter-Gruppe) | Q1 · Wiederholung | nein → Echtes Java |
-  | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
-  | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
-  | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein → Echtes Java |
+  | Arrays & Zählschleifen (Roboter-Gruppe) | Q1 · Wiederholung | nein |
+  | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein |
+  | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein |
+  | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein |
 
 - **Sichtbare Abläufe:** Bewegungen wandern in eine Aktions-Warteschlange
   und werden nacheinander animiert — ein `laufeQuadrat(100)` ist als
@@ -133,31 +134,31 @@ siehe unten).
    Java, offline)     · Natives steuern die Welt-Engine
 ```
 
-Beide Laufzeiten bedienen dieselben Abläufe (übernehmen → platzieren →
-Methoden aufrufen → Spiel starten). Der **Übungsmodus** interpretiert die
-typische Unterrichts-Teilmenge von Java selbst (Methodenaufrufe, Variablen
-mit `new`, `for`-Zählschleifen, `while (laeuft())`, `return`) und erklärt
-freundlich, wenn etwas nur mit echtem Java geht. **CheerpJ** kompiliert
-und führt vollständiges Java aus — komplett clientseitig, auch auf dem
-iPad. Die Wahl wird **gemerkt**: Einmal „Echtes Java“ aktiviert, startet
-die App auf dem Gerät künftig direkt mit dem echten Compiler (und fällt
-bei Netzproblemen automatisch in den Übungsmodus zurück).
+**Es gibt keinen Modus-Schalter:** Die App startet immer mit der echten
+Java-Laufzeit (**CheerpJ**: ECJ-Compiler + JVM, komplett clientseitig,
+auch auf dem iPad). Nur wenn CheerpJ nicht geladen werden kann, springt
+der **Übungsmodus als Notbetrieb** ein — deutlich markiert
+(„⚠ Notbetrieb“ + „erneut versuchen“-Knopf). Er interpretiert die
+typische Unterrichts-Teilmenge (Methodenaufrufe, `new`,
+`for`-Zählschleifen, `while (laeuft())`, `return`) und erklärt
+freundlich, was erst mit echtem Java geht. Beide Laufzeiten bedienen
+dieselben Abläufe (übernehmen → platzieren → Methoden aufrufen → Spiel
+starten).
 
 ## CheerpJ-Pfad validieren (einziger offener Punkt)
 
 Der CheerpJ-Pfad ist vollständig implementiert, konnte in der Build-Umgebung
 aber nicht ausgeführt werden (CDN blockiert). Bitte im Browser prüfen:
 
-1. Schalter **„Echtes Java“** → „CheerpJ bereit“ sollte erscheinen.
-   Wenn nicht: Das (Schul-)Netz blockiert `cjrtnc.leaningtech.com`
-   → CheerpJ selbst hosten (Lizenz für Schulen prüfen, Datenschutz!).
+1. Beim Laden sollte „CheerpJ bereit“ erscheinen. Zeigt der Status
+   stattdessen „⚠ Notbetrieb“, blockiert das (Schul-)Netz
+   `cjrtnc.leaningtech.com` → CheerpJ selbst hosten (Lizenz für Schulen
+   prüfen, Datenschutz!).
 2. **✓ Übernehmen** übersetzt die Klassen mit ECJ (liegt als
    `public/ecj.jar` bei); Compilerfehler erscheinen mit korrigierten
    Zeilennummern in der Konsole.
 3. Objekt platzieren, Methode aufrufen, **▶ Start** — läuft alles über
    `de.schule.jle.Steuerung` (Reflexion) bzw. die `nativ*`-Bridge.
-
-Fällt CheerpJ aus, wechselt die App automatisch zurück in den Übungsmodus.
 
 ## Projektstruktur
 
@@ -167,8 +168,8 @@ src/engine/                    Welt, Figur (Aktions-Queue), Eingabe (Touch)
 src/ui/klassenVerwaltung.ts    Quelltexte, Vorlagen, localStorage, Vererbung
 src/ui/objektbank.ts           Klassen → neu/Quelltext · Objekte · Methoden
 src/java/javaParser.ts         kleiner Java-Parser (Signaturen + Übungsmodus)
-src/java/laufzeit.ts           Interface Übungsmodus ⇄ CheerpJ
-src/java/mockLaufzeit.ts       Übungsmodus-Interpreter (offline)
+src/java/laufzeit.ts           Interface CheerpJ ⇄ Notbetrieb
+src/java/mockLaufzeit.ts       Übungsmodus-Interpreter (Notbetrieb, offline)
 src/java/cheerpjLaufzeit.ts    echtes Java im Browser (ECJ + Reflexion)
 java-framework/                Java-API (Figur, Welt, Steuerung)
                                build.sh → public/framework.jar

@@ -32,12 +32,51 @@ const log = (zeile: string) => {
 };
 $("konsole-leeren").addEventListener("click", () => (konsole.innerHTML = ""));
 
-// --- Laufzeit (Übungsmodus ⇄ CheerpJ) ---------------------------------------
-let laufzeit: JavaLaufzeit = new MockLaufzeit();
-let initVersprechen = laufzeit.init(welt, log);
+// --- Laufzeit: immer echtes Java (CheerpJ) -----------------------------------
+// Es gibt keinen Modus-Schalter: Der echte Compiler ist der Normalfall.
+// Nur wenn CheerpJ nicht geladen werden kann (offline, Filter), springt
+// automatisch der eingeschränkte Übungsmodus als NOTBETRIEB ein – klar
+// gekennzeichnet und mit „erneut versuchen“-Knopf.
+let laufzeit: JavaLaufzeit;
+let notbetrieb = false;
 let uebernommen = false; // seit Laufzeit-Start erfolgreich übersetzt
 let geaendert = true; // Quelltext geändert seit letztem Übernehmen
 const status = $("status");
+const laufzeitNeuKnopf = $<HTMLButtonElement>("laufzeit-neu");
+
+async function starteLaufzeit(): Promise<void> {
+  laufzeit = new CheerpJLaufzeit();
+  notbetrieb = false;
+  laufzeitNeuKnopf.hidden = true;
+  status.textContent = "Echtes Java wird geladen …";
+  try {
+    await laufzeit.init(welt, log);
+    status.textContent = laufzeit.name;
+  } catch (e) {
+    log("✗ " + (e as Error).message);
+    log("⚠ Echtes Java (CheerpJ) ist nicht erreichbar – Notbetrieb im eingeschränkten Übungsmodus. Internet/Filter prüfen, dann oben „erneut versuchen“.");
+    laufzeit = new MockLaufzeit();
+    notbetrieb = true;
+    await laufzeit.init(welt, log);
+    status.textContent = "⚠ Notbetrieb: " + laufzeit.name;
+    laufzeitNeuKnopf.hidden = false;
+  }
+}
+
+let initVersprechen = starteLaufzeit();
+
+laufzeitNeuKnopf.addEventListener("click", () => {
+  void (async () => {
+    laufzeit?.stoppeSpiel();
+    welt.leeren();
+    objektbank.waehleAktiv(null);
+    uebernommen = false;
+    geaendert = true;
+    initVersprechen = starteLaufzeit();
+    await initVersprechen;
+    await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  })();
+});
 
 // --- Klassen und Objektbank ----------------------------------------------------
 const klassenVerwaltung = new KlassenVerwaltung();
@@ -224,47 +263,6 @@ $("leeren").addEventListener("click", () => {
   })();
 });
 
-// --- Laufzeit umschalten (Übungsmodus ⇄ echtes Java) -----------------------------------------
-// Die Wahl wird gemerkt: Einmal „Echtes Java“ eingeschaltet, startet die
-// App beim nächsten Mal direkt mit dem echten Compiler.
-const LAUFZEIT_SCHLUESSEL = "javawelt.echtesJava";
-const cheerpjBox = $<HTMLInputElement>("cheerpj");
-cheerpjBox.addEventListener("change", () => {
-  void (async () => {
-    laufzeit.stoppeSpiel();
-    welt.leeren();
-    objektbank.waehleAktiv(null);
-    uebernommen = false;
-    geaendert = true;
-    laufzeit = cheerpjBox.checked ? new CheerpJLaufzeit() : new MockLaufzeit();
-    status.textContent = cheerpjBox.checked ? "CheerpJ wird geladen …" : laufzeit.name;
-    try {
-      initVersprechen = laufzeit.init(welt, log);
-      await initVersprechen;
-      status.textContent = laufzeit.name;
-      try {
-        localStorage.setItem(LAUFZEIT_SCHLUESSEL, cheerpjBox.checked ? "1" : "0");
-      } catch {
-        // ohne Speicher: Wahl gilt nur für diese Sitzung
-      }
-      await uebernehmen();
-    } catch (e) {
-      log("✗ " + (e as Error).message);
-      log("Zurück zum Übungsmodus. (Läuft das Schulnetz über einen Filter? Siehe README.)");
-      cheerpjBox.checked = false;
-      try {
-        localStorage.setItem(LAUFZEIT_SCHLUESSEL, "0");
-      } catch {
-        // s. o.
-      }
-      laufzeit = new MockLaufzeit();
-      initVersprechen = laufzeit.init(welt, log);
-      status.textContent = laufzeit.name;
-      await uebernehmen();
-    }
-  })();
-});
-
 // --- Projekt speichern / öffnen (Datei mit Klassen + Bildern) -----------------------------------
 // localStorage sichert nur auf DIESEM Gerät/Browser. Für „mitnehmen und
 // später weitermachen“ (anderes iPad, Abgabe, Sicherung) gibt es die
@@ -408,8 +406,8 @@ for (const szenario of SZENARIEN) {
     if (szenario.emojis) bilder.setzeEmojis(szenario.emojis);
     szenarienDialog.close();
     log(`✓ Szenario „${szenario.titel}“ geladen.`);
-    if (szenario.hinweis && !cheerpjBox.checked) {
-      log(`Hinweis: Dieses Szenario ${szenario.hinweis} – oben rechts einschalten.`);
+    if (szenario.hinweis && notbetrieb) {
+      log(`⚠ Dieses Szenario ${szenario.hinweis} – zurzeit läuft nur der Notbetrieb (oben „erneut versuchen“).`);
     }
     void uebernehmen().catch((e: Error) => log("✗ " + e.message));
   };
@@ -434,15 +432,7 @@ $("zuruecksetzen").addEventListener("click", () => {
 // --- Start -------------------------------------------------------------------------------------
 oeffneKlasse(aktiveKlasse);
 aktualisiereKnoepfe();
-if (localStorage.getItem(LAUFZEIT_SCHLUESSEL) === "1") {
-  // Gemerkte Wahl: direkt mit echtem Java starten (fällt bei Fehlern
-  // automatisch in den Übungsmodus zurück).
-  cheerpjBox.checked = true;
-  cheerpjBox.dispatchEvent(new Event("change"));
-} else {
-  void (async () => {
-    await initVersprechen;
-    status.textContent = laufzeit.name;
-    await uebernehmen().catch((e: Error) => log("✗ " + e.message));
-  })();
-}
+void (async () => {
+  await initVersprechen;
+  await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+})();

@@ -374,7 +374,7 @@ export const SZENARIEN: Szenario[] = [
     stufe: "Q1 · Wiederholung",
     beschreibung:
       "Eine Roboter-Gruppe im Array, Durchlauf per Index mit Zählschleife (kein for-each) – wie im Abitur gefordert.",
-    hinweis: "braucht „Echtes Java“",
+    hinweis: "läuft nicht im Notbetrieb",
     klassen: { MeineWelt: ARRAYS_WELT, Roboter: ROBOTER_VORLAGE },
     emojis: { Roboter: "🤖" },
   },
@@ -384,7 +384,7 @@ export const SZENARIEN: Szenario[] = [
     stufe: "Q1 · lineare Strukturen",
     beschreibung:
       "NRW-Klasse Stack<ContentType> (editierbar!) – Kisten stapeln und abbauen macht das LIFO-Prinzip sichtbar.",
-    hinweis: "braucht „Echtes Java“",
+    hinweis: "läuft nicht im Notbetrieb",
     klassen: { MeineWelt: STACK_WELT, Kiste: KISTE, Stack: nrwKlasse("Stack") },
     emojis: { Kiste: "📦" },
   },
@@ -394,7 +394,7 @@ export const SZENARIEN: Szenario[] = [
     stufe: "Q1 · lineare Strukturen",
     beschreibung:
       "NRW-Klasse Queue<ContentType> (editierbar!) – ein Kiosk bedient Kunden nach dem FIFO-Prinzip, inkl. Umfüll-Idiom.",
-    hinweis: "braucht „Echtes Java“",
+    hinweis: "läuft nicht im Notbetrieb",
     klassen: { MeineWelt: QUEUE_WELT, Kunde: KUNDE, Queue: nrwKlasse("Queue") },
     emojis: { Kunde: "🧍" },
   },
@@ -404,7 +404,7 @@ export const SZENARIEN: Szenario[] = [
     stufe: "Q1 · lineare Strukturen",
     beschreibung:
       "NRW-Klasse List<ContentType> (editierbar!) – Waggons anhängen, einfügen, entfernen und der klassische Listendurchlauf.",
-    hinweis: "braucht „Echtes Java“",
+    hinweis: "läuft nicht im Notbetrieb",
     klassen: { MeineWelt: LIST_WELT, Waggon: WAGGON, List: nrwKlasse("List") },
     emojis: { Waggon: "🚃" },
   },

@@ -71,7 +71,7 @@ export class MockLaufzeit implements JavaLaufzeit {
   async init(welt: Welt, ausgabe: Ausgabe): Promise<void> {
     this.welt = welt;
     this.ausgabe = ausgabe;
-    this.ausgabe("Übungsmodus bereit. (Vollständiges Java über den Schalter „Echtes Java“.)");
+    this.ausgabe("Übungsmodus bereit (führt den typischen Unterrichts-Code direkt aus).");
   }
 
   async kompiliere(klassen: Record<string, string>): Promise<boolean> {
@@ -361,9 +361,9 @@ export class MockLaufzeit implements JavaLaufzeit {
         }
         case "unbekannt":
           throw new LaufFehler(
-            `Zeile ${a.zeile}: „${a.text}“ – das versteht der Übungsmodus nicht. ` +
-              `Er kann: Methodenaufrufe, Variablen mit new, for-Zählschleifen, while (laeuft()). ` +
-              `Für vollständiges Java oben „Echtes Java“ einschalten.`,
+            `Zeile ${a.zeile}: „${a.text}“ – das versteht der Übungsmodus (Notbetrieb) nicht. ` +
+              `Er kann: Methodenaufrufe, Variablen mit new, for-Zählschleifen, while (laeuft()), return. ` +
+              `Vollständiges Java läuft, sobald CheerpJ geladen werden kann – oben „erneut versuchen“.`,
           );
       }
     }
@@ -447,7 +447,7 @@ export class MockLaufzeit implements JavaLaufzeit {
         return this.werteAufruf(ausdruck.ziel, ausdruck.methode, ausdruck.args, selbst, umgebung, gen, tiefe, 0);
       case "unbekanntAusdruck":
         throw new LaufFehler(
-          `„${ausdruck.text}“ – solche Ausdrücke (z. B. Rechnungen) kann der Übungsmodus nicht. „Echtes Java“ einschalten.`,
+          `„${ausdruck.text}“ – solche Ausdrücke (z. B. Rechnungen) kann der Übungsmodus (Notbetrieb) nicht.`,
         );
     }
   }

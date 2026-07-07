@@ -1,6 +1,7 @@
 import figurQuelle from "../../java-framework/de/schule/jle/Figur.java?raw";
 import weltQuelle from "../../java-framework/de/schule/jle/Welt.java?raw";
 import { KlassenDef, parseKlasse } from "../java/javaParser";
+import { STANDARD_KLASSEN } from "./szenarien";
 
 const SPEICHER_SCHLUESSEL = "javawelt.klassen.v2";
 
@@ -19,40 +20,6 @@ export interface KlassenInfo {
   framework: boolean;
 }
 
-const ROBOTER_VORLAGE = `public class Roboter extends Figur {
-
-    // Eigene Methode: läuft ein Quadrat mit der angegebenen Seitenlänge.
-    public void laufeQuadrat(int seite) {
-        for (int i = 0; i < 4; i++) {
-            geheVor(seite);
-            dreheDich(90);
-        }
-    }
-}
-`;
-
-const MEINEWELT_VORLAGE = `public class MeineWelt extends Welt {
-
-    Roboter rob;
-
-    // Wird einmal beim Start ausgeführt: Figuren erzeugen und platzieren.
-    public void bereiteVor() {
-        rob = new Roboter();
-        rob.setzePosition(200, 240);
-        rob.sage("Los geht's!");
-    }
-
-    // Das Spiel: Diese Schleife läuft, bis du auf Stopp drückst.
-    public void spiele() {
-        while (laeuft()) {
-            rob.geheVor(25);
-            rob.dreheDich(15);
-            warte(100);
-        }
-    }
-}
-`;
-
 function neueKlassenVorlage(name: string): string {
   return `public class ${name} extends Figur {
 
@@ -70,6 +37,7 @@ const FIGUR_GEERBT: MethodenSignatur[] = [
   { name: "geheVor", params: [{ typ: "int", name: "pixel" }], geerbt: true },
   { name: "dreheDich", params: [{ typ: "int", name: "grad" }], geerbt: true },
   { name: "sage", params: [{ typ: "String", name: "text" }], geerbt: true },
+  { name: "nenne", params: [{ typ: "String", name: "name" }], geerbt: true },
   { name: "setzePosition", params: [{ typ: "int", name: "x" }, { typ: "int", name: "y" }], geerbt: true },
   { name: "gibX", params: [], geerbt: true },
   { name: "gibY", params: [], geerbt: true },
@@ -99,10 +67,27 @@ export class KlassenVerwaltung {
   }
 
   private setzeVorlagen(): void {
-    this.schueler = new Map([
-      ["MeineWelt", { name: "MeineWelt", code: MEINEWELT_VORLAGE, framework: false }],
-      ["Roboter", { name: "Roboter", code: ROBOTER_VORLAGE, framework: false }],
-    ]);
+    this.schueler = new Map(
+      Object.entries(STANDARD_KLASSEN).map(([name, code]) => [name, { name, code, framework: false }]),
+    );
+  }
+
+  /** Ersetzt alle Schülerklassen (Szenario laden). */
+  ersetzeAlle(klassen: Record<string, string>): void {
+    this.schueler = new Map(
+      Object.entries(klassen).map(([name, code]) => [name, { name, code, framework: false }]),
+    );
+    this.speichere();
+    this.onListeGeaendert?.();
+  }
+
+  /** Fügt eine Klasse mit vorgegebenem Quelltext hinzu (Bibliothek). */
+  fuegeHinzu(name: string, code: string): string | null {
+    if (this.gib(name)) return `Die Klasse ${name} ist schon im Projekt.`;
+    this.schueler.set(name, { name, code, framework: false });
+    this.speichere();
+    this.onListeGeaendert?.();
+    return null;
   }
 
   // ---- Zugriff --------------------------------------------------------------
@@ -201,6 +186,11 @@ export class KlassenVerwaltung {
     ];
   }
 
+  /** Übrige Schülerklassen (Weltklasse, Datenstrukturen …) für die Anzeige. */
+  weitereKlassen(): string[] {
+    return [...this.schueler.keys()].filter((n) => !this.istFigurKlasse(n));
+  }
+
   /** Die Weltklasse fürs Spiel (erste Schülerklasse, die von Welt erbt). */
   weltKlasse(): string | null {
     for (const name of this.schueler.keys()) {
@@ -256,7 +246,11 @@ export class KlassenVerwaltung {
       );
       // Ohne Weltklasse fehlt der Spiel-Einstieg → Vorlage ergänzen.
       if (!this.weltKlasse() && !this.schueler.has("MeineWelt")) {
-        this.schueler.set("MeineWelt", { name: "MeineWelt", code: MEINEWELT_VORLAGE, framework: false });
+        this.schueler.set("MeineWelt", {
+          name: "MeineWelt",
+          code: STANDARD_KLASSEN["MeineWelt"],
+          framework: false,
+        });
       }
       return true;
     } catch {

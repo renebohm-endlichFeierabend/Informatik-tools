@@ -12,6 +12,7 @@
         <h1>JavaWelt</h1>
         <span class="untertitel">Java lernen im Browser</span>
         <div class="rechts">
+          <button id="szenarien-auf" class="sekundaer">Szenarien</button>
           <button id="hilfe-auf" class="sekundaer">Hilfe</button>
           <label class="schalter" title="Kompiliert und führt vollständiges Java im Browser aus (CheerpJ)">
             <input type="checkbox" id="cheerpj" />
@@ -41,7 +42,10 @@
           <section class="box">
             <div class="box-kopf">
               <h2>Klassen</h2>
-              <span id="neue-klasse"></span>
+              <span class="klassen-knoepfe">
+                <button id="bibliothek-auf" class="sekundaer" title="NRW-Klassen (Stack, Queue, List) als editierbare Kopie hinzufügen">📚 Bibliothek</button>
+                <span id="neue-klasse"></span>
+              </span>
             </div>
             <div id="klassen"></div>
           </section>
@@ -87,6 +91,33 @@
       </main>
     </div>
 
+    <dialog id="szenarien-dialog">
+      <h2>Lernszenarien</h2>
+      <p class="leer">
+        Ein Szenario lädt fertige Klassen für eine Unterrichtsreihe
+        (Kernlehrplan NRW). Achtung: Die aktuellen Klassen werden ersetzt.
+      </p>
+      <div id="szenarien-liste" class="eintrag-liste"></div>
+      <div class="dialog-aktionen">
+        <span></span>
+        <button id="szenarien-zu">Schließen</button>
+      </div>
+    </dialog>
+
+    <dialog id="bibliothek-dialog">
+      <h2>Klassen-Bibliothek (NRW-Abiturvorgaben)</h2>
+      <p class="leer">
+        Fügt eine <b>editierbare Kopie</b> der Klasse zum Projekt hinzu –
+        zum Verwenden, Lesen und (im LK) Verändern. Zum Ausführen wird
+        „Echtes Java“ benötigt.
+      </p>
+      <div id="bibliothek-liste" class="eintrag-liste"></div>
+      <div class="dialog-aktionen">
+        <span></span>
+        <button id="bibliothek-zu">Schließen</button>
+      </div>
+    </dialog>
+
     <dialog id="hilfe">
       <h2>So arbeitest du mit der JavaWelt</h2>
       <ol>
@@ -98,6 +129,10 @@
         <li><b>Spiel starten:</b> <code>▶ Start</code> führt deine Weltklasse aus: erst
           <code>bereiteVor()</code>, dann <code>spiele()</code> mit der Spielschleife
           <code>while (laeuft()) { … warte(100); }</code>. <code>■ Stopp</code> beendet die Schleife.</li>
+        <li><b>Bilder:</b> Über den 🖼-Knopf bekommt eine Klasse ein Emoji oder eigenes Bild.</li>
+        <li><b>Bibliothek &amp; Szenarien:</b> <code>📚 Bibliothek</code> fügt die NRW-Klassen
+          (Stack, Queue, List) als editierbare Kopie hinzu; <code>Szenarien</code> (oben) lädt
+          fertige Unterrichts-Sätze mit Aufgaben.</li>
       </ol>
       <h3>Übungsmodus und echtes Java</h3>
       <p>

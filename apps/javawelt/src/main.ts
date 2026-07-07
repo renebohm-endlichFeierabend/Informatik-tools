@@ -2,6 +2,9 @@ import { Welt } from "./engine/welt";
 import { Eingabe } from "./engine/eingabe";
 import { Objektbank } from "./ui/objektbank";
 import { KlassenVerwaltung } from "./ui/klassenVerwaltung";
+import { BilderVerwaltung, erstelleBildDialog } from "./ui/bilder";
+import { SZENARIEN } from "./ui/szenarien";
+import { NRW_BIBLIOTHEK } from "./java/nrwBibliothek";
 import { JavaLaufzeit } from "./java/laufzeit";
 import { MockLaufzeit, MockAbbruch } from "./java/mockLaufzeit";
 import { CheerpJLaufzeit } from "./java/cheerpjLaufzeit";
@@ -12,6 +15,10 @@ const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) 
 const canvas = $<HTMLCanvasElement>("canvas");
 const welt = new Welt(canvas);
 const eingabe = new Eingabe(canvas, welt);
+
+// --- Bilder für Klassen ------------------------------------------------------
+const bilder = new BilderVerwaltung();
+welt.bildFuer = (klasse) => bilder.fuerEngine(klasse);
 
 // --- Konsole -----------------------------------------------------------------
 const konsole = $("konsole");
@@ -45,6 +52,7 @@ const objektbank = new Objektbank(
   $("neue-klasse"),
 );
 eingabe.onAuswahl = (f) => objektbank.waehleAktiv(f);
+objektbank.onBildWaehlen = erstelleBildDialog(bilder, log);
 
 // --- Quelltext-Editor ------------------------------------------------------------
 const codeEl = $<HTMLTextAreaElement>("klassen-code");
@@ -78,6 +86,15 @@ function oeffneKlasse(name: string): void {
 
 codeEl.addEventListener("input", () => {
   klassenVerwaltung.setzeCode(aktiveKlasse, codeEl.value);
+});
+
+// Tab rückt ein (4 Leerzeichen), statt den Fokus zu verlieren.
+codeEl.addEventListener("keydown", (e) => {
+  if (e.key === "Tab" && !codeEl.readOnly) {
+    e.preventDefault();
+    codeEl.setRangeText("    ", codeEl.selectionStart, codeEl.selectionEnd, "end");
+    klassenVerwaltung.setzeCode(aktiveKlasse, codeEl.value);
+  }
 });
 
 loeschenKnopf.addEventListener("click", () => {
@@ -234,6 +251,99 @@ cheerpjBox.addEventListener("change", () => {
     }
   })();
 });
+
+// --- Bibliothek (NRW-Klassen als editierbare Kopie) --------------------------------------------
+const bibliothekDialog = document.getElementById("bibliothek-dialog") as HTMLDialogElement;
+const bibliothekListe = $("bibliothek-liste");
+
+function zeichneBibliothek(): void {
+  bibliothekListe.innerHTML = "";
+  for (const eintrag of NRW_BIBLIOTHEK) {
+    const karte = document.createElement("div");
+    karte.className = "eintrag";
+    const text = document.createElement("div");
+    text.className = "eintrag-text";
+    const titel = document.createElement("b");
+    titel.textContent = eintrag.titel; // textContent: Generics wie <ContentType> sind kein HTML
+    const beschreibung = document.createElement("p");
+    beschreibung.textContent = eintrag.beschreibung;
+    text.append(titel, beschreibung);
+    karte.appendChild(text);
+
+    const knopf = document.createElement("button");
+    if (klassenVerwaltung.gib(eintrag.name)) {
+      knopf.textContent = "im Projekt";
+      knopf.disabled = true;
+      knopf.className = "sekundaer";
+    } else {
+      knopf.textContent = "Hinzufügen";
+      knopf.onclick = () => {
+        const fehler = klassenVerwaltung.fuegeHinzu(eintrag.name, eintrag.code);
+        if (fehler) {
+          log("✗ " + fehler);
+          return;
+        }
+        bibliothekDialog.close();
+        oeffneKlasse(eintrag.name);
+        log(`✓ ${eintrag.name} als editierbare Kopie hinzugefügt.`);
+      };
+    }
+    karte.appendChild(knopf);
+    bibliothekListe.appendChild(karte);
+  }
+}
+
+$("bibliothek-auf").addEventListener("click", () => {
+  zeichneBibliothek();
+  bibliothekDialog.showModal();
+});
+$("bibliothek-zu").addEventListener("click", () => bibliothekDialog.close());
+
+// --- Lernszenarien -------------------------------------------------------------------------------
+const szenarienDialog = document.getElementById("szenarien-dialog") as HTMLDialogElement;
+const szenarienListe = $("szenarien-liste");
+
+for (const szenario of SZENARIEN) {
+  const karte = document.createElement("div");
+  karte.className = "eintrag";
+  const text = document.createElement("div");
+  text.className = "eintrag-text";
+  const titel = document.createElement("b");
+  titel.textContent = szenario.titel;
+  const stufe = document.createElement("span");
+  stufe.className = "abzeichen";
+  stufe.textContent = szenario.stufe;
+  text.append(titel, " ", stufe);
+  if (szenario.hinweis) {
+    const hinweis = document.createElement("span");
+    hinweis.className = "abzeichen warnung";
+    hinweis.textContent = szenario.hinweis;
+    text.append(" ", hinweis);
+  }
+  const beschreibung = document.createElement("p");
+  beschreibung.textContent = szenario.beschreibung;
+  text.appendChild(beschreibung);
+  karte.appendChild(text);
+
+  const knopf = document.createElement("button");
+  knopf.textContent = "Laden";
+  knopf.onclick = () => {
+    if (!confirm(`Szenario „${szenario.titel}“ laden?\nDie aktuellen Klassen werden ersetzt.`)) return;
+    klassenVerwaltung.ersetzeAlle(szenario.klassen);
+    if (szenario.emojis) bilder.setzeEmojis(szenario.emojis);
+    szenarienDialog.close();
+    log(`✓ Szenario „${szenario.titel}“ geladen.`);
+    if (szenario.hinweis && !cheerpjBox.checked) {
+      log(`Hinweis: Dieses Szenario ${szenario.hinweis} – oben rechts einschalten.`);
+    }
+    void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  };
+  karte.appendChild(knopf);
+  szenarienListe.appendChild(karte);
+}
+
+$("szenarien-auf").addEventListener("click", () => szenarienDialog.showModal());
+$("szenarien-zu").addEventListener("click", () => szenarienDialog.close());
 
 // --- Hilfe ------------------------------------------------------------------------------------
 const hilfe = document.getElementById("hilfe") as HTMLDialogElement;

@@ -81,6 +81,8 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
         welt().setzePosition(id, x, y),
       Java_de_schule_jle_Figur_nativSage: (_lib: unknown, id: number, text: unknown) =>
         welt().sage(id, String(text)),
+      Java_de_schule_jle_Figur_nativBenenne: (_lib: unknown, id: number, name: unknown) =>
+        welt().benenne(id, String(name)),
       Java_de_schule_jle_Figur_nativEntferne: (_lib: unknown, id: number) => welt().entferne(id),
       Java_de_schule_jle_Figur_nativGibX: (_lib: unknown, id: number) => welt().gibX(id),
       Java_de_schule_jle_Figur_nativGibY: (_lib: unknown, id: number) => welt().gibY(id),

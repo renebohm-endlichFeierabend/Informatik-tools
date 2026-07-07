@@ -17,6 +17,8 @@ export class Objektbank {
   onKlasseOeffnen: ((name: string) => void) | null = null;
   /** „neu“-Knopf gedrückt → Platzieren-Modus starten/abbrechen. */
   onPlatzieren: ((klasse: string) => void) | null = null;
+  /** Bild-Knopf einer Figuren-Klasse gedrückt. */
+  onBildWaehlen: ((klasse: string) => void) | null = null;
 
   constructor(
     private readonly welt: Welt,
@@ -55,31 +57,54 @@ export class Objektbank {
   private zeichneKlassen(): void {
     this.klassenEl.innerHTML = "";
     for (const name of this.klassenVerwaltung.platzierbareKlassen()) {
-      const karte = document.createElement("div");
-      karte.className = "klasse";
-      const titel = document.createElement("span");
-      titel.className = "klasse-name";
-      titel.textContent = name;
-      karte.appendChild(titel);
+      this.klassenEl.appendChild(this.klassenKarte(name, true));
+    }
+    const weitere = this.klassenVerwaltung.weitereKlassen();
+    if (weitere.length > 0) {
+      const trenner = document.createElement("div");
+      trenner.className = "klassen-trenner";
+      trenner.textContent = "weitere Klassen";
+      this.klassenEl.appendChild(trenner);
+      for (const name of weitere) {
+        this.klassenEl.appendChild(this.klassenKarte(name, false));
+      }
+    }
+  }
 
-      const aktionen = document.createElement("span");
-      aktionen.className = "aktionen";
+  private klassenKarte(name: string, platzierbar: boolean): HTMLElement {
+    const karte = document.createElement("div");
+    karte.className = "klasse";
+    const titel = document.createElement("span");
+    titel.className = "klasse-name";
+    titel.textContent = name;
+    karte.appendChild(titel);
 
+    const aktionen = document.createElement("span");
+    aktionen.className = "aktionen";
+
+    if (platzierbar) {
       const neu = document.createElement("button");
       neu.textContent = "neu";
       neu.title = `Ein Objekt der Klasse ${name} auf der Welt platzieren`;
       neu.onclick = () => this.onPlatzieren?.(name);
       aktionen.appendChild(neu);
 
-      const quelltext = document.createElement("button");
-      quelltext.className = "sekundaer";
-      quelltext.textContent = "Quelltext";
-      quelltext.onclick = () => this.onKlasseOeffnen?.(name);
-      aktionen.appendChild(quelltext);
-
-      karte.appendChild(aktionen);
-      this.klassenEl.appendChild(karte);
+      const bild = document.createElement("button");
+      bild.className = "sekundaer";
+      bild.textContent = "🖼";
+      bild.title = `Bild für ${name} wählen`;
+      bild.onclick = () => this.onBildWaehlen?.(name);
+      aktionen.appendChild(bild);
     }
+
+    const quelltext = document.createElement("button");
+    quelltext.className = "sekundaer";
+    quelltext.textContent = "Quelltext";
+    quelltext.onclick = () => this.onKlasseOeffnen?.(name);
+    aktionen.appendChild(quelltext);
+
+    karte.appendChild(aktionen);
+    return karte;
   }
 
   private baueNeueKlasseZeile(): void {

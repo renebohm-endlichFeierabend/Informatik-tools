@@ -5,7 +5,6 @@ import {
   Ausdruck,
   KlassenDef,
   MethodenDef,
-  NeuAusdruck,
   ParseFehler,
   parseKlasse,
 } from "./javaParser";
@@ -34,6 +33,11 @@ class LaufFehler extends Error {}
 /** Ein Neustart/Neu-Übernehmen hat diesen Lauf überholt. */
 class Abbruch extends Error {}
 
+/** Signal, mit dem `return` eine Methode verlässt (kein Fehler). */
+class RueckgabeSignal {
+  constructor(readonly wert: Wert) {}
+}
+
 const MAX_TIEFE = 64;
 const MAX_SCHLEIFEN = 100_000;
 
@@ -42,6 +46,7 @@ const FIGUR_METHODEN: Record<string, string[]> = {
   dreheDich: ["int"],
   setzePosition: ["int", "int"],
   sage: ["String"],
+  nenne: ["String"],
   gibX: [],
   gibY: [],
   gibWinkel: [],
@@ -159,7 +164,11 @@ export class MockLaufzeit implements JavaLaufzeit {
     // Konstruktor ohne Parameter ausführen, falls vorhanden (ganze Kette).
     for (const d of this.klassenKette(klasse).reverse()) {
       if (d.konstruktor) {
-        await this.fuehreAnweisungenAus(objekt, d.konstruktor, new Map(), gen, 0);
+        try {
+          await this.fuehreAnweisungenAus(objekt, d.konstruktor, new Map(), gen, 0);
+        } catch (e) {
+          if (!(e instanceof RueckgabeSignal)) throw e;
+        }
       }
     }
     return id;
@@ -242,6 +251,9 @@ export class MockLaufzeit implements JavaLaufzeit {
       case "sage":
         this.welt.sage(id, String(args[0]));
         return null;
+      case "nenne":
+        this.welt.benenne(id, String(args[0]));
+        return null;
       case "gibX":
         return this.welt.gibX(id);
       case "gibY":
@@ -285,7 +297,12 @@ export class MockLaufzeit implements JavaLaufzeit {
     if (tiefe > MAX_TIEFE) throw new LaufFehler(`Zu viele verschachtelte Aufrufe (Methode ${methode.name}).`);
     const umgebung = new Map<string, Wert>();
     methode.params.forEach((p, i) => umgebung.set(p.name, wandle(args[i], p.typ, methode.name)));
-    await this.fuehreAnweisungenAus(selbst, methode.body, umgebung, gen, tiefe);
+    try {
+      await this.fuehreAnweisungenAus(selbst, methode.body, umgebung, gen, tiefe);
+    } catch (e) {
+      if (e instanceof RueckgabeSignal) return e.wert;
+      throw e;
+    }
     return null;
   }
 
@@ -300,12 +317,12 @@ export class MockLaufzeit implements JavaLaufzeit {
       this.pruefeAktiv(gen);
       switch (a.art) {
         case "deklaration": {
-          const wert = a.neu ? await this.werteNeu(a.neu, selbst, umgebung, gen, tiefe) : standardwert(a.typ);
+          const wert = a.wert ? await this.werteAusdruck(a.wert, selbst, umgebung, gen, tiefe) : standardwert(a.typ);
           umgebung.set(a.name, wert);
           break;
         }
-        case "zuweisungNeu": {
-          const wert = await this.werteNeu(a.neu, selbst, umgebung, gen, tiefe);
+        case "zuweisung": {
+          const wert = await this.werteAusdruck(a.wert, selbst, umgebung, gen, tiefe);
           if (umgebung.has(a.name)) umgebung.set(a.name, wert);
           else if (selbst.felder.has(a.name)) selbst.felder.set(a.name, wert);
           else throw new LaufFehler(`Zeile ${a.zeile}: Die Variable ${a.name} wurde nicht deklariert.`);
@@ -314,6 +331,10 @@ export class MockLaufzeit implements JavaLaufzeit {
         case "aufruf":
           await this.werteAufruf(a.ziel, a.methode, a.args, selbst, umgebung, gen, tiefe, a.zeile);
           break;
+        case "rueckgabe":
+          throw new RueckgabeSignal(
+            a.wert ? await this.werteAusdruck(a.wert, selbst, umgebung, gen, tiefe) : null,
+          );
         case "for": {
           const von = erwarteZahl(await this.werteAusdruck(a.von, selbst, umgebung, gen, tiefe), a.zeile);
           const bisRoh = erwarteZahl(await this.werteAusdruck(a.bis, selbst, umgebung, gen, tiefe), a.zeile);
@@ -349,18 +370,27 @@ export class MockLaufzeit implements JavaLaufzeit {
   }
 
   private async werteNeu(
-    neu: NeuAusdruck,
+    klasse: string,
+    args: Ausdruck[],
     selbst: MockObjekt,
     umgebung: Map<string, Wert>,
     gen: number,
     tiefe: number,
   ): Promise<Wert> {
-    if (neu.args.length > 1) {
-      throw new LaufFehler(`new ${neu.klasse}(…): Der Übungsmodus unterstützt nur new ${neu.klasse}() oder new ${neu.klasse}("Name").`);
+    if (args.length > 1) {
+      throw new LaufFehler(`new ${klasse}(…): Der Übungsmodus unterstützt nur new ${klasse}() oder new Figur("Name").`);
     }
-    const id = await this.erzeuge(neu.klasse, this.welt.breite / 2, this.welt.hoehe / 2, gen);
-    if (neu.args.length === 1) {
-      const name = await this.werteAusdruck(neu.args[0], selbst, umgebung, gen, tiefe);
+    // Wie in echtem Java: Konstruktoren werden NICHT vererbt. new Hund("Bello")
+    // geht nur, wenn Hund selbst so einen Konstruktor hätte – Figur hat ihn.
+    if (args.length === 1 && klasse !== "Figur") {
+      throw new LaufFehler(
+        `new ${klasse}("…"): ${klasse} hat keinen Konstruktor mit einem Namen – Konstruktoren werden nicht vererbt. ` +
+          `Nutze new ${klasse}() und danach nenne("…").`,
+      );
+    }
+    const id = await this.erzeuge(klasse, this.welt.breite / 2, this.welt.hoehe / 2, gen);
+    if (args.length === 1) {
+      const name = await this.werteAusdruck(args[0], selbst, umgebung, gen, tiefe);
       const figur = this.welt.figur(id);
       if (figur && typeof name === "string") figur.name = name;
     }
@@ -411,6 +441,8 @@ export class MockLaufzeit implements JavaLaufzeit {
         if (selbst.felder.has(ausdruck.name)) return selbst.felder.get(ausdruck.name);
         throw new LaufFehler(`Die Variable ${ausdruck.name} wurde nicht deklariert.`);
       }
+      case "neuAusdruck":
+        return this.werteNeu(ausdruck.klasse, ausdruck.args, selbst, umgebung, gen, tiefe);
       case "aufrufAusdruck":
         return this.werteAufruf(ausdruck.ziel, ausdruck.methode, ausdruck.args, selbst, umgebung, gen, tiefe, 0);
       case "unbekanntAusdruck":

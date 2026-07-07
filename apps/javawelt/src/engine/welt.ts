@@ -1,5 +1,8 @@
 import { Figur } from "./figur";
 
+/** Bild einer Klasse: Emoji oder geladenes Bildelement (siehe src/ui/bilder.ts). */
+export type FigurBild = { art: "emoji"; wert: string } | { art: "bild"; element: HTMLImageElement };
+
 const FARBEN = ["#4f8cff", "#ff5d73", "#42c98e", "#f5a623", "#a974ff", "#2dd4bf", "#f472b6", "#facc15"];
 
 /**
@@ -18,6 +21,9 @@ export class Welt {
 
   /** Beobachter für die UI (z. B. Objektbank), wenn sich Figuren ändern. */
   onAenderung: (() => void) | null = null;
+
+  /** Liefert das Bild für eine Klasse (oder null → Standardkreis). */
+  bildFuer: ((klasse: string) => FigurBild | null) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
@@ -72,6 +78,14 @@ export class Welt {
 
   sage(id: number, text: string): void {
     this.figuren.get(id)?.sage(text);
+  }
+
+  benenne(id: number, name: string): void {
+    const f = this.figuren.get(id);
+    if (f && name) {
+      f.name = name;
+      this.onAenderung?.();
+    }
   }
 
   gibX(id: number): number {
@@ -163,21 +177,32 @@ export class Welt {
       ctx.setLineDash([]);
     }
 
-    // Körper
+    // Körper: Bild der Klasse (Emoji/eigenes Bild) oder Standardkreis.
     ctx.rotate(f.winkelRad);
-    ctx.beginPath();
-    ctx.arc(0, 0, 20, 0, Math.PI * 2);
-    ctx.fillStyle = f.farbe;
-    ctx.fill();
-    // Blickrichtung (Pfeil)
-    ctx.beginPath();
-    ctx.moveTo(8, 0);
-    ctx.lineTo(20, 0);
-    ctx.lineTo(8, -7);
-    ctx.lineTo(8, 7);
-    ctx.closePath();
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.fill();
+    const bild = this.bildFuer?.(f.klasse) ?? null;
+    if (bild?.art === "emoji") {
+      ctx.font = "38px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(bild.wert, 0, 2);
+      ctx.textBaseline = "alphabetic";
+    } else if (bild?.art === "bild") {
+      ctx.drawImage(bild.element, -24, -24, 48, 48);
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
+      ctx.fillStyle = f.farbe;
+      ctx.fill();
+      // Blickrichtung (Pfeil)
+      ctx.beginPath();
+      ctx.moveTo(8, 0);
+      ctx.lineTo(20, 0);
+      ctx.lineTo(8, -7);
+      ctx.lineTo(8, 7);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fill();
+    }
     ctx.restore();
 
     // Name : Klasse

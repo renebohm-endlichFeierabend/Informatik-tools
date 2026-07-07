@@ -69,9 +69,31 @@ siehe unten).
   ergänzt; Fehler-Zeilennummern werden entsprechend korrigiert.
 
 - **Figuren-API (deutsch, sprechend):** `geheVor(int)`, `dreheDich(int)`,
-  `sage(String)`, `setzePosition(int,int)`, `gibX()`, `gibY()`,
-  `gibWinkel()`, `entferne()`. Weltklasse: `laeuft()`, `warte(int)`,
-  `zufallszahl(int,int)`, Konstanten `BREITE`/`HOEHE`.
+  `sage(String)`, `nenne(String)`, `setzePosition(int,int)`, `gibX()`,
+  `gibY()`, `gibWinkel()`, `entferne()`. Weltklasse: `laeuft()`,
+  `warte(int)`, `zufallszahl(int,int)`, Konstanten `BREITE`/`HOEHE`.
+  (`nenne` statt Namens-Konstruktor in Unterklassen — Konstruktoren werden
+  in Java nicht vererbt, und `super(...)`-Gerüst soll vermieden werden.)
+
+- **NRW-Klassenbibliothek (📚):** `Stack<ContentType>`, `Queue<ContentType>`
+  und `List<ContentType>` nach den Abiturvorgaben NRW lassen sich per Knopf
+  als **editierbare Kopie** ins Projekt holen — verwenden im GK, lesen und
+  verändern im LK. (Ausführen braucht „Echtes Java“, s. u.)
+
+- **Bilder für Klassen (🖼):** Jede Figuren-Klasse bekommt per Knopf ein
+  Emoji oder ein eigenes (automatisch verkleinertes) Bild; die Engine
+  zeichnet es rotierend mit der Blickrichtung.
+
+- **Lernszenarien (Kernlehrplan NRW):** Der „Szenarien“-Knopf lädt fertige
+  Klassensätze mit Aufgaben-Kommentaren:
+  | Szenario | Stufe / KLP-Bezug | läuft im Übungsmodus? |
+  |---|---|---|
+  | Erste Schritte: Objekte & Klassen | EF · Einstieg OOP | ja |
+  | Vererbung & Polymorphie (Tier/Hund/Katze) | Q1 · Wiederholung | ja |
+  | Arrays & Zählschleifen (Roboter-Gruppe) | Q1 · Wiederholung | nein → Echtes Java |
+  | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
+  | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
+  | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein → Echtes Java |
 
 - **Sichtbare Abläufe:** Bewegungen wandern in eine Aktions-Warteschlange
   und werden nacheinander animiert — ein `laufeQuadrat(100)` ist als
@@ -144,7 +166,17 @@ Quelltexten passt.
 ## Nächste Schritte (Vorschlag)
 
 1. CheerpJ im Schulnetz validieren; ggf. Self-Hosting klären.
-2. Monaco-Editor mit Java-Syntaxfarben statt `textarea`.
-3. Tastatur-/Touch-Eingabe für Spiele (`istTasteGedrueckt(...)`),
-   Kollisionen (`beruehrt(...)`), Bilder/Sprites.
-4. Projekte teilen (Export/Import als Datei oder Link) für Abgaben.
+2. Weitere Szenarien entlang des KLP NRW:
+   - **Suchen & Sortieren auf linearen Strukturen** (Q1): Säulen-Figuren
+     nach Größe sortieren (Bubble-/Selectionsort sichtbar animiert).
+   - **BinaryTree / BinarySearchTree** (Q1/Q2) in der Bibliothek ergänzen,
+     Szenario „Baum pflanzen“: Knoten-Figuren, die sich beim `insert`
+     als Baum anordnen; Traversierungen ablaufen lassen.
+   - **Graphen** (Q2, LK): Vertex/Edge/Graph aus den NRW-Materialien,
+     Szenario Wegsuche (Tiefensuche/Breitensuche mit Markierung).
+   - **Automaten** (Q2): Zustands-Figuren, ein Eingabewort läuft als
+     Figur durch den Automaten.
+3. Monaco-Editor mit Java-Syntaxfarben statt `textarea`.
+4. Tastatur-/Touch-Eingabe für Spiele (`istTasteGedrueckt(...)`),
+   Kollisionen (`beruehrt(...)`).
+5. Projekte teilen (Export/Import als Datei oder Link) für Abgaben.

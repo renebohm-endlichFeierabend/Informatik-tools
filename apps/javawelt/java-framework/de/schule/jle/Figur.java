@@ -74,6 +74,11 @@ public class Figur {
     nativSage(id, text);
   }
 
+  /** Gibt der Figur einen neuen Namen (unter der Figur sichtbar). */
+  public void nenne(String name) {
+    nativBenenne(id, name);
+  }
+
   /** Gibt die aktuelle Blickrichtung in Grad zurück (0 = nach rechts). */
   public int gibWinkel() {
     return winkel;
@@ -106,6 +111,8 @@ public class Figur {
   private static native void nativSetzePosition(int id, int x, int y);
 
   private static native void nativSage(int id, String text);
+
+  private static native void nativBenenne(int id, String name);
 
   private static native void nativEntferne(int id);
 

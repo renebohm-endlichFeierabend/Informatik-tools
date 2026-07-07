@@ -37,23 +37,20 @@ export interface KlassenDef {
   konstruktor: Anweisung[] | null;
 }
 
-export interface NeuAusdruck {
-  klasse: string;
-  args: Ausdruck[];
-}
-
 export type Ausdruck =
   | { art: "zahl"; wert: number }
   | { art: "text"; wert: string }
   | { art: "wahrheit"; wert: boolean }
   | { art: "variable"; name: string }
+  | { art: "neuAusdruck"; klasse: string; args: Ausdruck[] }
   | { art: "aufrufAusdruck"; ziel: string | null; methode: string; args: Ausdruck[] }
   | { art: "unbekanntAusdruck"; text: string };
 
 export type Anweisung =
-  | { art: "deklaration"; typ: string; name: string; neu: NeuAusdruck | null; zeile: number }
-  | { art: "zuweisungNeu"; name: string; neu: NeuAusdruck; zeile: number }
+  | { art: "deklaration"; typ: string; name: string; wert: Ausdruck | null; zeile: number }
+  | { art: "zuweisung"; name: string; wert: Ausdruck; zeile: number }
   | { art: "aufruf"; ziel: string | null; methode: string; args: Ausdruck[]; zeile: number }
+  | { art: "rueckgabe"; wert: Ausdruck | null; zeile: number }
   | { art: "for"; variable: string; von: Ausdruck; bis: Ausdruck; inklusive: boolean; body: Anweisung[]; zeile: number }
   | { art: "whileLaeuft"; body: Anweisung[]; zeile: number }
   | { art: "unbekannt"; text: string; zeile: number };
@@ -176,7 +173,11 @@ function trenneArgumente(text: string): string[] {
  */
 export function parseKlasse(quelltext: string): KlassenDef {
   const quelle = entferneKommentare(quelltext);
-  const kopf = /(?:public\s+)?class\s+([A-Za-z_]\w*)(?:\s+extends\s+([A-Za-z_]\w*))?\s*\{/.exec(quelle);
+  // Erlaubt Generics (class Queue<ContentType>) und implements-Klauseln.
+  const kopf =
+    /(?:public\s+)?class\s+([A-Za-z_]\w*)\s*(?:<[^>{]*>)?(?:\s+extends\s+([A-Za-z_]\w*)(?:\s*<[^>{]*>)?)?(?:\s+implements\s+[^{]+?)?\s*\{/.exec(
+      quelle,
+    );
   if (!kopf || kopf.index === undefined) {
     throw new ParseFehler("Keine Klasse gefunden. Erwartet wird z. B.: public class Roboter extends Figur { … }");
   }
@@ -360,31 +361,16 @@ function findeSemikolon(quelle: string, von: number, bis: number): number {
   return -1;
 }
 
-const DEKL_MIT_NEU = /^([A-Za-z_][\w<>[\]]*)\s+([A-Za-z_]\w*)\s*=\s*new\s+([A-Za-z_]\w*)\s*\((.*)\)$/;
-const DEKL_OHNE = /^([A-Za-z_][\w<>[\]]*)\s+([A-Za-z_]\w*)$/;
-const ZUWEISUNG_NEU = /^([A-Za-z_]\w*)\s*=\s*new\s+([A-Za-z_]\w*)\s*\((.*)\)$/;
-const AUFRUF_MIT_ZIEL = /^([A-Za-z_]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\((.*)\)$/;
-const AUFRUF_OHNE_ZIEL = /^([A-Za-z_]\w*)\s*\((.*)\)$/;
+const RUECKGABE = /^return\b\s*(.*)$/s;
+const AUFRUF_MIT_ZIEL = /^([A-Za-z_]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\((.*)\)$/s;
+const AUFRUF_OHNE_ZIEL = /^([A-Za-z_]\w*)\s*\((.*)\)$/s;
+const ZUWEISUNG = /^([A-Za-z_]\w*)\s*=\s*([^=].*)$/s;
+const DEKLARATION = /^([A-Za-z_][\w<>[\]]*)\s+([A-Za-z_]\w*)(?:\s*=\s*(.+))?$/s;
 
 function parseEinfacheAnweisung(text: string, zeile: number): Anweisung {
-  let m = DEKL_MIT_NEU.exec(text);
+  let m = RUECKGABE.exec(text);
   if (m) {
-    return {
-      art: "deklaration",
-      typ: m[1],
-      name: m[2],
-      neu: { klasse: m[3], args: trenneArgumente(m[4]).map(parseAusdruck) },
-      zeile,
-    };
-  }
-  m = ZUWEISUNG_NEU.exec(text);
-  if (m) {
-    return {
-      art: "zuweisungNeu",
-      name: m[1],
-      neu: { klasse: m[2], args: trenneArgumente(m[3]).map(parseAusdruck) },
-      zeile,
-    };
+    return { art: "rueckgabe", wert: m[1].trim() === "" ? null : parseAusdruck(m[1]), zeile };
   }
   m = AUFRUF_MIT_ZIEL.exec(text);
   if (m) {
@@ -394,9 +380,13 @@ function parseEinfacheAnweisung(text: string, zeile: number): Anweisung {
   if (m && !/^(if|while|for|switch|return|new)$/.test(m[1])) {
     return { art: "aufruf", ziel: null, methode: m[1], args: trenneArgumente(m[2]).map(parseAusdruck), zeile };
   }
-  m = DEKL_OHNE.exec(text);
-  if (m && !/^(return|break|continue)$/.test(m[1])) {
-    return { art: "deklaration", typ: m[1], name: m[2], neu: null, zeile };
+  m = ZUWEISUNG.exec(text);
+  if (m) {
+    return { art: "zuweisung", name: m[1], wert: parseAusdruck(m[2]), zeile };
+  }
+  m = DEKLARATION.exec(text);
+  if (m && !/^(return|break|continue|new)$/.test(m[1])) {
+    return { art: "deklaration", typ: m[1], name: m[2], wert: m[3] ? parseAusdruck(m[3]) : null, zeile };
   }
   return { art: "unbekannt", text: text.slice(0, 60), zeile };
 }
@@ -410,7 +400,12 @@ export function parseAusdruck(text: string): Ausdruck {
   if (/^-?\d+(\.\d+)?$/.test(t)) return { art: "zahl", wert: Number(t) };
   if (t === "true") return { art: "wahrheit", wert: true };
   if (t === "false") return { art: "wahrheit", wert: false };
-  let m = /^([A-Za-z_]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\((.*)\)$/.exec(t);
+  // new Klasse(args) – auch mit Generics: new Stack<Teller>()
+  let m = /^new\s+([A-Za-z_]\w*)\s*(?:<[^>]*>)?\s*\((.*)\)$/s.exec(t);
+  if (m) {
+    return { art: "neuAusdruck", klasse: m[1], args: trenneArgumente(m[2]).map(parseAusdruck) };
+  }
+  m = /^([A-Za-z_]\w*)\s*\.\s*([A-Za-z_]\w*)\s*\((.*)\)$/.exec(t);
   if (m) {
     return { art: "aufrufAusdruck", ziel: m[1], methode: m[2], args: trenneArgumente(m[3]).map(parseAusdruck) };
   }

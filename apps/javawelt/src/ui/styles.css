@@ -7,10 +7,16 @@
   --gedimmt: #9aa6bd;
   --akzent: #4f8cff;
   --gefahr: #ff5d73;
+  --erfolg: #42c98e;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Das hidden-Attribut gewinnt immer – auch gegen eigene display-Regeln. */
+[hidden] {
+  display: none !important;
 }
 
 html,
@@ -38,7 +44,7 @@ header {
 }
 
 header h1 {
-  font-size: 16px;
+  font-size: 17px;
   margin: 0;
   font-weight: 650;
 }
@@ -52,44 +58,54 @@ header .rechts {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-size: 13px;
   color: var(--gedimmt);
 }
 
 main {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  grid-template-rows: auto auto;
-  grid-template-areas:
-    "welt objekte"
-    "spielcode klassencode";
-  align-items: start;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 12px;
   min-height: 0;
   overflow-y: auto;
 }
 
-#buehne {
-  grid-area: welt;
-}
-#objektbank-box {
-  grid-area: objekte;
-}
-#editor-box {
-  grid-area: spielcode;
-}
-#klassencode-box {
-  grid-area: klassencode;
+.zeile {
+  display: flex;
+  gap: 12px;
+  /* nicht stauchen – main scrollt stattdessen */
+  flex: 0 0 auto;
 }
 
-/* Ist das Klassen-Quelltext-Fenster ausgeblendet, nimmt der Spielcode die
-   volle Breite ein. */
-main:has(#klassencode-box[hidden]) {
-  grid-template-areas:
-    "welt objekte"
-    "spielcode spielcode";
+.zeile.oben {
+  align-items: flex-start;
+}
+
+.zeile.unten {
+  /* füllt auf großen Bildschirmen den Rest, schrumpft aber nie */
+  flex: 1 0 auto;
+}
+
+#buehne {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#seite {
+  flex: 0 0 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+#editor-box {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#konsole-box {
+  flex: 0 0 380px;
+  min-width: 0;
 }
 
 .box {
@@ -98,6 +114,7 @@ main:has(#klassencode-box[hidden]) {
   border-radius: 12px;
   padding: 12px;
   min-height: 0;
+  min-width: 0;
 }
 
 .box h2 {
@@ -108,6 +125,23 @@ main:has(#klassencode-box[hidden]) {
   color: var(--gedimmt);
 }
 
+.box-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.box-kopf h2 {
+  margin-bottom: 8px;
+}
+
+.hinweis {
+  color: var(--akzent);
+  font-size: 13px;
+}
+
 #buehne {
   display: flex;
   flex-direction: column;
@@ -115,7 +149,10 @@ main:has(#klassencode-box[hidden]) {
 
 canvas {
   width: 100%;
+  max-width: 780px;
   height: auto;
+  aspect-ratio: 3 / 2;
+  align-self: center;
   border-radius: 10px;
   touch-action: none;
   background: #0f1525;
@@ -134,14 +171,20 @@ button {
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 7px 12px;
-  font-size: 13px;
+  padding: 9px 14px;
+  font-size: 14px;
   cursor: pointer;
   font-weight: 550;
+  min-height: 38px;
 }
 
 button:hover {
   filter: brightness(1.08);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 button.sekundaer {
@@ -153,6 +196,16 @@ button.gefahr {
   background: var(--gefahr);
 }
 
+button.auffaellig {
+  box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.55);
+}
+
+button.mini {
+  padding: 3px 10px;
+  font-size: 12px;
+  min-height: 26px;
+}
+
 label.schalter {
   display: inline-flex;
   align-items: center;
@@ -161,12 +214,19 @@ label.schalter {
   cursor: pointer;
 }
 
+label.schalter input {
+  width: 18px;
+  height: 18px;
+}
+
+/* --- Klassen und Objekte -------------------------------------------------- */
+
 .klasse,
 .objekt {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 10px;
   border-radius: 8px;
   background: var(--panel2);
   margin-bottom: 6px;
@@ -179,12 +239,35 @@ label.schalter {
 .klasse .aktionen {
   margin-left: auto;
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .klasse .aktionen button {
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 5px 12px;
+  font-size: 13px;
+  min-height: 32px;
+}
+
+.neue-klasse-formular {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.neue-klasse-formular input {
+  width: 120px;
+  background: var(--bg);
+  border: 1px solid var(--rand);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 14px;
+}
+
+#neue-klasse button {
+  padding: 5px 12px;
+  font-size: 13px;
+  min-height: 32px;
 }
 
 .objekt {
@@ -200,6 +283,7 @@ label.schalter {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+  flex: 0 0 auto;
 }
 
 .objekt-typ {
@@ -207,16 +291,27 @@ label.schalter {
   font-size: 12px;
 }
 
+/* --- Methoden --------------------------------------------------------------- */
+
 .methoden-kopf {
   font-family: ui-monospace, monospace;
   color: var(--gedimmt);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.methoden-trenner {
+  color: var(--gedimmt);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 10px 0 6px;
 }
 
 .methode {
   display: flex;
   gap: 6px;
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
 .methode button {
@@ -224,15 +319,18 @@ label.schalter {
   background: var(--panel2);
   border: 1px solid var(--rand);
   flex: 0 0 auto;
+  font-size: 13px;
 }
 
 .methode input {
   flex: 1;
+  min-width: 60px;
   background: var(--bg);
   border: 1px solid var(--rand);
   color: var(--text);
-  border-radius: 6px;
-  padding: 4px 8px;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
 }
 
 .leer {
@@ -241,57 +339,18 @@ label.schalter {
   margin: 4px 0;
 }
 
-#editor {
-  flex: 1;
-  width: 100%;
-  resize: none;
-  background: #0f1525;
-  color: var(--text);
-  border: 1px solid var(--rand);
-  border-radius: 8px;
-  padding: 10px;
-  font-family: ui-monospace, "SF Mono", monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  min-height: 160px;
-}
+/* --- Quelltext-Editor ---------------------------------------------------------- */
 
 #editor-box {
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-#konsole {
-  background: #0a0e18;
-  border: 1px solid var(--rand);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  color: #b9c4da;
-  height: 120px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-}
-
-/* --- Klassen-Quelltext-Fenster (unten rechts) -------------------------- */
-/* :not([hidden]), damit das hidden-Attribut die Box wirklich ausblendet. */
-#klassencode-box:not([hidden]) {
-  display: flex;
-  flex-direction: column;
-}
-
-.box-kopf {
+.editor-aktionen {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-button.mini {
-  padding: 2px 8px;
-  font-size: 12px;
-  line-height: 1.2;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .tabs {
@@ -307,7 +366,8 @@ button.mini {
   color: var(--gedimmt);
   font-family: ui-monospace, monospace;
   font-size: 12px;
-  padding: 4px 10px;
+  padding: 6px 12px;
+  min-height: 32px;
 }
 
 .tabs .tab.aktiv {
@@ -325,30 +385,107 @@ button.mini {
   border-radius: 8px;
   padding: 10px;
   font-family: ui-monospace, "SF Mono", monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  min-height: 320px;
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 280px;
+  tab-size: 4;
 }
 
-/* "Quelltext"-Knopf auf den Klassenkarten der Objektbank. */
-.klasse .quelltext {
-  background: var(--panel2);
+#klassen-code[readonly] {
+  color: var(--gedimmt);
+}
+
+/* --- Konsole ----------------------------------------------------------------------- */
+
+#konsole-box {
+  display: flex;
+  flex-direction: column;
+}
+
+#konsole {
+  flex: 1;
+  background: #0a0e18;
   border: 1px solid var(--rand);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: #b9c4da;
+  min-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-@media (max-width: 820px) {
-  main {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "welt"
-      "objekte"
-      "spielcode"
-      "klassencode";
+#konsole .fehler {
+  color: var(--gefahr);
+}
+
+#konsole .erfolg {
+  color: var(--erfolg);
+}
+
+/* --- Hilfe-Dialog --------------------------------------------------------------------- */
+
+dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+dialog h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+dialog h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+dialog code {
+  background: var(--panel2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 13px;
+}
+
+dialog ol {
+  padding-left: 20px;
+}
+
+dialog li {
+  margin-bottom: 6px;
+}
+
+.dialog-aktionen {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* --- schmale Bildschirme (iPad hochkant, Smartphone) ---------------------------------- */
+
+@media (max-width: 900px) {
+  .zeile {
+    flex-direction: column;
   }
-  main:has(#klassencode-box[hidden]) {
-    grid-template-areas:
-      "welt"
-      "objekte"
-      "spielcode";
+  .zeile.oben {
+    align-items: stretch;
+  }
+  #seite,
+  #konsole-box {
+    flex: 1 1 auto;
   }
 }

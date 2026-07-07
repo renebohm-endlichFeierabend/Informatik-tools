@@ -3,32 +3,45 @@ package de.schule.jle;
 /**
  * Eine Figur in der JavaWelt.
  *
- * Bewusst einfach gehalten – und ohne Pflicht-Vererbung (anders als
- * Greenfoots {@code Actor}): Eine Figur ist ein ganz normales Objekt, das
- * man erzeugt und steuert. So lernt man zuerst den Objektbegriff, bevor
- * Vererbung eingeführt wird.
+ * Eigene Klassen erben von Figur – mehr Gerüst braucht es nicht:
  *
  * <pre>
- *   Figur bello = new Figur("Bello");
- *   bello.geheVor(100);
- *   bello.dreheDich(90);
+ *   public class Roboter extends Figur {
+ *
+ *       public void laufeQuadrat(int seite) {
+ *           for (int i = 0; i &lt; 4; i++) {
+ *               geheVor(seite);
+ *               dreheDich(90);
+ *           }
+ *       }
+ *   }
  * </pre>
+ *
+ * Es ist bewusst KEIN eigener Konstruktor und KEIN super(...)-Aufruf nötig:
+ * Figur hat einen parameterlosen Konstruktor, den Java automatisch aufruft.
  *
  * Die <b>Bewegung</b> wird hier in echtem Java berechnet (Trigonometrie!):
  * {@link #geheVor(int)} rechnet aus Blickrichtung und Schrittweite die
  * Verschiebung in x- und y-Richtung aus. Nur das *Anzeigen* übernimmt die
  * Welt-Engine über die {@code nativ*}-Methoden (in JavaScript implementiert).
- * So sehen Schülerinnen und Schüler, wie die Bewegung wirklich funktioniert.
  */
 public class Figur {
-  /** Verbindung zur sichtbaren Figur in der Welt. */
-  private final int id;
+  /** Verbindung zur sichtbaren Figur in der Welt (nicht für Schülercode). */
+  final int id;
 
   /** Blickrichtung in Grad. 0 = nach rechts, 90 = nach unten. */
   private int winkel = 0;
 
+  /** Erzeugt eine Figur; der Name wird automatisch vergeben (z. B. "roboter1"). */
+  public Figur() {
+    this.id = nativErzeuge("", getClass().getSimpleName());
+    Steuerung.merke(this);
+  }
+
+  /** Erzeugt eine Figur mit eigenem Namen. */
   public Figur(String name) {
-    this.id = nativErzeuge(name);
+    this.id = nativErzeuge(name, getClass().getSimpleName());
+    Steuerung.merke(this);
   }
 
   /**
@@ -47,13 +60,8 @@ public class Figur {
 
   /** Dreht die Figur um {@code grad} Grad (im Uhrzeigersinn). */
   public void dreheDich(int grad) {
-    winkel = (winkel + grad) % 360;
+    winkel = Math.floorMod(winkel + grad, 360);
     nativDrehe(id, grad);
-  }
-
-  /** Gibt die aktuelle Blickrichtung in Grad zurück (0 = nach rechts). */
-  public int gibWinkel() {
-    return winkel;
   }
 
   /** Setzt die Figur an eine feste Position. */
@@ -66,9 +74,30 @@ public class Figur {
     nativSage(id, text);
   }
 
+  /** Gibt die aktuelle Blickrichtung in Grad zurück (0 = nach rechts). */
+  public int gibWinkel() {
+    return winkel;
+  }
+
+  /** Gibt die aktuelle x-Position zurück. */
+  public int gibX() {
+    return nativGibX(id);
+  }
+
+  /** Gibt die aktuelle y-Position zurück. */
+  public int gibY() {
+    return nativGibY(id);
+  }
+
+  /** Entfernt die Figur von der Welt. */
+  public void entferne() {
+    Steuerung.vergiss(this);
+    nativEntferne(id);
+  }
+
   // --- in JavaScript implementiert (CheerpJ-Natives) ---------------------
   // Diese Methoden verbinden die Figur mit der sichtbaren Welt-Engine.
-  private static native int nativErzeuge(String name);
+  private static native int nativErzeuge(String name, String klasse);
 
   private static native void nativVerschiebe(int id, int dx, int dy);
 
@@ -77,4 +106,10 @@ public class Figur {
   private static native void nativSetzePosition(int id, int x, int y);
 
   private static native void nativSage(int id, String text);
+
+  private static native void nativEntferne(int id);
+
+  private static native int nativGibX(int id);
+
+  private static native int nativGibY(int id);
 }

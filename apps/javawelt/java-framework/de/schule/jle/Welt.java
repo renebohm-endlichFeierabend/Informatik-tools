@@ -1,30 +1,71 @@
 package de.schule.jle;
 
 /**
- * Die Welt ist die Bühne, auf der die Figuren leben.
+ * Die Welt ist die Bühne, auf der die Figuren leben – und zugleich das
+ * Programm: In deiner eigenen Weltklasse läuft das Spiel ab.
  *
- * Wichtiger Unterschied zu Greenfoot: Die Welt EXISTIERT bereits – sie muss
- * NICHT beerbt werden. Du kannst sie hier aber lesen und anpassen, um deine
- * Szene einzurichten.
- *
- * Verwendung aus dem Spielcode:
  * <pre>
- *   Welt welt = new Welt();
- *   welt.bereiteVor();
+ *   public class MeineWelt extends Welt {
+ *
+ *       public void bereiteVor() {
+ *           // Figuren erzeugen und platzieren
+ *       }
+ *
+ *       public void spiele() {
+ *           while (laeuft()) {
+ *               // ein Spielschritt
+ *               warte(100);
+ *           }
+ *       }
+ *   }
  * </pre>
+ *
+ * Beim Start ruft die Umgebung erst {@link #bereiteVor()} auf (einmal),
+ * danach {@link #spiele()} – dort gehört die Spielschleife hin.
  */
 public class Welt {
+  /** Breite der Welt in Pixeln. */
+  public static final int BREITE = 720;
 
-  public Welt() {
+  /** Höhe der Welt in Pixeln. */
+  public static final int HOEHE = 480;
+
+  /** Startet die Welt: erst {@link #bereiteVor()}, dann {@link #spiele()}. */
+  public final void starte() {
+    bereiteVor();
+    spiele();
+  }
+
+  /** Wird einmal am Anfang aufgerufen: Figuren erzeugen und platzieren. */
+  public void bereiteVor() {
+  }
+
+  /** Das eigentliche Spiel – hier läuft deine Spielschleife. */
+  public void spiele() {
   }
 
   /**
-   * Richtet die Welt ein: Hier erzeugst und platzierst du deine Figuren.
-   * Ändere diese Methode, um deine eigene Start-Szene zu bauen.
+   * Gibt {@code true} zurück, solange das Spiel läuft (Stopp-Knopf noch
+   * nicht gedrückt). Typische Verwendung: {@code while (laeuft()) { ... }}
    */
-  public void bereiteVor() {
-    Figur held = new Figur("Held");
-    held.setzePosition(160, 240);
-    held.sage("Auf geht's!");
+  public boolean laeuft() {
+    return nativLaeuft();
   }
+
+  /** Hält das Programm {@code millis} Millisekunden an (1000 = 1 Sekunde). */
+  public void warte(int millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  /** Gibt eine Zufallszahl zwischen {@code von} und {@code bis} zurück (beide inklusive). */
+  public int zufallszahl(int von, int bis) {
+    return von + (int) (Math.random() * (bis - von + 1));
+  }
+
+  // --- in JavaScript implementiert (CheerpJ-Native) -----------------------
+  private static native boolean nativLaeuft();
 }

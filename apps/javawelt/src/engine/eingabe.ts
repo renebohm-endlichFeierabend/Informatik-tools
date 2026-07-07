@@ -2,16 +2,21 @@ import { Welt } from "./welt";
 import { Figur } from "./figur";
 
 /**
- * Maus- und Touch-Steuerung (Pointer Events → funktioniert auf iPad).
+ * Maus- und Touch-Steuerung (Pointer Events → funktioniert auf dem iPad).
  * - Figur antippen/anklicken: auswählen
  * - ziehen: verschieben
- * - im "Platzieren"-Modus ins Leere tippen: neue Figur erzeugen
+ * - im Platzieren-Modus auf freie Fläche tippen: dort ein Objekt erzeugen
+ *   (einmalig; der Modus wird von der Objektbank gesetzt)
  */
 export class Eingabe {
-  platzierenModus = false;
-  platzierenName = "Figur";
+  /** Klasse, deren nächstes Objekt per Tipp platziert wird (one-shot). */
+  platzierenKlasse: string | null = null;
 
   onAuswahl: ((f: Figur | null) => void) | null = null;
+  /** Tipp auf freie Fläche im Platzieren-Modus. */
+  onPlatziere: ((klasse: string, x: number, y: number) => void) | null = null;
+  /** Der Platzieren-Modus wurde beendet (platziert oder abgebrochen). */
+  onPlatzierenEnde: (() => void) | null = null;
 
   private gezogen: Figur | null = null;
 
@@ -24,6 +29,16 @@ export class Eingabe {
     canvas.addEventListener("pointerup", (e) => this.hoch(e));
   }
 
+  starte(klasse: string): void {
+    this.platzierenKlasse = klasse;
+  }
+
+  brichAb(): void {
+    if (this.platzierenKlasse === null) return;
+    this.platzierenKlasse = null;
+    this.onPlatzierenEnde?.();
+  }
+
   private pos(e: PointerEvent): { x: number; y: number } {
     const r = this.canvas.getBoundingClientRect();
     return {
@@ -34,16 +49,19 @@ export class Eingabe {
 
   private runter(e: PointerEvent): void {
     const { x, y } = this.pos(e);
+    if (this.platzierenKlasse) {
+      const klasse = this.platzierenKlasse;
+      this.platzierenKlasse = null;
+      this.onPlatziere?.(klasse, Math.round(x), Math.round(y));
+      this.onPlatzierenEnde?.();
+      return;
+    }
     const f = this.welt.figurBei(x, y);
     if (f) {
       this.gezogen = f;
       this.welt.waehle(f.id);
       this.onAuswahl?.(f);
       this.canvas.setPointerCapture(e.pointerId);
-    } else if (this.platzierenModus) {
-      const id = this.welt.erzeugeFigur(this.platzierenName, x, y);
-      this.welt.waehle(id);
-      this.onAuswahl?.(this.welt.alleFiguren().find((g) => g.id === id) ?? null);
     } else {
       this.welt.waehle(null);
       this.onAuswahl?.(null);
@@ -53,8 +71,7 @@ export class Eingabe {
   private bewege(e: PointerEvent): void {
     if (!this.gezogen) return;
     const { x, y } = this.pos(e);
-    this.gezogen.x = this.gezogen.zielX = x;
-    this.gezogen.y = this.gezogen.zielY = y;
+    this.gezogen.zieheNach(x, y);
   }
 
   private hoch(e: PointerEvent): void {

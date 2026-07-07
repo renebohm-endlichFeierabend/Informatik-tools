@@ -1,13 +1,11 @@
-# JavaWelt — visuelle Lernumgebung für Java (Prototyp)
+# JavaWelt — visuelle Lernumgebung für Java (Oberstufe, iPad-tauglich)
 
-Eine web-native Lernumgebung für den Informatik-Unterricht der Oberstufe:
-Objekte per Mausklick erzeugen, auf einer Welt platzieren und steuern — und
-denselben Effekt mit **echtem Java**-Code erzielen. Ziel: das Gute aus BlueJ
-(interaktive Objekte) und Greenfoot (Spielwelt) verbinden, aber **im Browser**
-(iPad-tauglich) und **ohne Greenfoots verwirrenden Vererbungszwang**.
-
-> Status: **früher Prototyp / Spike**. Er soll die Machbarkeit zeigen und über
-> die Architektur entscheidbar machen — noch kein fertiges Produkt.
+Eine web-native Lernumgebung für den Informatik-Unterricht: Schülerinnen und
+Schüler schreiben **eigene Java-Klassen**, platzieren **Objekte** davon per
+Fingertipp auf einer Welt, rufen deren **Methoden** interaktiv auf — und
+lassen ihr **Spiel** in einer eigenen Weltklasse laufen. Das Gute aus BlueJ
+(interaktive Objektbank) und Greenfoot (Spielwelt), aber **im Browser**
+(iPad!) und mit **minimalem Code-Gerüst**.
 
 ## Schnellstart
 
@@ -16,102 +14,169 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-Das läuft sofort mit der **Mock-Laufzeit** (kein Download, kein Server).
-Funktioniert ohne Internet und auf dem iPad.
+Läuft sofort im **Übungsmodus** (kein Download, kein Server, offline).
+Für vollständiges Java den Schalter **„Echtes Java“** aktivieren (CheerpJ,
+siehe unten).
 
-## Was funktioniert (im Sandbox verifiziert)
+## Das Unterrichts-Modell
 
-- **Welt-Engine** (TypeScript/Canvas): Render-Schleife, weiche Bewegung,
-  Maus- **und** Touch-Steuerung (Pointer Events → iPad).
-- **Objektbank im BlueJ-Stil**: „neue Figur" erzeugt ein Objekt; Methoden
-  (`geheVor`, `dreheDich`, `sage`) per Knopf interaktiv aufrufen — **ohne Code**.
-- **Platzieren per Klick** auf die Welt; Figuren ziehen.
-- **Spielcode-Editor + „Ausführen"** (mit Mock: klar gekennzeichnete Demo-Animation).
-- **Klassen-Quelltext** (Fenster unten rechts, optional): Quelltext von `Figur`
-  und `Welt` ansehen/ändern. Die Bewegung (`geheVor`) ist jetzt echter,
-  lesbarer Java-Code (Trigonometrie) statt einer Black Box.
-- Sauberer Build (`npm run build`) und Framework-Jar (`npm run build:framework`).
+- **Eigene Klassen erben von `Figur`** — mehr Gerüst gibt es nicht.
+  Kein Paket, kein Konstruktor, kein `super(...)`:
 
-## Was noch zu validieren ist (CheerpJ-Pfad)
+  ```java
+  public class Roboter extends Figur {
 
-Der echte Java-Pfad (`src/java/cheerpjLaufzeit.ts`) ist **vollständig
-geschrieben**. Der Eclipse-Compiler liegt jetzt als **`public/ecj.jar`** bei
-(Eclipse Compiler for Java, Version 3.33.0), die größte Lücke ist also
-geschlossen. CheerpJ selbst konnte im Build-Sandbox trotzdem **nicht
-ausgeführt** werden, weil dort das CheerpJ-CDN blockiert ist und kein Browser
-läuft. Darum bitte **im Browser bei euch** testen:
+      public void laufeQuadrat(int seite) {
+          for (int i = 0; i < 4; i++) {
+              geheVor(seite);
+              dreheDich(90);
+          }
+      }
+  }
+  ```
 
-1. **Checkbox „echtes Java (CheerpJ)"** oben rechts aktivieren. Dann sollte
-   CheerpJ vom CDN laden und „CheerpJ bereit." erscheinen. Klappt das nicht,
-   blockiert vermutlich das (Schul-)Netz das CDN `cjrtnc.leaningtech.com`
-   → dann CheerpJ selbst hosten (siehe „Warum CheerpJ?").
-2. **Kompilieren + Ausführen**: „▶ Ausführen" kompiliert den Spielcode (und die
-   editierten Klassen `Figur`/`Welt`) im Browser mit ECJ und startet ihn.
-   Fehlermeldung wie „Codeversion" oder „UnsupportedClassVersion"? → die
-   `ecj.jar`-Version oder die CheerpJ-Loader-Version in `cheerpjLaufzeit.ts`
-   (`LOADER_URL`) aufeinander abstimmen (CheerpJ-Runtime ist Java 8/11).
-3. **Interop prüfen**: Figuren werden von Java über die `nativ*`-Methoden
-   bewegt (Bridge in `cheerpjLaufzeit.ts`, Java-Seite in
-   `java-framework/de/schule/jle/Figur.java`).
+- **Das Spiel läuft in der Weltklasse.** `▶ Start` ruft `bereiteVor()`
+  (einmal) und dann `spiele()` auf — dort steht die Spielschleife:
 
-Wenn CheerpJ nicht lädt, fällt die App automatisch auf die Mock-Laufzeit
-zurück. Die `ecj.jar` (~3 MB) liegt absichtlich im Repo, damit GitHub Pages sie
-mit ausliefert.
+  ```java
+  public class MeineWelt extends Welt {
 
-## Architektur
+      Roboter rob;
+
+      public void bereiteVor() {
+          rob = new Roboter();
+          rob.setzePosition(200, 240);
+      }
+
+      public void spiele() {
+          while (laeuft()) {      // bis ■ Stopp gedrückt wird
+              rob.geheVor(25);
+              rob.dreheDich(15);
+              warte(100);
+          }
+      }
+  }
+  ```
+
+- **Objektbank wie in BlueJ:** Bei einer Klasse auf `neu` tippen, auf der
+  Welt platzieren; Objekt antippen → seine öffentlichen Methoden erscheinen
+  mit Eingabefeldern (eigene zuerst, geerbte von `Figur` darunter).
+  Rückgabewerte (z. B. `gibX()`) landen in der Konsole.
+
+- **Kein löschbarer Boilerplate:** Die Framework-Klassen `Figur` und `Welt`
+  sind sichtbar (Tab mit 🔒), aber schreibgeschützt — nachlesen ja,
+  kaputtmachen nein. Die eine unsichtbare Import-Zeile wird beim Übersetzen
+  ergänzt; Fehler-Zeilennummern werden entsprechend korrigiert.
+
+- **Figuren-API (deutsch, sprechend):** `geheVor(int)`, `dreheDich(int)`,
+  `sage(String)`, `nenne(String)`, `setzePosition(int,int)`, `gibX()`,
+  `gibY()`, `gibWinkel()`, `entferne()`. Weltklasse: `laeuft()`,
+  `warte(int)`, `zufallszahl(int,int)`, Konstanten `BREITE`/`HOEHE`.
+  (`nenne` statt Namens-Konstruktor in Unterklassen — Konstruktoren werden
+  in Java nicht vererbt, und `super(...)`-Gerüst soll vermieden werden.)
+
+- **NRW-Klassenbibliothek (📚):** `Stack<ContentType>`, `Queue<ContentType>`
+  und `List<ContentType>` nach den Abiturvorgaben NRW lassen sich per Knopf
+  als **editierbare Kopie** ins Projekt holen — verwenden im GK, lesen und
+  verändern im LK. (Ausführen braucht „Echtes Java“, s. u.)
+
+- **Bilder für Klassen (🖼):** Jede Figuren-Klasse bekommt per Knopf ein
+  Emoji oder ein eigenes (automatisch verkleinertes) Bild; die Engine
+  zeichnet es rotierend mit der Blickrichtung.
+
+- **Lernszenarien (Kernlehrplan NRW):** Der „Szenarien“-Knopf lädt fertige
+  Klassensätze mit Aufgaben-Kommentaren:
+  | Szenario | Stufe / KLP-Bezug | läuft im Übungsmodus? |
+  |---|---|---|
+  | Erste Schritte: Objekte & Klassen | EF · Einstieg OOP | ja |
+  | Vererbung & Polymorphie (Tier/Hund/Katze) | Q1 · Wiederholung | ja |
+  | Arrays & Zählschleifen (Roboter-Gruppe) | Q1 · Wiederholung | nein → Echtes Java |
+  | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
+  | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
+  | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein → Echtes Java |
+
+- **Sichtbare Abläufe:** Bewegungen wandern in eine Aktions-Warteschlange
+  und werden nacheinander animiert — ein `laufeQuadrat(100)` ist als
+  Quadrat *sichtbar*, obwohl Java es in Mikrosekunden berechnet.
+
+- Der Quelltext wird im **localStorage** des Geräts gesichert — ein
+  neu geladener Tab auf dem iPad verliert nichts. („Hilfe“ → Zurücksetzen
+  stellt die Vorlagen wieder her.)
+
+## Zwei Laufzeiten, eine Oberfläche
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Oberfläche (TypeScript)                                  │
-│  · Welt-Engine (Canvas, Loop, Touch)   src/engine/        │
-│  · Objektbank / Inspektor              src/ui/            │
-│  · Code-Editor + Konsole               index.html         │
-└───────────────┬───────────────────────────────────────────┘
-                │ JavaLaufzeit-Interface  (src/java/laufzeit.ts)
+┌───────────────────────────────────────────────────────────┐
+│  Oberfläche (TypeScript)                                    │
+│  · Welt-Engine (Canvas, Aktions-Queue, Touch)  src/engine/  │
+│  · Objektbank / Klassenverwaltung              src/ui/      │
+│  · Java-Parser (Signaturen + Übungsmodus)      src/java/    │
+└───────────────┬─────────────────────────────────────────────┘
+                │ Interface JavaLaufzeit (src/java/laufzeit.ts)
         ┌───────┴────────┐
         ▼                ▼
-  MockLaufzeit      CheerpJLaufzeit ──► CheerpJ (WASM-JVM)
-  (pur JS,           · kompiliert Schülercode (ECJ) im Browser
-   sofort lauffähig) · echtes Java + Reflexion, clientseitig
-                     · Natives bewegen die Figuren der Engine
+  Übungsmodus       CheerpJ-Laufzeit ──► CheerpJ (WASM-JVM)
+  (Interpreter        · kompiliert mit ECJ im Browser
+   für Unterrichts-   · echtes Java + Reflexion, clientseitig
+   Java, offline)     · Natives steuern die Welt-Engine
 ```
 
-**Schlüsselidee:** Die Engine kennt CheerpJ nicht direkt. Sowohl die
-Maus-Objektbank als auch echter Java-Code rufen **dieselbe Welt-API** auf
-(`erzeugeFigur`, `geheVor`, …). Dadurch ist die App heute vorführbar und der
-schwer testbare Java-Teil sauber gekapselt und einzeln validierbar.
+Beide Laufzeiten bedienen dieselben Abläufe (übernehmen → platzieren →
+Methoden aufrufen → Spiel starten). Der **Übungsmodus** interpretiert die
+typische Unterrichts-Teilmenge von Java selbst (Methodenaufrufe, Variablen
+mit `new`, `for`-Zählschleifen, `while (laeuft())`) und erklärt freundlich,
+wenn etwas nur mit echtem Java geht. **CheerpJ** kompiliert und führt
+vollständiges Java aus — komplett clientseitig, auch auf dem iPad.
 
-### Warum CheerpJ?
+## CheerpJ-Pfad validieren (einziger offener Punkt)
 
-Es ist (Stand 2026) der einzige Weg, **echtes Java inklusive Kompilierung
-vollständig clientseitig** im Browser auszuführen — ohne Compile-Server, auch
-auf dem iPad. Alternativen: TeaVM (braucht serverseitiges `javac`), DoppioJVM
-(alt/langsam). Zu klären für den Schulbetrieb: CheerpJ-**Lizenz** für
-Self-Hosting und **Datenschutz** (eigenes Hosting statt CDN).
+Der CheerpJ-Pfad ist vollständig implementiert, konnte in der Build-Umgebung
+aber nicht ausgeführt werden (CDN blockiert). Bitte im Browser prüfen:
 
-## Pädagogik: bewusst anders als Greenfoot
+1. Schalter **„Echtes Java“** → „CheerpJ bereit“ sollte erscheinen.
+   Wenn nicht: Das (Schul-)Netz blockiert `cjrtnc.leaningtech.com`
+   → CheerpJ selbst hosten (Lizenz für Schulen prüfen, Datenschutz!).
+2. **✓ Übernehmen** übersetzt die Klassen mit ECJ (liegt als
+   `public/ecj.jar` bei); Compilerfehler erscheinen mit korrigierten
+   Zeilennummern in der Konsole.
+3. Objekt platzieren, Methode aufrufen, **▶ Start** — läuft alles über
+   `de.schule.jle.Steuerung` (Reflexion) bzw. die `nativ*`-Bridge.
 
-- Die **Welt existiert bereits** als Objekt — sie muss **nicht** beerbt werden.
-- Eine **Figur** ist ein normales Objekt: `new Figur("Bello")`. Erst der
-  **Objektbegriff**, dann (später, wenn er dran ist) **Vererbung** — nicht vom
-  Framework erzwungen.
-- Deutsche, sprechende API (`geheVor`, `dreheDich`, `sage`).
-
-## Nächste Schritte (Vorschlag)
-
-1. CheerpJ-Pfad bei euch validieren (Punkte oben) — entscheidet die Architektur.
-2. Monaco-Editor mit Java-Syntax statt `textarea`.
-3. Eigene Klassen der Schüler in die Objektbank aufnehmen (Reflexion).
-4. Framework ausbauen: Kollision, Tastatur/Spiel-Loop, Bilder/Sprites, Klänge.
-5. Curriculum-Mapping Oberstufe (OOP, Datenstrukturen, Such-/Sortier­verfahren,
-   Zustandsautomaten) als Beispiel-Szenarien.
+Fällt CheerpJ aus, wechselt die App automatisch zurück in den Übungsmodus.
 
 ## Projektstruktur
 
 ```
-index.html                     Oberfläche
-src/engine/                    Welt, Figur, Eingabe (Canvas/Touch)
-src/ui/objektbank.ts           BlueJ-artige Objektinteraktion
-src/java/laufzeit.ts           Interface MockLaufzeit ⇄ CheerpJLaufzeit
-java-framework/                Java-API (Figur), build.sh → public/framework.jar
+index.html                     Oberfläche (Welt, Objektbank, Editor, Konsole)
+src/engine/                    Welt, Figur (Aktions-Queue), Eingabe (Touch)
+src/ui/klassenVerwaltung.ts    Quelltexte, Vorlagen, localStorage, Vererbung
+src/ui/objektbank.ts           Klassen → neu/Quelltext · Objekte · Methoden
+src/java/javaParser.ts         kleiner Java-Parser (Signaturen + Übungsmodus)
+src/java/laufzeit.ts           Interface Übungsmodus ⇄ CheerpJ
+src/java/mockLaufzeit.ts       Übungsmodus-Interpreter (offline)
+src/java/cheerpjLaufzeit.ts    echtes Java im Browser (ECJ + Reflexion)
+java-framework/                Java-API (Figur, Welt, Steuerung)
+                               build.sh → public/framework.jar
 ```
+
+Nach Änderungen an den Java-Framework-Klassen: `npm run build:framework`
+(braucht ein lokales JDK ≥ 11), damit `public/framework.jar` zu den
+Quelltexten passt.
+
+## Nächste Schritte (Vorschlag)
+
+1. CheerpJ im Schulnetz validieren; ggf. Self-Hosting klären.
+2. Weitere Szenarien entlang des KLP NRW:
+   - **Suchen & Sortieren auf linearen Strukturen** (Q1): Säulen-Figuren
+     nach Größe sortieren (Bubble-/Selectionsort sichtbar animiert).
+   - **BinaryTree / BinarySearchTree** (Q1/Q2) in der Bibliothek ergänzen,
+     Szenario „Baum pflanzen“: Knoten-Figuren, die sich beim `insert`
+     als Baum anordnen; Traversierungen ablaufen lassen.
+   - **Graphen** (Q2, LK): Vertex/Edge/Graph aus den NRW-Materialien,
+     Szenario Wegsuche (Tiefensuche/Breitensuche mit Markierung).
+   - **Automaten** (Q2): Zustands-Figuren, ein Eingabewort läuft als
+     Figur durch den Automaten.
+3. Monaco-Editor mit Java-Syntaxfarben statt `textarea`.
+4. Tastatur-/Touch-Eingabe für Spiele (`istTasteGedrueckt(...)`),
+   Kollisionen (`beruehrt(...)`).
+5. Projekte teilen (Export/Import als Datei oder Link) für Abgaben.

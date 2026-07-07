@@ -4,22 +4,45 @@ import { Welt } from "../engine/welt";
 export type Ausgabe = (zeile: string) => void;
 
 /**
- * Abstraktion über "Java ausführen". Die Engine kennt CheerpJ NICHT direkt –
- * sie spricht nur dieses Interface an. Dadurch:
- *   - läuft die App sofort mit der Mock-Laufzeit (kein Download, kein Browser-Risiko),
- *   - lässt sich die echte CheerpJ-Laufzeit per Flag einschalten und getrennt validieren.
+ * Abstraktion über "Java ausführen". Die Oberfläche kennt CheerpJ NICHT
+ * direkt – sie spricht nur dieses Interface an. Dadurch:
+ *   - läuft die App sofort im Übungsmodus (kein Download, kein Netz nötig),
+ *   - lässt sich die echte CheerpJ-Laufzeit per Schalter zuschalten und
+ *     getrennt validieren.
+ *
+ * Beide Laufzeiten bedienen dieselben Abläufe der Oberfläche:
+ * Klassen übernehmen (kompilieren) → Objekte erzeugen/platzieren →
+ * Methoden aufrufen → Spiel (Weltklasse) starten/stoppen.
  */
 export interface JavaLaufzeit {
   readonly name: string;
-  /** Einmalige Initialisierung (CheerpJ laden, Natives registrieren ...). */
+
+  /** Einmalige Initialisierung (CheerpJ laden, Natives registrieren …). */
   init(welt: Welt, ausgabe: Ausgabe): Promise<void>;
+
   /**
-   * Optional: zusätzliche, von Schülerinnen und Schülern editierbare
-   * Klassen-Quelltexte (voll qualifizierter Name → Java-Quelltext, z. B.
-   * `"de.schule.jle.Figur"`). Werden beim nächsten `fuehreAus` mitkompiliert
-   * und überlagern die Klassen aus dem Framework-Jar.
+   * Übernimmt die Schülerklassen (Klassenname → Quelltext ohne Paket-Gerüst).
+   * Gibt false zurück, wenn die Übersetzung fehlschlägt (Fehler landen in
+   * der Konsole). Bestehende Java-Objekte werden dabei verworfen.
    */
-  setzeKlassen?(klassen: Record<string, string>): void;
-  /** Kompiliert und führt den Schüler-Quelltext aus. */
-  fuehreAus(quelltext: string): Promise<void>;
+  kompiliere(klassen: Record<string, string>): Promise<boolean>;
+
+  /** Erzeugt ein Objekt der Klasse an (x, y); gibt die Engine-Id zurück. */
+  erzeugeObjekt(klasse: string, x: number, y: number): Promise<number>;
+
+  /**
+   * Ruft eine öffentliche Methode des Objekts auf. Argumente kommen als
+   * Text und werden anhand der Parametertypen umgewandelt. Gibt den
+   * Rückgabewert als Text zurück ("" bei void).
+   */
+  rufeMethode(id: number, methode: string, args: string[]): Promise<string>;
+
+  /** Entfernt das Objekt (Java-Seite; die Engine räumt über Natives auf). */
+  entferneObjekt(id: number): Promise<void>;
+
+  /** Startet die Weltklasse: bereiteVor(), dann spiele(). */
+  starteSpiel(weltKlasse: string): Promise<void>;
+
+  /** Lässt laeuft() false liefern, damit die Spielschleife endet. */
+  stoppeSpiel(): void;
 }

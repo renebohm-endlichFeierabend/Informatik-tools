@@ -3,78 +3,150 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>JavaWelt – visuelle Lernumgebung</title>
+    <title>JavaWelt – Java lernen im Browser</title>
     <link rel="stylesheet" href="/src/ui/styles.css" />
   </head>
   <body>
     <div id="app">
       <header>
         <h1>JavaWelt</h1>
-        <span class="untertitel">visuelle Lernumgebung für Java · Prototyp</span>
+        <span class="untertitel">Java lernen im Browser</span>
         <div class="rechts">
-          <label class="schalter">
-            <input type="checkbox" id="klassencode-an" />
-            Klassen-Quelltext
-          </label>
-          <label class="schalter">
+          <button id="szenarien-auf" class="sekundaer">Szenarien</button>
+          <button id="hilfe-auf" class="sekundaer">Hilfe</button>
+          <label class="schalter" title="Kompiliert und führt vollständiges Java im Browser aus (CheerpJ)">
             <input type="checkbox" id="cheerpj" />
-            echtes Java (CheerpJ)
+            Echtes Java
           </label>
-          <span id="status">Mock-Laufzeit</span>
+          <span id="status">Übungsmodus</span>
         </div>
       </header>
 
       <main>
-        <div class="box" id="buehne">
-          <h2>Welt</h2>
+        <div class="zeile oben">
+        <section class="box" id="buehne">
+          <div class="box-kopf">
+            <h2>Welt</h2>
+            <span id="platzieren-hinweis" class="hinweis" hidden></span>
+          </div>
           <canvas id="canvas" width="720" height="480"></canvas>
           <div class="werkzeuge">
-            <button id="platzieren" class="sekundaer">Platzieren: aus</button>
+            <button id="start">▶ Start</button>
+            <button id="stopp" class="sekundaer" disabled>■ Stopp</button>
             <button id="leeren" class="sekundaer">Welt leeren</button>
-            <span class="leer">Figur antippen zum Auswählen · ziehen zum Bewegen</span>
+            <span class="leer">Figur antippen = auswählen · ziehen = verschieben</span>
           </div>
+        </section>
+
+        <aside id="seite">
+          <section class="box">
+            <div class="box-kopf">
+              <h2>Klassen</h2>
+              <span class="klassen-knoepfe">
+                <button id="bibliothek-auf" class="sekundaer" title="NRW-Klassen (Stack, Queue, List) als editierbare Kopie hinzufügen">📚 Bibliothek</button>
+                <span id="neue-klasse"></span>
+              </span>
+            </div>
+            <div id="klassen"></div>
+          </section>
+          <section class="box">
+            <h2>Objekte</h2>
+            <div id="objekte"></div>
+          </section>
+          <section class="box">
+            <h2>Methoden</h2>
+            <div id="methoden"></div>
+          </section>
+        </aside>
         </div>
 
-        <div class="box" id="objektbank-box">
-          <h2>Klassen</h2>
-          <div id="klassen"></div>
-          <h2 style="margin-top: 10px">Objekte</h2>
-          <div id="objekte"></div>
-          <h2 style="margin-top: 10px">Methoden aufrufen</h2>
-          <div id="methoden"></div>
-        </div>
-
-        <div class="box" id="editor-box">
-          <h2>Spielcode</h2>
-          <textarea id="editor" spellcheck="false">
-Figur bello = new Figur("Bello");
-bello.sage("Hallo Welt!");
-bello.geheVor(160);
-bello.dreheDich(90);
-bello.geheVor(120);</textarea
-          >
-          <div class="werkzeuge">
-            <button id="ausfuehren">▶ Ausführen</button>
-          </div>
-          <h2 style="margin-top: 10px">Konsole</h2>
-          <div id="konsole"></div>
-        </div>
-
-        <div class="box" id="klassencode-box" hidden>
+        <div class="zeile unten">
+        <section class="box" id="editor-box">
           <div class="box-kopf">
-            <h2>Klassen-Quelltext</h2>
-            <button id="klassencode-zu" class="sekundaer mini" title="schließen">✕</button>
+            <h2>Quelltext</h2>
+            <div class="editor-aktionen">
+              <span id="editor-hinweis" class="hinweis" hidden>🔒 Framework-Klasse – nur zum Lesen</span>
+              <button id="klasse-loeschen" class="sekundaer" hidden>Klasse löschen</button>
+              <button id="uebernehmen" title="Klassen übersetzen und übernehmen (leert die Welt)">✓ Übernehmen</button>
+            </div>
           </div>
           <div id="klassen-tabs" class="tabs"></div>
-          <textarea id="klassen-code" spellcheck="false"></textarea>
-          <p class="leer">
-            Tipp: Hier kannst du den Quelltext der Klassen ansehen und ändern.
-            Mit „echtes Java (CheerpJ)" werden die Änderungen beim Ausführen
-            mitkompiliert.
-          </p>
+          <textarea
+            id="klassen-code"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+          ></textarea>
+        </section>
+
+        <section class="box" id="konsole-box">
+          <div class="box-kopf">
+            <h2>Konsole</h2>
+            <button id="konsole-leeren" class="sekundaer mini">leeren</button>
+          </div>
+          <div id="konsole"></div>
+        </section>
         </div>
       </main>
     </div>
+
+    <dialog id="szenarien-dialog">
+      <h2>Lernszenarien</h2>
+      <p class="leer">
+        Ein Szenario lädt fertige Klassen für eine Unterrichtsreihe
+        (Kernlehrplan NRW). Achtung: Die aktuellen Klassen werden ersetzt.
+      </p>
+      <div id="szenarien-liste" class="eintrag-liste"></div>
+      <div class="dialog-aktionen">
+        <span></span>
+        <button id="szenarien-zu">Schließen</button>
+      </div>
+    </dialog>
+
+    <dialog id="bibliothek-dialog">
+      <h2>Klassen-Bibliothek (NRW-Abiturvorgaben)</h2>
+      <p class="leer">
+        Fügt eine <b>editierbare Kopie</b> der Klasse zum Projekt hinzu –
+        zum Verwenden, Lesen und (im LK) Verändern. Zum Ausführen wird
+        „Echtes Java“ benötigt.
+      </p>
+      <div id="bibliothek-liste" class="eintrag-liste"></div>
+      <div class="dialog-aktionen">
+        <span></span>
+        <button id="bibliothek-zu">Schließen</button>
+      </div>
+    </dialog>
+
+    <dialog id="hilfe">
+      <h2>So arbeitest du mit der JavaWelt</h2>
+      <ol>
+        <li><b>Klassen schreiben:</b> Unten im Quelltext-Bereich. Eigene Figuren-Klassen erben von
+          <code>Figur</code> (<code>public class Biene extends Figur { … }</code>) – mehr Gerüst braucht es nicht.</li>
+        <li><b>Übernehmen:</b> <code>✓ Übernehmen</code> übersetzt deine Klassen. Dabei wird die Welt geleert.</li>
+        <li><b>Objekte platzieren:</b> Bei einer Klasse auf <code>neu</code> tippen, dann auf die Welt tippen.</li>
+        <li><b>Methoden aufrufen:</b> Objekt antippen – rechts erscheinen seine Methoden mit Eingabefeldern.</li>
+        <li><b>Spiel starten:</b> <code>▶ Start</code> führt deine Weltklasse aus: erst
+          <code>bereiteVor()</code>, dann <code>spiele()</code> mit der Spielschleife
+          <code>while (laeuft()) { … warte(100); }</code>. <code>■ Stopp</code> beendet die Schleife.</li>
+        <li><b>Bilder:</b> Über den 🖼-Knopf bekommt eine Klasse ein Emoji oder eigenes Bild.</li>
+        <li><b>Bibliothek &amp; Szenarien:</b> <code>📚 Bibliothek</code> fügt die NRW-Klassen
+          (Stack, Queue, List) als editierbare Kopie hinzu; <code>Szenarien</code> (oben) lädt
+          fertige Unterrichts-Sätze mit Aufgaben.</li>
+      </ol>
+      <h3>Übungsmodus und echtes Java</h3>
+      <p>
+        Ohne den Schalter „Echtes Java“ läuft der <b>Übungsmodus</b>: Er funktioniert sofort und offline,
+        versteht aber nur den typischen Unterrichts-Code (Methodenaufrufe, Variablen mit <code>new</code>,
+        <code>for</code>-Zählschleifen, <code>while (laeuft())</code>). Mit „Echtes Java“ wird dein Code
+        von einem echten Java-Compiler im Browser übersetzt – dann geht alles, was Java kann.
+      </p>
+      <div class="dialog-aktionen">
+        <button id="zuruecksetzen" class="gefahr">Alle Klassen auf Anfang zurücksetzen</button>
+        <button id="hilfe-zu">Schließen</button>
+      </div>
+    </dialog>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

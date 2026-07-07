@@ -5,3 +5,6 @@ dist/
 
 # Kompilierte Klassen des Java-Frameworks (Quelltext bleibt versioniert).
 java-framework/out/
+
+# Test-Ausgaben
+tests/.out/

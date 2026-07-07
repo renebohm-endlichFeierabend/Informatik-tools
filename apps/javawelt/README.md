@@ -106,6 +106,25 @@ Filter im Schulnetz), springt automatisch ein klar gekennzeichneter
   und Abgaben (Moodle/Teams/AirDrop). Unabhängig davon sichert die App
   jede Eingabe zusätzlich im localStorage des Geräts.
 
+- **Abgabe erstellen (📤):** Ein Klick erzeugt ein einheitliches
+  Abgabe-Dokument (Welt-Screenshot + alle Quelltexte + Konsolenausgabe
+  als eine HTML-Datei) samt Projektdatei und bietet beides auf dem iPad
+  direkt über das **Share-Sheet** an — Teilen → OneNote/Teams, fertig.
+  Wo das Share-Sheet nicht verfügbar ist, werden die Dateien
+  heruntergeladen.
+
+- **Aufgaben-Links (🔗 / Deep-Links):** Die Aufgabe öffnet die Umgebung
+  im richtigen Zustand — in OneNote steht nur noch ein Link:
+  - `?szenario=<id>` lädt ein Lernszenario direkt
+    (ids: `erste-schritte`, `vererbung`, `arrays`, `stack`, `queue`,
+    `liste`, `datenbank`),
+  - `?projekt=<URL>` lädt eine bereitgestellte Projektdatei (z. B. aus
+    dem Repo über GitHub Pages),
+  - `#projekt=<komprimiert>` trägt das komplette Projekt im Link selbst —
+    der 🔗-Knopf erzeugt so einen Link aus dem aktuellen Projekt
+    (Klassen + Bilder), ganz ohne Hosting.
+  Vor dem Ersetzen der aktuellen Klassen wird immer nachgefragt.
+
 - **Bilder für Klassen (🖼):** Jede Figuren-Klasse bekommt per Knopf ein
   Emoji oder ein eigenes (automatisch verkleinertes) Bild; die Engine
   zeichnet es rotierend mit der Blickrichtung.
@@ -211,4 +230,7 @@ Quelltexten passt.
 3. Monaco-Editor mit Java-Syntaxfarben statt `textarea`.
 4. Tastatur-/Touch-Eingabe für Spiele (`istTasteGedrueckt(...)`),
    Kollisionen (`beruehrt(...)`).
-5. Projekte teilen (Export/Import als Datei oder Link) für Abgaben.
+5. ~~Projekte teilen (Export/Import als Datei oder Link) für Abgaben.~~
+   ✓ umgesetzt: 📤 Abgabe (Share-Sheet) und 🔗 Aufgaben-Links, siehe oben;
+   Konzept für die nächste Stufe (Aufgaben direkt in der Umgebung) in
+   `KONZEPT_AUFGABEN.md`.

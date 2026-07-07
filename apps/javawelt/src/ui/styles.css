@@ -496,6 +496,22 @@ dialog li {
   flex-wrap: wrap;
 }
 
+/* Aufgaben-Link-Dialog: der Link ist lang, aber soll greifbar bleiben */
+#link-text {
+  width: 100%;
+  height: 7em;
+  resize: none;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  word-break: break-all;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+  color: #3a4a58;
+  background: #f6f8fa;
+}
+
 /* Listen in Szenarien- und Bibliothek-Dialog */
 .eintrag-liste {
   display: flex;

@@ -5,7 +5,9 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9, #10, Doku-PR) gemerged**
+**Stand: Juli 2026 · alle bisherigen PRs (#9, #10, #11) gemerged ·
+Aufgaben-Links + Abgabe-Knopf umgesetzt (Branch
+`claude/ai-task-integration-dev-pkon6e`)**
 
 ## Was ist JavaWelt?
 
@@ -70,6 +72,16 @@ Datenbanken (ER, Normalformen, SQL, NRW-Klassen).
 - **Persistenz:** localStorage (automatisch, gerätegebunden) + Projekt
   als JSON-Datei speichern/öffnen (⬇/⬆ im Header; Klassen + Bilder) —
   für Gerätewechsel und Abgaben über die Dateien-App.
+- **Aufgaben-Links (Deep-Links):** `?szenario=<id>` lädt ein Szenario,
+  `?projekt=<URL>` eine bereitgestellte Projektdatei, `#projekt=<kode>`
+  das komplette Projekt aus dem Link (gzip + Base64-URL, 🔗-Knopf
+  erzeugt ihn). Immer mit Rückfrage; die Adresse wird nach dem Laden
+  aufgeräumt (kein erneutes Ersetzen beim Neuladen). Logik in
+  `src/ui/teilen.ts` + `verarbeiteStartLink()` in `main.ts`.
+- **📤 Abgabe:** eine HTML-Datei (Welt-Screenshot, alle Quelltexte,
+  Konsole, Datum, Namenszeile) + Projektdatei, per Web Share API
+  (Share-Sheet, Safari-tauglich: alles synchron in der Nutzer-Geste
+  vorbereitet) oder als Download.
 - Übungsmodus-Interpreter versteht: Methodenaufrufe, `new`, Felder,
   lokale Variablen, `for`-Zählschleifen, `while (laeuft())`, `return`,
   Polymorphie/dynamische Bindung. Alles andere → verständliche Meldung.
@@ -159,16 +171,14 @@ Der Unterrichts-Workflow ist heute: Aufgabe in OneNote → Editor öffnen,
 Szenario laden, programmieren → Screenshot zurück nach OneNote. Zwei
 Medienbrüche. Besprochene und priorisierte Ideen:
 
-1. **Aufgaben-Links (Deep-Links)** — *als Nächstes, klein:*
-   URL-Parameter auswerten: `?szenario=<id>` lädt ein Szenario direkt,
-   `?projekt=<URL>` lädt eine vorbereitete Projektdatei (z. B. aus dem
-   Repo/GitHub Pages), optional `#projekt=<komprimiert>` für Aufgaben
-   komplett im Link. OneNote enthält dann nur noch einen Link.
-2. **„Abgabe erstellen“-Knopf** — *als Nächstes, klein:*
-   Ein Klick erzeugt Welt-Screenshot (canvas.toDataURL) + Quelltext +
-   Konsole als ein Bild/HTML und bietet es auf dem iPad über das
-   **Share-Sheet** an (Web Share API mit Dateien funktioniert in
-   Safari) → direkt nach OneNote/Teams. Optional Projektdatei anhängen.
+1. ~~**Aufgaben-Links (Deep-Links)**~~ — ✓ **umgesetzt**:
+   `?szenario=<id>`, `?projekt=<URL>`, `#projekt=<komprimiert>` inkl.
+   🔗-Knopf zum Erzeugen; getestet in `tests/uiTest3.mjs`.
+2. ~~**„Abgabe erstellen“-Knopf**~~ — ✓ **umgesetzt**: 📤-Knopf erzeugt
+   HTML-Abgabe (Screenshot + Quelltext + Konsole) + Projektdatei über
+   das Share-Sheet bzw. als Download; getestet in `tests/uiTest3.mjs`.
+   Offen: auf einem echten iPad prüfen, ob Safari die HTML-Datei ins
+   Share-Sheet nimmt (sonst auf Bild/PDF umstellen).
 3. **Aufgaben-Panel mit Auto-Checks** — *größeres Paket, hoher Wert:*
    Szenarien bekommen strukturierte Aufgaben (statt nur Kommentaren) in
    einer Seitenleiste; einfache Checks gegen Parser + Weltzustand

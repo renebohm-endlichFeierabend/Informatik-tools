@@ -7,7 +7,8 @@
 > Leitentscheidungen fest; die technische Umsetzung folgt in Phasen
 > (siehe unten).
 
-**Stand: Juli 2026 — Konzeptphase, noch keine Umsetzung begonnen**
+**Stand: Juli 2026 — Optionen 1, 3 und 4 (Links + Abgabe) sind
+umgesetzt; die Teilszenarien-Umsetzung (Optionen 2, 5, 6) steht aus**
 
 ## Bezug: die sechs diskutierten Optionen
 
@@ -32,10 +33,11 @@ zu Teilszenarien, die in ein Gesamtszenario einfließen) und sieht
 **Option 5 und 6 für bestimmte Aufgabenformate als besonders
 passend** — mit den unten festgehaltenen Anforderungen an visuelles
 Feedback, Hilfen, Gamification, Reflexion und Lehrkraft-Sicht.
-Die Optionen 1, 3 und 4 bleiben davon unberührt (kleine, unabhängige
-Bausteine für Hin- und Rückweg) und sind mit dem Konzept kombinierbar:
-Deep-Links verteilen Teilszenarien, der Abgabe-Export transportiert
-Fortschritt, Hilfe-Nutzung und Reflexion.
+Die Optionen 1, 3 und 4 sind als kleine, unabhängige Bausteine für
+Hin- und Rückweg **bereits umgesetzt** (Deep-Links, 🔗-Knopf,
+📤-Abgabe-Knopf mit Projektdatei) und greifen ins Konzept: Deep-Links
+verteilen künftig Teilszenarien, der Abgabe-Export transportiert
+später Fortschritt, Hilfe-Nutzung und Reflexion.
 
 ## Leitentscheidung: Teilszenarien statt Aufgabenliste
 

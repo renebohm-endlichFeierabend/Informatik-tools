@@ -3,7 +3,13 @@ import { Eingabe } from "./engine/eingabe";
 import { Objektbank } from "./ui/objektbank";
 import { KlassenVerwaltung } from "./ui/klassenVerwaltung";
 import { BilderVerwaltung, erstelleBildDialog } from "./ui/bilder";
-import { SZENARIEN } from "./ui/szenarien";
+import { SZENARIEN, Szenario } from "./ui/szenarien";
+import {
+  kodiereProjektFuerLink,
+  dekodiereProjektAusLink,
+  erstelleAbgabeHtml,
+  teileDateien,
+} from "./ui/teilen";
 import { NRW_BIBLIOTHEK, bibliothekEintrag } from "./java/nrwBibliothek";
 import { JavaLaufzeit } from "./java/laufzeit";
 import { MockLaufzeit, MockAbbruch } from "./java/mockLaufzeit";
@@ -269,15 +275,47 @@ $("leeren").addEventListener("click", () => {
 // Projektdatei: über die iPad-Dateien-App speicher- und ladbar.
 const projektDatei = $<HTMLInputElement>("projekt-datei");
 
-$("projekt-speichern").addEventListener("click", () => {
-  const daten = {
+/** Der komplette Projektstand (Klassen + Bilder) – für Datei, Link und Abgabe. */
+function erstelleProjektDaten(): Record<string, unknown> {
+  return {
     format: "javawelt-projekt",
     version: 1,
     gespeichert: new Date().toISOString(),
     klassen: klassenVerwaltung.quelltexte(),
     bilder: bilder.alle(),
   };
-  const blob = new Blob([JSON.stringify(daten, null, 2)], { type: "application/json" });
+}
+
+/**
+ * Prüft Projektdaten (aus Datei, Link oder URL) und übernimmt sie nach
+ * Rückfrage. Gibt true zurück, wenn das Projekt geladen wurde.
+ */
+function uebernimmProjektDaten(roh: unknown, quelle: string): boolean {
+  const daten = roh as {
+    format?: string;
+    klassen?: Record<string, string>;
+    bilder?: Record<string, never>;
+  } | null;
+  const klassen = daten?.klassen ?? {};
+  const namen = Object.keys(klassen).filter((n) => /^[A-Z][A-Za-z0-9]*$/.test(n));
+  if (daten?.format !== "javawelt-projekt" || namen.length === 0) {
+    log(`✗ ${quelle} ist keine JavaWelt-Projektdatei.`);
+    return false;
+  }
+  if (!confirm(`Projekt „${quelle}“ öffnen?\nDie aktuellen Klassen werden ersetzt.`)) return false;
+  klassenVerwaltung.ersetzeAlle(
+    Object.fromEntries(namen.map((n) => [n, String(klassen[n])])),
+  );
+  bilder.ersetzeAlle(daten.bilder ?? {});
+  log(`✓ Projekt „${quelle}“ geöffnet (${namen.length} Klassen).`);
+  void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  return true;
+}
+
+$("projekt-speichern").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(erstelleProjektDaten(), null, 2)], {
+    type: "application/json",
+  });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `javawelt-${new Date().toISOString().slice(0, 10)}.json`;
@@ -292,26 +330,72 @@ projektDatei.addEventListener("change", () => {
   projektDatei.value = "";
   if (!datei) return;
   void datei.text().then((text) => {
-    let daten: { format?: string; klassen?: Record<string, string>; bilder?: Record<string, never> };
+    let daten: unknown;
     try {
       daten = JSON.parse(text);
     } catch {
       log("✗ Das ist keine lesbare Projektdatei.");
       return;
     }
-    const klassen = daten.klassen ?? {};
-    const namen = Object.keys(klassen).filter((n) => /^[A-Z][A-Za-z0-9]*$/.test(n));
-    if (daten.format !== "javawelt-projekt" || namen.length === 0) {
-      log("✗ Das ist keine JavaWelt-Projektdatei.");
-      return;
+    uebernimmProjektDaten(daten, datei.name);
+  });
+});
+
+// --- Aufgaben-Link erzeugen (Projekt komprimiert im Link) ---------------------------------------
+const linkDialog = document.getElementById("link-dialog") as HTMLDialogElement;
+const linkText = $<HTMLTextAreaElement>("link-text");
+
+$("link-erstellen").addEventListener("click", () => {
+  void (async () => {
+    try {
+      const kode = await kodiereProjektFuerLink(erstelleProjektDaten());
+      linkText.value = `${location.origin}${location.pathname}#projekt=${kode}`;
+      linkDialog.showModal();
+    } catch (e) {
+      log("✗ Link konnte nicht erzeugt werden: " + (e as Error).message);
     }
-    if (!confirm(`Projekt „${datei.name}“ öffnen?\nDie aktuellen Klassen werden ersetzt.`)) return;
-    klassenVerwaltung.ersetzeAlle(
-      Object.fromEntries(namen.map((n) => [n, String(klassen[n])])),
-    );
-    bilder.ersetzeAlle((daten.bilder as never) ?? {});
-    log(`✓ Projekt „${datei.name}“ geöffnet (${namen.length} Klassen).`);
-    void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  })();
+});
+$("link-kopieren").addEventListener("click", () => {
+  // Synchron aus der Geste heraus – so erlaubt auch Safari das Kopieren.
+  navigator.clipboard.writeText(linkText.value).then(
+    () => {
+      linkDialog.close();
+      log("✓ Aufgaben-Link kopiert – in OneNote/Teams einfügen.");
+    },
+    () => {
+      linkText.select();
+      log("✗ Kopieren nicht erlaubt – Link im Feld markieren und manuell kopieren.");
+    },
+  );
+});
+$("link-zu").addEventListener("click", () => linkDialog.close());
+
+// --- Abgabe erstellen (Screenshot + Quelltext + Konsole + Projektdatei) --------------------------
+$("abgabe-erstellen").addEventListener("click", () => {
+  // Alles synchron vorbereiten: Safari erlaubt das Share-Sheet nur direkt
+  // aus der Nutzer-Geste heraus (kein await vor navigator.share).
+  const datum = new Date();
+  const stempel = datum.toISOString().slice(0, 10);
+  const html = erstelleAbgabeHtml({
+    datum,
+    laufzeit: status.textContent ?? "",
+    bild: canvas.toDataURL("image/png"),
+    klassen: klassenVerwaltung.quelltexte(),
+    konsole: konsole.innerText,
+  });
+  const dateien = [
+    new File([html], `javawelt-abgabe-${stempel}.html`, { type: "text/html" }),
+    new File([JSON.stringify(erstelleProjektDaten(), null, 2)], `javawelt-projekt-${stempel}.json`, {
+      type: "application/json",
+    }),
+  ];
+  void teileDateien(dateien, "JavaWelt-Abgabe").then((ergebnis) => {
+    if (ergebnis === "geteilt") {
+      log("✓ Abgabe geteilt (Dokument + Projektdatei).");
+    } else if (ergebnis === "heruntergeladen") {
+      log("✓ Abgabe heruntergeladen: Dokument (.html) + Projektdatei (.json) – z. B. in OneNote einfügen.");
+    }
   });
 });
 
@@ -376,6 +460,19 @@ $("bibliothek-zu").addEventListener("click", () => bibliothekDialog.close());
 const szenarienDialog = document.getElementById("szenarien-dialog") as HTMLDialogElement;
 const szenarienListe = $("szenarien-liste");
 
+/** Lädt ein Szenario nach Rückfrage; true, wenn geladen wurde. */
+function ladeSzenario(szenario: Szenario): boolean {
+  if (!confirm(`Szenario „${szenario.titel}“ laden?\nDie aktuellen Klassen werden ersetzt.`)) return false;
+  klassenVerwaltung.ersetzeAlle(szenario.klassen);
+  if (szenario.emojis) bilder.setzeEmojis(szenario.emojis);
+  log(`✓ Szenario „${szenario.titel}“ geladen.`);
+  if (szenario.hinweis && notbetrieb) {
+    log(`⚠ Dieses Szenario ${szenario.hinweis} – zurzeit läuft nur der Notbetrieb (oben „erneut versuchen“).`);
+  }
+  void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  return true;
+}
+
 for (const szenario of SZENARIEN) {
   const karte = document.createElement("div");
   karte.className = "eintrag";
@@ -401,15 +498,7 @@ for (const szenario of SZENARIEN) {
   const knopf = document.createElement("button");
   knopf.textContent = "Laden";
   knopf.onclick = () => {
-    if (!confirm(`Szenario „${szenario.titel}“ laden?\nDie aktuellen Klassen werden ersetzt.`)) return;
-    klassenVerwaltung.ersetzeAlle(szenario.klassen);
-    if (szenario.emojis) bilder.setzeEmojis(szenario.emojis);
-    szenarienDialog.close();
-    log(`✓ Szenario „${szenario.titel}“ geladen.`);
-    if (szenario.hinweis && notbetrieb) {
-      log(`⚠ Dieses Szenario ${szenario.hinweis} – zurzeit läuft nur der Notbetrieb (oben „erneut versuchen“).`);
-    }
-    void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+    if (ladeSzenario(szenario)) szenarienDialog.close();
   };
   karte.appendChild(knopf);
   szenarienListe.appendChild(karte);
@@ -429,10 +518,55 @@ $("zuruecksetzen").addEventListener("click", () => {
   void uebernehmen().catch((e: Error) => log("✗ " + e.message));
 });
 
+// --- Aufgaben-Links (Deep-Links) -----------------------------------------------------------------
+// Die Aufgabe öffnet die Umgebung im richtigen Zustand – ein Tipp in OneNote:
+//   ?szenario=<id>          lädt ein Lernszenario direkt
+//   ?projekt=<URL>          lädt eine vorbereitete Projektdatei (z. B. GitHub Pages)
+//   #projekt=<komprimiert>  das komplette Projekt im Link selbst (🔗-Knopf)
+async function verarbeiteStartLink(): Promise<boolean> {
+  const params = new URLSearchParams(location.search);
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const szenarioId = params.get("szenario");
+  const projektUrl = params.get("projekt");
+  const projektImLink = hash.get("projekt");
+  if (!szenarioId && !projektUrl && !projektImLink) return false;
+  // Adresse aufräumen: Neuladen soll das Projekt nicht noch einmal ersetzen.
+  history.replaceState(null, "", location.pathname);
+  if (szenarioId) {
+    const szenario = SZENARIEN.find((s) => s.id === szenarioId);
+    if (!szenario) {
+      log(`✗ Unbekanntes Szenario im Link: „${szenarioId}“.`);
+      return false;
+    }
+    return ladeSzenario(szenario);
+  }
+  if (projektImLink) {
+    try {
+      return uebernimmProjektDaten(await dekodiereProjektAusLink(projektImLink), "Aufgaben-Link");
+    } catch (e) {
+      log("✗ " + (e as Error).message);
+      return false;
+    }
+  }
+  try {
+    const antwort = await fetch(projektUrl!);
+    if (!antwort.ok) throw new Error(`HTTP ${antwort.status}`);
+    const name = projektUrl!.split("/").pop() || projektUrl!;
+    return uebernimmProjektDaten(await antwort.json(), name);
+  } catch (e) {
+    log(`✗ Projekt aus dem Link konnte nicht geladen werden (${(e as Error).message}).`);
+    return false;
+  }
+}
+
 // --- Start -------------------------------------------------------------------------------------
 oeffneKlasse(aktiveKlasse);
 aktualisiereKnoepfe();
 void (async () => {
-  await initVersprechen;
-  await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  // Erst der Link (löst bei Erfolg selbst das Übernehmen aus), sonst normal.
+  const linkGeladen = await verarbeiteStartLink().catch(() => false);
+  if (!linkGeladen) {
+    await initVersprechen;
+    await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  }
 })();

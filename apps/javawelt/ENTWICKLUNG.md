@@ -172,8 +172,11 @@ Medienbrüche. Besprochene und priorisierte Ideen:
 3. **Aufgaben-Panel mit Auto-Checks** — *größeres Paket, hoher Wert:*
    Szenarien bekommen strukturierte Aufgaben (statt nur Kommentaren) in
    einer Seitenleiste; einfache Checks gegen Parser + Weltzustand
-   („Klasse Kuh erbt von Tier ✓“, „nach Start stehen nur Pinguine ✓“)
+   („Klasse Kuh erbt von Tier ✓”, „nach Start stehen nur Pinguine ✓”)
    haken sich selbst ab. Pilot mit dem Vererbungs-Szenario.
+   **Didaktisches Konzept dazu (Teilszenarien, visuelles Feedback,
+   gestufte Hilfen, Gamification-Regeln, Lehrkraft-Sicht):**
+   `KONZEPT_AUFGABEN.md` — vor der Umsetzung lesen.
 4. **Brücke zum Java-Analyse-Tool** (liegt im selben Repo,
    `java_analyse_tool.html`, nutzt OpenRouter): Knopf „Analysieren“
    übergibt aktuelle Klasse + Aufgabe ans vorhandene Tool.

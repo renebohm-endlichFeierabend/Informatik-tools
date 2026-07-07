@@ -15,6 +15,8 @@
           <button id="projekt-speichern" class="sekundaer" title="Projekt (Klassen + Bilder) als Datei sichern">⬇ Speichern</button>
           <button id="projekt-oeffnen" class="sekundaer" title="Gespeicherte Projektdatei laden">⬆ Öffnen</button>
           <input id="projekt-datei" type="file" accept=".json,application/json" hidden />
+          <button id="abgabe-erstellen" class="sekundaer" title="Abgabe erstellen: Welt-Bild + Quelltext + Konsole als Dokument teilen">📤 Abgabe</button>
+          <button id="link-erstellen" class="sekundaer" title="Aufgaben-Link erzeugen: das aktuelle Projekt komplett im Link">🔗 Link</button>
           <button id="szenarien-auf" class="sekundaer">Szenarien</button>
           <button id="hilfe-auf" class="sekundaer">Hilfe</button>
           <span id="status">Echtes Java wird geladen …</span>
@@ -118,6 +120,20 @@
       </div>
     </dialog>
 
+    <dialog id="link-dialog">
+      <h2>Aufgaben-Link</h2>
+      <p class="leer">
+        Der Link enthält das komplette Projekt (Klassen + Bilder). Wer ihn
+        öffnet, bekommt genau diesen Stand angeboten – so wird aus einer
+        vorbereiteten Aufgabe <b>ein Tipp in OneNote/Teams</b>.
+      </p>
+      <textarea id="link-text" readonly spellcheck="false"></textarea>
+      <div class="dialog-aktionen">
+        <button id="link-kopieren">Kopieren</button>
+        <button id="link-zu" class="sekundaer">Schließen</button>
+      </div>
+    </dialog>
+
     <dialog id="hilfe">
       <h2>So arbeitest du mit der JavaWelt</h2>
       <ol>
@@ -140,6 +156,13 @@
         <li><b>Speichern &amp; Weitermachen:</b> Die App sichert automatisch auf diesem Gerät.
           Mit <code>⬇ Speichern</code> / <code>⬆ Öffnen</code> wandert das Projekt als Datei
           (Dateien-App) — für Gerätewechsel, Sicherung und Abgaben.</li>
+        <li><b>Abgeben:</b> <code>📤 Abgabe</code> erzeugt ein fertiges Abgabe-Dokument
+          (Welt-Bild + Quelltext + Konsole) samt Projektdatei und bietet es auf dem iPad
+          direkt zum Teilen an — z. B. nach OneNote oder Teams.</li>
+        <li><b>Aufgaben-Links:</b> <code>🔗 Link</code> packt das aktuelle Projekt komplett
+          in einen Link (für Lehrkräfte: Aufgabe vorbereiten, Link in OneNote einfügen).
+          Links der Form <code>?szenario=…</code> laden ein Szenario direkt,
+          <code>?projekt=&lt;URL&gt;</code> eine bereitgestellte Projektdatei.</li>
       </ol>
       <h3>Echtes Java im Browser</h3>
       <p>

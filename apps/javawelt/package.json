@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "build:framework": "bash java-framework/build.sh",
     "test": "node tests/laufAlle.mjs",
-    "test:ui": "node tests/uiTest.mjs && node tests/uiTest2.mjs"
+    "test:ui": "node tests/uiTest.mjs && node tests/uiTest2.mjs && node tests/uiTest3.mjs"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

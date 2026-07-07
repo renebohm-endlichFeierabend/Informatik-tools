@@ -2,12 +2,40 @@
 
 > **Zweck:** Fachlich-didaktisches Konzept für die Integration von
 > Aufgaben direkt in die Lernumgebung (Roadmap-Punkte 3 und 4 in
-> `ENTWICKLUNG.md`). Grundlage ist das Feedback von R. Böhm und
-> Kolleg:innen (Juli 2026) zur Optionen-Diskussion. Dieses Dokument
-> hält die Leitentscheidungen fest; die technische Umsetzung folgt in
-> Phasen (siehe unten).
+> `ENTWICKLUNG.md`). Grundlage ist das Kollegen-Feedback (Juli 2026)
+> zur Optionen-Diskussion. Dieses Dokument hält die
+> Leitentscheidungen fest; die technische Umsetzung folgt in Phasen
+> (siehe unten).
 
 **Stand: Juli 2026 — Konzeptphase, noch keine Umsetzung begonnen**
+
+## Bezug: die sechs diskutierten Optionen
+
+Ausgangspunkt war eine Optionen-Liste zur Verzahnung von Aufgaben
+(OneNote) und Entwicklungsumgebung:
+
+1. **Aufgaben-Links (Deep-Links)** — `?szenario=…`, `?projekt=<URL>`,
+   `#projekt=<komprimiert>` (Hinweg).
+2. **Aufgaben in die Umgebung statt daneben** — Aufgaben-Panel als
+   Seitenleiste mit abhakbaren Schritten (Hinweg).
+3. **„Abgabe erstellen“-Knopf** — Screenshot + Quelltext + Konsole
+   über das Share-Sheet (Rückweg).
+4. **Projektdatei als „echte“ Abgabe** — lauffähige Abgabe statt
+   Code-Foto (Rückweg).
+5. **Auto-Checks pro Aufgabe** — Prüfungen gegen Parser + Weltzustand,
+   formatives Feedback im Moment des Arbeitens.
+6. **Brücke zum KI-Analyse-Tool** — Verhalten prüft die JavaWelt,
+   Codequalität/NRW-Konventionen das vorhandene Analyse-Tool.
+
+Das Kollegen-Feedback befürwortet **Option 2 als Kern** (weitergedacht
+zu Teilszenarien, die in ein Gesamtszenario einfließen) und sieht
+**Option 5 und 6 für bestimmte Aufgabenformate als besonders
+passend** — mit den unten festgehaltenen Anforderungen an visuelles
+Feedback, Hilfen, Gamification, Reflexion und Lehrkraft-Sicht.
+Die Optionen 1, 3 und 4 bleiben davon unberührt (kleine, unabhängige
+Bausteine für Hin- und Rückweg) und sind mit dem Konzept kombinierbar:
+Deep-Links verteilen Teilszenarien, der Abgabe-Export transportiert
+Fortschritt, Hilfe-Nutzung und Reflexion.
 
 ## Leitentscheidung: Teilszenarien statt Aufgabenliste
 

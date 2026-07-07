@@ -58,6 +58,25 @@ export class BilderVerwaltung {
     this.onAenderung?.();
   }
 
+  /** Alle Bildzuordnungen (für die Projektdatei). */
+  alle(): Record<string, BildQuelle> {
+    return Object.fromEntries(this.bilder);
+  }
+
+  /** Ersetzt alle Bildzuordnungen (Projektdatei öffnen). */
+  ersetzeAlle(daten: Record<string, BildQuelle>): void {
+    this.bilder.clear();
+    this.elemente.clear();
+    for (const [klasse, quelle] of Object.entries(daten)) {
+      if (quelle && (quelle.art === "emoji" || quelle.art === "daten")) {
+        this.bilder.set(klasse, quelle);
+        if (quelle.art === "daten") this.ladeElement(klasse, quelle.wert);
+      }
+    }
+    this.speichere();
+    this.onAenderung?.();
+  }
+
   /** Setzt Emoji-Vorgaben (z. B. aus einem Szenario) für mehrere Klassen. */
   setzeEmojis(vorgaben: Record<string, string>): void {
     for (const [klasse, emoji] of Object.entries(vorgaben)) {

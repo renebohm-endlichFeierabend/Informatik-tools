@@ -1,5 +1,6 @@
 import { JavaLaufzeit, Ausgabe } from "./laufzeit";
 import { Welt } from "../engine/welt";
+import { Datenbank, ZOO_SEED } from "./datenbank";
 
 // CheerpJ wird per <script> vom CDN geladen und stellt diese globalen
 // Funktionen bereit. Versionen/Signaturen ggf. an die bei euch genutzte
@@ -40,6 +41,8 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   private lib: any = null;
   private steuerung: any = null;
   private ecj: any = null;
+  /** SQL-Datenbank (SQLite im Browser) für die NRW-Datenbankklassen. */
+  private readonly datenbank = new Datenbank(ZOO_SEED);
 
   async init(welt: Welt, ausgabe: Ausgabe): Promise<void> {
     this.welt = welt;
@@ -87,6 +90,9 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       Java_de_schule_jle_Figur_nativGibX: (_lib: unknown, id: number) => welt().gibX(id),
       Java_de_schule_jle_Figur_nativGibY: (_lib: unknown, id: number) => welt().gibY(id),
       Java_de_schule_jle_Welt_nativLaeuft: () => this.laeuftFlag,
+      // Async-Native: CheerpJ wartet auf das Promise (SQL läuft in sql.js).
+      Java_de_schule_jle_DatenbankBruecke_nativFuehreAus: (_lib: unknown, sql: unknown) =>
+        this.datenbank.fuehreAus(String(sql)),
     };
   }
 
@@ -95,6 +101,8 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   async kompiliere(klassen: Record<string, string>): Promise<boolean> {
     this.pruefeBereit();
     this.laeuftFlag = false;
+    // Wie die Welt: Die Datenbank startet nach jedem Übernehmen frisch.
+    this.datenbank.setzeZurueck();
     const nr = ++this.laufNr;
     const quellDir = `/str/quellen${nr}`;
     const ausgabeDir = `/files/out${nr}`;

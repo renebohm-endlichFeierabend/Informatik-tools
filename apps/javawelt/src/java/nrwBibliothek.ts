@@ -16,6 +16,8 @@ export interface BibliothekEintrag {
   titel: string;
   beschreibung: string;
   code: string;
+  /** Klassen, die mitinstalliert werden müssen (z. B. Graph → List). */
+  benoetigt?: string[];
 }
 
 const QUEUE_QUELLE = `/**
@@ -446,6 +448,729 @@ public class List<ContentType> {
 }
 `;
 
+const COMPARABLE_CONTENT_QUELLE = `/**
+ * Interface ComparableContent<ContentType> (NRW-Abiturvorgaben)
+ *
+ * Damit Objekte in einen binären Suchbaum (BinarySearchTree) eingefügt
+ * werden können, muss ihre Klasse dieses Interface implementieren, d. h.
+ * die drei Vergleichsmethoden bereitstellen:
+ *
+ *   public class Schueler implements ComparableContent<Schueler> { ... }
+ */
+public interface ComparableContent<ContentType> {
+
+    /** true, wenn dieses Objekt größer als pContent ist. */
+    public boolean isGreater(ContentType pContent);
+
+    /** true, wenn dieses Objekt gleich pContent ist. */
+    public boolean isEqual(ContentType pContent);
+
+    /** true, wenn dieses Objekt kleiner als pContent ist. */
+    public boolean isLess(ContentType pContent);
+}
+`;
+
+const BINARYTREE_QUELLE = `/**
+ * Klasse BinaryTree<ContentType> (NRW-Abiturvorgaben)
+ *
+ * Objekte der generischen Klasse BinaryTree verwalten beliebige Objekte
+ * vom Typ ContentType in einem Binärbaum. Ein Binärbaum ist entweder leer
+ * oder er besteht aus einer Wurzel mit Inhalt sowie einem linken und einem
+ * rechten Teilbaum, die wiederum Binärbäume sind.
+ */
+public class BinaryTree<ContentType> {
+
+    /* --------- Anfang der privaten inneren Klasse BTNode ------------ */
+
+    private class BTNode<CT> {
+
+        private CT content;
+        private BinaryTree<CT> left, right;
+
+        public BTNode(CT pContent) {
+            this.content = pContent;
+            left = new BinaryTree<CT>();
+            right = new BinaryTree<CT>();
+        }
+    }
+
+    /* ---------- Ende der privaten inneren Klasse BTNode ------------- */
+
+    private BTNode<ContentType> node;
+
+    /** Ein leerer Binärbaum wird erzeugt. */
+    public BinaryTree() {
+        this.node = null;
+    }
+
+    /** Ein Binärbaum mit Wurzelinhalt pContent und leeren Teilbäumen. */
+    public BinaryTree(ContentType pContent) {
+        if (pContent != null) {
+            this.node = new BTNode<ContentType>(pContent);
+        } else {
+            this.node = null;
+        }
+    }
+
+    /**
+     * Ein Binärbaum mit Wurzelinhalt pContent sowie linkem Teilbaum
+     * pLeftTree und rechtem Teilbaum pRightTree wird erzeugt.
+     */
+    public BinaryTree(ContentType pContent, BinaryTree<ContentType> pLeftTree,
+            BinaryTree<ContentType> pRightTree) {
+        if (pContent != null) {
+            this.node = new BTNode<ContentType>(pContent);
+            if (pLeftTree != null) {
+                this.node.left = pLeftTree;
+            } else {
+                this.node.left = new BinaryTree<ContentType>();
+            }
+            if (pRightTree != null) {
+                this.node.right = pRightTree;
+            } else {
+                this.node.right = new BinaryTree<ContentType>();
+            }
+        } else {
+            this.node = null;
+        }
+    }
+
+    /** Die Anfrage liefert den Wert true, wenn der Binärbaum leer ist. */
+    public boolean isEmpty() {
+        return this.node == null;
+    }
+
+    /**
+     * Falls pContent ungleich null ist, wird der Inhalt der Wurzel auf
+     * pContent gesetzt (bei leerem Baum entstehen zwei leere Teilbäume).
+     */
+    public void setContent(ContentType pContent) {
+        if (pContent != null) {
+            if (this.isEmpty()) {
+                this.node = new BTNode<ContentType>(pContent);
+            } else {
+                this.node.content = pContent;
+            }
+        }
+    }
+
+    /** Liefert das Inhaltsobjekt der Wurzel (null bei leerem Baum). */
+    public ContentType getContent() {
+        if (this.isEmpty()) {
+            return null;
+        } else {
+            return this.node.content;
+        }
+    }
+
+    /** Setzt den linken Teilbaum, falls der Baum nicht leer ist. */
+    public void setLeftTree(BinaryTree<ContentType> pTree) {
+        if (!this.isEmpty() && pTree != null) {
+            this.node.left = pTree;
+        }
+    }
+
+    /** Setzt den rechten Teilbaum, falls der Baum nicht leer ist. */
+    public void setRightTree(BinaryTree<ContentType> pTree) {
+        if (!this.isEmpty() && pTree != null) {
+            this.node.right = pTree;
+        }
+    }
+
+    /** Liefert den linken Teilbaum (null bei leerem Baum). */
+    public BinaryTree<ContentType> getLeftTree() {
+        if (!this.isEmpty()) {
+            return this.node.left;
+        } else {
+            return null;
+        }
+    }
+
+    /** Liefert den rechten Teilbaum (null bei leerem Baum). */
+    public BinaryTree<ContentType> getRightTree() {
+        if (!this.isEmpty()) {
+            return this.node.right;
+        } else {
+            return null;
+        }
+    }
+}
+`;
+
+const BST_QUELLE = `/**
+ * Klasse BinarySearchTree<ContentType> (NRW-Abiturvorgaben)
+ *
+ * Objekte der Klasse verwalten ihre Inhaltsobjekte in einem binären
+ * Suchbaum. Der Inhaltstyp muss das Interface
+ * ComparableContent<ContentType> implementieren (isGreater/isEqual/isLess).
+ */
+public class BinarySearchTree<ContentType extends ComparableContent<ContentType>> {
+
+    /* -------- Anfang der privaten inneren Klasse BSTNode ------------ */
+
+    private class BSTNode<CT extends ComparableContent<CT>> {
+
+        private CT content;
+        private BinarySearchTree<CT> left, right;
+
+        public BSTNode(CT pContent) {
+            this.content = pContent;
+            left = new BinarySearchTree<CT>();
+            right = new BinarySearchTree<CT>();
+        }
+    }
+
+    /* --------- Ende der privaten inneren Klasse BSTNode ------------- */
+
+    private BSTNode<ContentType> node;
+
+    /** Ein leerer Suchbaum wird erzeugt. */
+    public BinarySearchTree() {
+        this.node = null;
+    }
+
+    /** Die Anfrage liefert den Wert true, wenn der Suchbaum leer ist. */
+    public boolean isEmpty() {
+        return this.node == null;
+    }
+
+    /**
+     * Falls pContent ungleich null und noch nicht im Baum vorhanden ist,
+     * wird pContent entsprechend der Ordnungsrelation einsortiert.
+     */
+    public void insert(ContentType pContent) {
+        if (pContent != null) {
+            if (this.isEmpty()) {
+                this.node = new BSTNode<ContentType>(pContent);
+            } else if (pContent.isLess(this.node.content)) {
+                this.node.left.insert(pContent);
+            } else if (pContent.isGreater(this.node.content)) {
+                this.node.right.insert(pContent);
+            }
+        }
+    }
+
+    /** Liefert das Inhaltsobjekt der Wurzel (null bei leerem Baum). */
+    public ContentType getContent() {
+        if (this.isEmpty()) {
+            return null;
+        } else {
+            return this.node.content;
+        }
+    }
+
+    /** Liefert den linken Teilbaum (null bei leerem Baum). */
+    public BinarySearchTree<ContentType> getLeftTree() {
+        if (this.isEmpty()) {
+            return null;
+        } else {
+            return this.node.left;
+        }
+    }
+
+    /** Liefert den rechten Teilbaum (null bei leerem Baum). */
+    public BinarySearchTree<ContentType> getRightTree() {
+        if (this.isEmpty()) {
+            return null;
+        } else {
+            return this.node.right;
+        }
+    }
+
+    /**
+     * Sucht pContent im Suchbaum und liefert das gefundene Inhaltsobjekt
+     * zurück (oder null, wenn es nicht vorhanden ist).
+     */
+    public ContentType search(ContentType pContent) {
+        if (this.isEmpty() || pContent == null) {
+            return null;
+        } else {
+            ContentType content = this.getContent();
+            if (pContent.isLess(content)) {
+                return this.getLeftTree().search(pContent);
+            } else if (pContent.isGreater(content)) {
+                return this.getRightTree().search(pContent);
+            } else if (pContent.isEqual(content)) {
+                return content;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Falls ein zu pContent gleiches Objekt im Baum enthalten ist, wird
+     * dieses entfernt; der Baum bleibt dabei ein binärer Suchbaum.
+     */
+    public void remove(ContentType pContent) {
+        if (this.isEmpty() || pContent == null) {
+            return;
+        }
+        if (pContent.isLess(this.node.content)) {
+            this.node.left.remove(pContent);
+        } else if (pContent.isGreater(this.node.content)) {
+            this.node.right.remove(pContent);
+        } else {
+            if (this.node.left.isEmpty()) {
+                if (this.node.right.isEmpty()) {
+                    this.node = null;
+                } else {
+                    this.node = this.getNodeOfRightSuccessor();
+                }
+            } else if (this.node.right.isEmpty()) {
+                this.node = this.getNodeOfLeftSuccessor();
+            } else {
+                if (this.getNodeOfRightSuccessor().left.isEmpty()) {
+                    this.node.content = this.getNodeOfRightSuccessor().content;
+                    this.node.right = this.getNodeOfRightSuccessor().right;
+                } else {
+                    BinarySearchTree<ContentType> previous =
+                            this.node.right.ancestorOfSmallRight();
+                    BSTNode<ContentType> smallest = previous.node.left.node;
+                    this.node.content = smallest.content;
+                    previous.remove(smallest.content);
+                }
+            }
+        }
+    }
+
+    /**
+     * Liefert den Vorgänger-Suchbaum des kleinsten Inhaltsobjekts im
+     * rechten Teilbaum (Hilfsmethode für remove).
+     */
+    private BinarySearchTree<ContentType> ancestorOfSmallRight() {
+        if (this.getNodeOfLeftSuccessor().left.isEmpty()) {
+            return this;
+        } else {
+            return this.node.left.ancestorOfSmallRight();
+        }
+    }
+
+    private BSTNode<ContentType> getNodeOfLeftSuccessor() {
+        return this.node.left.node;
+    }
+
+    private BSTNode<ContentType> getNodeOfRightSuccessor() {
+        return this.node.right.node;
+    }
+}
+`;
+
+const VERTEX_QUELLE = `/**
+ * Klasse Vertex (NRW-Abiturvorgaben)
+ *
+ * Objekte der Klasse Vertex sind Knoten eines Graphen mit eindeutiger
+ * ID-Bezeichnung. Sie können markiert werden (z. B. für Suchverfahren).
+ */
+public class Vertex {
+
+    private String id;
+    private boolean mark;
+
+    /** Ein Knoten mit der ID pID wird erzeugt; die Markierung ist false. */
+    public Vertex(String pID) {
+        id = pID;
+        mark = false;
+    }
+
+    /** Die Anfrage liefert die ID des Knotens. */
+    public String getID() {
+        return id;
+    }
+
+    /** Der Knoten wird markiert (true) bzw. die Markierung entfernt (false). */
+    public void setMark(boolean pMark) {
+        mark = pMark;
+    }
+
+    /** Die Anfrage liefert true, wenn der Knoten markiert ist. */
+    public boolean isMarked() {
+        return mark;
+    }
+}
+`;
+
+const EDGE_QUELLE = `/**
+ * Klasse Edge (NRW-Abiturvorgaben)
+ *
+ * Objekte der Klasse Edge sind ungerichtete, gewichtete Kanten eines
+ * Graphen. Sie verbinden zwei Knoten und können markiert werden.
+ */
+public class Edge {
+
+    private Vertex[] vertices;
+    private double weight;
+    private boolean mark;
+
+    /**
+     * Eine Kante zwischen pVertex und pAnotherVertex mit dem Gewicht
+     * pWeight wird erzeugt; die Markierung ist false.
+     */
+    public Edge(Vertex pVertex, Vertex pAnotherVertex, double pWeight) {
+        vertices = new Vertex[2];
+        vertices[0] = pVertex;
+        vertices[1] = pAnotherVertex;
+        weight = pWeight;
+        mark = false;
+    }
+
+    /** Liefert die beiden verbundenen Knoten als Feld der Länge 2. */
+    public Vertex[] getVertices() {
+        return vertices;
+    }
+
+    /** Setzt das Gewicht der Kante auf pWeight. */
+    public void setWeight(double pWeight) {
+        weight = pWeight;
+    }
+
+    /** Die Anfrage liefert das Gewicht der Kante. */
+    public double getWeight() {
+        return weight;
+    }
+
+    /** Die Kante wird markiert (true) bzw. die Markierung entfernt (false). */
+    public void setMark(boolean pMark) {
+        mark = pMark;
+    }
+
+    /** Die Anfrage liefert true, wenn die Kante markiert ist. */
+    public boolean isMarked() {
+        return mark;
+    }
+}
+`;
+
+const GRAPH_QUELLE = `/**
+ * Klasse Graph (NRW-Abiturvorgaben)
+ *
+ * Objekte der Klasse Graph sind ungerichtete, gewichtete Graphen aus
+ * Knoten (Vertex) und Kanten (Edge). Die Listen, die der Graph liefert
+ * (getVertices, getNeighbours, ...), sind NRW-Listen und werden mit
+ * toFirst()/hasAccess()/getContent()/next() durchlaufen.
+ */
+public class Graph {
+
+    private List<Vertex> vertices;
+    private List<Edge> edges;
+
+    /** Ein leerer Graph wird erzeugt. */
+    public Graph() {
+        vertices = new List<Vertex>();
+        edges = new List<Edge>();
+    }
+
+    /** Die Anfrage liefert true, wenn der Graph keine Knoten enthält. */
+    public boolean isEmpty() {
+        return vertices.isEmpty();
+    }
+
+    /**
+     * Der Knoten pVertex wird dem Graphen hinzugefügt, falls es noch
+     * keinen Knoten mit derselben ID gibt.
+     */
+    public void addVertex(Vertex pVertex) {
+        if (pVertex != null && pVertex.getID() != null
+                && getVertex(pVertex.getID()) == null) {
+            vertices.append(pVertex);
+        }
+    }
+
+    /**
+     * Die Kante pEdge wird dem Graphen hinzugefügt, falls ihre beiden
+     * Knoten im Graphen liegen, verschieden sind und es noch keine Kante
+     * zwischen ihnen gibt.
+     */
+    public void addEdge(Edge pEdge) {
+        if (pEdge != null) {
+            Vertex[] enden = pEdge.getVertices();
+            if (enden[0] != null && enden[1] != null && enden[0] != enden[1]
+                    && getVertex(enden[0].getID()) == enden[0]
+                    && getVertex(enden[1].getID()) == enden[1]
+                    && getEdge(enden[0], enden[1]) == null) {
+                edges.append(pEdge);
+            }
+        }
+    }
+
+    /** Liefert den Knoten mit der ID pID (oder null). */
+    public Vertex getVertex(String pID) {
+        Vertex ergebnis = null;
+        vertices.toFirst();
+        while (vertices.hasAccess() && ergebnis == null) {
+            if (vertices.getContent().getID().equals(pID)) {
+                ergebnis = vertices.getContent();
+            }
+            vertices.next();
+        }
+        return ergebnis;
+    }
+
+    /** Entfernt pVertex samt aller Kanten, die zu ihm führen. */
+    public void removeVertex(Vertex pVertex) {
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            Vertex[] enden = edges.getContent().getVertices();
+            if (enden[0] == pVertex || enden[1] == pVertex) {
+                edges.remove();
+            } else {
+                edges.next();
+            }
+        }
+        vertices.toFirst();
+        while (vertices.hasAccess()) {
+            if (vertices.getContent() == pVertex) {
+                vertices.remove();
+            } else {
+                vertices.next();
+            }
+        }
+    }
+
+    /** Entfernt die Kante pEdge aus dem Graphen. */
+    public void removeEdge(Edge pEdge) {
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            if (edges.getContent() == pEdge) {
+                edges.remove();
+            } else {
+                edges.next();
+            }
+        }
+    }
+
+    /** Liefert eine neue Liste aller Knoten des Graphen. */
+    public List<Vertex> getVertices() {
+        List<Vertex> ergebnis = new List<Vertex>();
+        vertices.toFirst();
+        while (vertices.hasAccess()) {
+            ergebnis.append(vertices.getContent());
+            vertices.next();
+        }
+        return ergebnis;
+    }
+
+    /** Liefert eine neue Liste aller Kanten des Graphen. */
+    public List<Edge> getEdges() {
+        List<Edge> ergebnis = new List<Edge>();
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            ergebnis.append(edges.getContent());
+            edges.next();
+        }
+        return ergebnis;
+    }
+
+    /** Liefert eine neue Liste aller Kanten, die an pVertex hängen. */
+    public List<Edge> getEdges(Vertex pVertex) {
+        List<Edge> ergebnis = new List<Edge>();
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            Vertex[] enden = edges.getContent().getVertices();
+            if (enden[0] == pVertex || enden[1] == pVertex) {
+                ergebnis.append(edges.getContent());
+            }
+            edges.next();
+        }
+        return ergebnis;
+    }
+
+    /** Liefert eine neue Liste aller Nachbarknoten von pVertex. */
+    public List<Vertex> getNeighbours(Vertex pVertex) {
+        List<Vertex> ergebnis = new List<Vertex>();
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            Vertex[] enden = edges.getContent().getVertices();
+            if (enden[0] == pVertex) {
+                ergebnis.append(enden[1]);
+            } else if (enden[1] == pVertex) {
+                ergebnis.append(enden[0]);
+            }
+            edges.next();
+        }
+        return ergebnis;
+    }
+
+    /** Liefert die Kante zwischen pVertex und pAnotherVertex (oder null). */
+    public Edge getEdge(Vertex pVertex, Vertex pAnotherVertex) {
+        Edge ergebnis = null;
+        edges.toFirst();
+        while (edges.hasAccess() && ergebnis == null) {
+            Vertex[] enden = edges.getContent().getVertices();
+            if ((enden[0] == pVertex && enden[1] == pAnotherVertex)
+                    || (enden[0] == pAnotherVertex && enden[1] == pVertex)) {
+                ergebnis = edges.getContent();
+            }
+            edges.next();
+        }
+        return ergebnis;
+    }
+
+    /** Setzt die Markierung ALLER Knoten auf pMark. */
+    public void setAllVertexMarks(boolean pMark) {
+        vertices.toFirst();
+        while (vertices.hasAccess()) {
+            vertices.getContent().setMark(pMark);
+            vertices.next();
+        }
+    }
+
+    /** Setzt die Markierung ALLER Kanten auf pMark. */
+    public void setAllEdgeMarks(boolean pMark) {
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            edges.getContent().setMark(pMark);
+            edges.next();
+        }
+    }
+
+    /** Die Anfrage liefert true, wenn alle Knoten markiert sind. */
+    public boolean allVerticesMarked() {
+        boolean ergebnis = true;
+        vertices.toFirst();
+        while (vertices.hasAccess()) {
+            if (!vertices.getContent().isMarked()) {
+                ergebnis = false;
+            }
+            vertices.next();
+        }
+        return ergebnis;
+    }
+
+    /** Die Anfrage liefert true, wenn alle Kanten markiert sind. */
+    public boolean allEdgesMarked() {
+        boolean ergebnis = true;
+        edges.toFirst();
+        while (edges.hasAccess()) {
+            if (!edges.getContent().isMarked()) {
+                ergebnis = false;
+            }
+            edges.next();
+        }
+        return ergebnis;
+    }
+}
+`;
+
+const QUERYRESULT_QUELLE = `/**
+ * Klasse QueryResult (NRW-Abiturvorgaben)
+ *
+ * Ein Objekt der Klasse QueryResult stellt das Ergebnis einer
+ * SQL-Abfrage dar: die Daten als Zeilen/Spalten-Feld sowie die
+ * Spaltennamen und Spaltentypen.
+ */
+public class QueryResult {
+
+    private String[][] data;
+    private String[] columnNames;
+    private String[] columnTypes;
+
+    /**
+     * Ein neues Abfrage-Ergebnis wird erzeugt. (In den Original-Vorgaben
+     * erzeugt nur DatabaseConnector solche Objekte.)
+     */
+    public QueryResult(String[][] pData, String[] pColumnNames, String[] pColumnTypes) {
+        data = pData;
+        columnNames = pColumnNames;
+        columnTypes = pColumnTypes;
+    }
+
+    /** Liefert die Daten: ein Feld von Zeilen, jede Zeile ein String-Feld. */
+    public String[][] getData() {
+        return data;
+    }
+
+    /** Liefert die Namen der Spalten. */
+    public String[] getColumnNames() {
+        return columnNames;
+    }
+
+    /** Liefert die Typen der Spalten (z. B. TEXT, INTEGER). */
+    public String[] getColumnTypes() {
+        return columnTypes;
+    }
+
+    /** Liefert die Anzahl der Zeilen. */
+    public int getRowCount() {
+        return data.length;
+    }
+
+    /** Liefert die Anzahl der Spalten. */
+    public int getColumnCount() {
+        return columnNames.length;
+    }
+}
+`;
+
+const DATABASECONNECTOR_QUELLE = `/**
+ * Klasse DatabaseConnector (NRW-Abiturvorgaben, Browser-Fassung)
+ *
+ * Ein Objekt der Klasse ermöglicht SQL auf einer Datenbank. In der
+ * JavaWelt läuft die Datenbank (SQLite) direkt im Browser – die
+ * Verbindungsdaten werden wie im Abitur entgegengenommen, aber nicht
+ * benötigt. Die Beispiel-Datenbank enthält die Tabellen
+ *   gehege(id, name, klima)
+ *   tier(id, name, art, geburtsjahr, gehege_id → gehege.id)
+ * und wird bei jedem ✓ Übernehmen auf den Anfang zurückgesetzt.
+ */
+public class DatabaseConnector {
+
+    private QueryResult currentQueryResult = null;
+    private String message = null;
+
+    /** Baut die "Verbindung" auf (Parameter nur zur Abitur-Kompatibilität). */
+    public DatabaseConnector(String pIP, int pPort, String pDatabase,
+            String pUsername, String pPassword) {
+    }
+
+    /**
+     * Der Auftrag schickt das SQL-Statement an die Datenbank.
+     * Ein Abfrage-Ergebnis ist danach über getCurrentQueryResult()
+     * abrufbar, ein Fehler über getErrorMessage().
+     */
+    public void executeStatement(String pSQLStatement) {
+        currentQueryResult = null;
+        message = null;
+        String antwort = DatenbankBruecke.fuehreAus(pSQLStatement);
+        String[] teile = antwort.split("\\u001E", -1);
+        if (teile[0].equals("fehler")) {
+            message = teile.length > 1 ? teile[1] : "Unbekannter Datenbankfehler.";
+            return;
+        }
+        if (teile.length < 3) {
+            return; // kein Abfrage-Ergebnis (INSERT, UPDATE, CREATE, ...)
+        }
+        String[] spalten = teile[1].split("\\u001F", -1);
+        String[] typen = teile[2].split("\\u001F", -1);
+        String[][] daten = new String[teile.length - 3][];
+        for (int i = 3; i < teile.length; i++) {
+            daten[i - 3] = teile[i].split("\\u001F", -1);
+        }
+        currentQueryResult = new QueryResult(daten, spalten, typen);
+    }
+
+    /**
+     * Liefert das Ergebnis der letzten SELECT-Abfrage – oder null, wenn
+     * die letzte Anweisung kein Ergebnis hatte oder fehlschlug.
+     */
+    public QueryResult getCurrentQueryResult() {
+        return currentQueryResult;
+    }
+
+    /**
+     * Liefert die Fehlermeldung der letzten Anweisung – oder null,
+     * wenn sie fehlerfrei war.
+     */
+    public String getErrorMessage() {
+        return message;
+    }
+
+    /** Schließt die Verbindung (im Browser: nichts zu tun). */
+    public void close() {
+    }
+}
+`;
+
 export const NRW_BIBLIOTHEK: BibliothekEintrag[] = [
   {
     name: "Stack",
@@ -466,4 +1191,65 @@ export const NRW_BIBLIOTHEK: BibliothekEintrag[] = [
       "isEmpty() · hasAccess() · next() · toFirst() · toLast() · getContent() · setContent() · insert() · append() · concat() · remove(). Mit interner Positionsanzeige („aktuelles Objekt“).",
     code: LIST_QUELLE,
   },
+  {
+    name: "BinaryTree",
+    titel: "BinaryTree<ContentType> — Binärbaum",
+    beschreibung:
+      "Drei Konstruktoren · isEmpty() · getContent() · setContent() · getLeftTree() · getRightTree() · setLeftTree() · setRightTree(). Grundlage für Traversierungen.",
+    code: BINARYTREE_QUELLE,
+  },
+  {
+    name: "BinarySearchTree",
+    titel: "BinarySearchTree<ContentType> — binärer Suchbaum",
+    beschreibung:
+      "isEmpty() · insert() · search() · remove() · getContent() · getLeftTree() · getRightTree(). Der Inhaltstyp implementiert ComparableContent (wird mitinstalliert).",
+    code: BST_QUELLE,
+    benoetigt: ["ComparableContent"],
+  },
+  {
+    name: "ComparableContent",
+    titel: "ComparableContent<ContentType> — Interface",
+    beschreibung:
+      "isGreater() · isEqual() · isLess(). Muss vom Inhaltstyp eines binären Suchbaums implementiert werden.",
+    code: COMPARABLE_CONTENT_QUELLE,
+  },
+  {
+    name: "Graph",
+    titel: "Graph — ungerichteter, gewichteter Graph",
+    beschreibung:
+      "addVertex/addEdge · getVertex/getEdge · getVertices/getEdges/getNeighbours (als NRW-List) · Markierungen für Such-/Wegalgorithmen. Vertex, Edge und List werden mitinstalliert.",
+    code: GRAPH_QUELLE,
+    benoetigt: ["Vertex", "Edge", "List"],
+  },
+  {
+    name: "Vertex",
+    titel: "Vertex — Knoten eines Graphen",
+    beschreibung: "Vertex(String pID) · getID() · setMark() · isMarked().",
+    code: VERTEX_QUELLE,
+  },
+  {
+    name: "Edge",
+    titel: "Edge — gewichtete Kante eines Graphen",
+    beschreibung: "Edge(v1, v2, gewicht) · getVertices() · getWeight()/setWeight() · setMark()/isMarked().",
+    code: EDGE_QUELLE,
+  },
+  {
+    name: "DatabaseConnector",
+    titel: "DatabaseConnector — SQL-Zugriff",
+    beschreibung:
+      "executeStatement(sql) · getCurrentQueryResult() · getErrorMessage() · close(). Spricht die eingebaute SQLite-Datenbank im Browser an (Beispiel: Tabellen gehege und tier). QueryResult wird mitinstalliert.",
+    code: DATABASECONNECTOR_QUELLE,
+    benoetigt: ["QueryResult"],
+  },
+  {
+    name: "QueryResult",
+    titel: "QueryResult — Ergebnis einer SQL-Abfrage",
+    beschreibung: "getData() · getColumnNames() · getColumnTypes() · getRowCount() · getColumnCount().",
+    code: QUERYRESULT_QUELLE,
+  },
 ];
+
+/** Einen Eintrag samt Name nachschlagen. */
+export function bibliothekEintrag(name: string): BibliothekEintrag | null {
+  return NRW_BIBLIOTHEK.find((e) => e.name === name) ?? null;
+}

@@ -12,13 +12,13 @@
         <h1>JavaWelt</h1>
         <span class="untertitel">Java lernen im Browser</span>
         <div class="rechts">
+          <button id="projekt-speichern" class="sekundaer" title="Projekt (Klassen + Bilder) als Datei sichern">⬇ Speichern</button>
+          <button id="projekt-oeffnen" class="sekundaer" title="Gespeicherte Projektdatei laden">⬆ Öffnen</button>
+          <input id="projekt-datei" type="file" accept=".json,application/json" hidden />
           <button id="szenarien-auf" class="sekundaer">Szenarien</button>
           <button id="hilfe-auf" class="sekundaer">Hilfe</button>
-          <label class="schalter" title="Kompiliert und führt vollständiges Java im Browser aus (CheerpJ)">
-            <input type="checkbox" id="cheerpj" />
-            Echtes Java
-          </label>
-          <span id="status">Übungsmodus</span>
+          <span id="status">Echtes Java wird geladen …</span>
+          <button id="laufzeit-neu" class="sekundaer mini" hidden title="Echtes Java (CheerpJ) erneut laden">erneut versuchen</button>
         </div>
       </header>
 
@@ -131,15 +131,24 @@
           <code>while (laeuft()) { … warte(100); }</code>. <code>■ Stopp</code> beendet die Schleife.</li>
         <li><b>Bilder:</b> Über den 🖼-Knopf bekommt eine Klasse ein Emoji oder eigenes Bild.</li>
         <li><b>Bibliothek &amp; Szenarien:</b> <code>📚 Bibliothek</code> fügt die NRW-Klassen
-          (Stack, Queue, List) als editierbare Kopie hinzu; <code>Szenarien</code> (oben) lädt
-          fertige Unterrichts-Sätze mit Aufgaben.</li>
+          (Stack, Queue, List, BinaryTree, BinarySearchTree, Graph, DatabaseConnector …) als
+          editierbare Kopie hinzu; <code>Szenarien</code> (oben) lädt fertige Unterrichts-Sätze
+          mit Aufgaben.</li>
+        <li><b>SQL:</b> Eine echte SQLite-Datenbank läuft im Browser mit
+          (Tabellen <code>gehege</code> und <code>tier</code>) — über <code>DatabaseConnector</code>
+          wie im Abitur abfragbar. Bei <code>✓ Übernehmen</code> startet sie frisch.</li>
+        <li><b>Speichern &amp; Weitermachen:</b> Die App sichert automatisch auf diesem Gerät.
+          Mit <code>⬇ Speichern</code> / <code>⬆ Öffnen</code> wandert das Projekt als Datei
+          (Dateien-App) — für Gerätewechsel, Sicherung und Abgaben.</li>
       </ol>
-      <h3>Übungsmodus und echtes Java</h3>
+      <h3>Echtes Java im Browser</h3>
       <p>
-        Ohne den Schalter „Echtes Java“ läuft der <b>Übungsmodus</b>: Er funktioniert sofort und offline,
-        versteht aber nur den typischen Unterrichts-Code (Methodenaufrufe, Variablen mit <code>new</code>,
-        <code>for</code>-Zählschleifen, <code>while (laeuft())</code>). Mit „Echtes Java“ wird dein Code
-        von einem echten Java-Compiler im Browser übersetzt – dann geht alles, was Java kann.
+        Dein Code wird immer von einem <b>echten Java-Compiler</b> übersetzt und in einer JVM im
+        Browser ausgeführt (CheerpJ) – es geht alles, was Java kann. Nur wenn CheerpJ nicht geladen
+        werden kann (kein Internet, Filter im Schulnetz), springt automatisch ein
+        <b>eingeschränkter Notbetrieb</b> ein, der den typischen Unterrichts-Code direkt ausführt
+        (Methodenaufrufe, <code>new</code>, Zählschleifen, <code>while (laeuft())</code>,
+        <code>return</code>). Oben rechts erscheint dann „erneut versuchen“.
       </p>
       <div class="dialog-aktionen">
         <button id="zuruecksetzen" class="gefahr">Alle Klassen auf Anfang zurücksetzen</button>

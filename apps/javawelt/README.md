@@ -14,9 +14,10 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-Läuft sofort im **Übungsmodus** (kein Download, kein Server, offline).
-Für vollständiges Java den Schalter **„Echtes Java“** aktivieren (CheerpJ,
-siehe unten).
+Es läuft **immer echtes Java** (Compiler + JVM im Browser, CheerpJ) —
+ohne Modus-Schalter. Nur wenn CheerpJ nicht geladen werden kann (offline,
+Filter im Schulnetz), springt automatisch ein klar gekennzeichneter
+**Notbetrieb** ein (eingeschränkter Interpreter, siehe unten).
 
 ## Das Unterrichts-Modell
 
@@ -75,10 +76,35 @@ siehe unten).
   (`nenne` statt Namens-Konstruktor in Unterklassen — Konstruktoren werden
   in Java nicht vererbt, und `super(...)`-Gerüst soll vermieden werden.)
 
-- **NRW-Klassenbibliothek (📚):** `Stack<ContentType>`, `Queue<ContentType>`
-  und `List<ContentType>` nach den Abiturvorgaben NRW lassen sich per Knopf
-  als **editierbare Kopie** ins Projekt holen — verwenden im GK, lesen und
-  verändern im LK. (Ausführen braucht „Echtes Java“, s. u.)
+- **NRW-Klassenbibliothek (📚):** Alle Datenstruktur-Klassen der
+  Abiturvorgaben NRW lassen sich per Knopf als **editierbare Kopie** ins
+  Projekt holen — verwenden im GK, lesen und verändern im LK:
+  `Stack`, `Queue`, `List`, `BinaryTree`, `BinarySearchTree` (+ Interface
+  `ComparableContent`), `Graph`/`Vertex`/`Edge`. Abhängigkeiten werden
+  automatisch mitinstalliert (Graph → List/Vertex/Edge, BST →
+  ComparableContent). Die Semantik aller Klassen ist mit einer echten JVM
+  getestet (inkl. aller `remove`-Fälle im Suchbaum). Die
+  Netzwerkklassen der Vorgaben sind bewusst außen vor (kein
+  Socket-Zugriff im Browser).
+
+- **Datenbanken & SQL (Q1):** Eine **echte SQLite-Datenbank** läuft per
+  WebAssembly im Browser (sql.js, selbst gehostet unter
+  `public/sql-wasm.{js,wasm}` — kein CDN, kein Server). Die NRW-Klassen
+  `DatabaseConnector` und `QueryResult` sind in der Bibliothek
+  (editierbar) und sprechen sie über die interne `DatenbankBruecke` an.
+  Beispiel-Schema: `gehege(id, name, klima)` und
+  `tier(id, name, art, geburtsjahr, gehege_id)` — eine 1:n-Beziehung für
+  ER-Diagramm, Schema-Diskussion, Normalformen und JOINs. Beim
+  ✓ Übernehmen wird die Datenbank (wie die Welt) auf den Seed
+  zurückgesetzt, damit alle reproduzierbar mit denselben Daten starten.
+  SQL-Verhalten und String-Protokoll sind mit echter SQLite und echter
+  JVM getestet.
+
+- **Projekt speichern/öffnen (⬇/⬆):** Der Arbeitsstand (alle Klassen +
+  Bilder) lässt sich als JSON-Datei sichern und wieder öffnen — auf dem
+  iPad über die Dateien-App. Damit funktionieren Gerätewechsel, Sicherung
+  und Abgaben (Moodle/Teams/AirDrop). Unabhängig davon sichert die App
+  jede Eingabe zusätzlich im localStorage des Geräts.
 
 - **Bilder für Klassen (🖼):** Jede Figuren-Klasse bekommt per Knopf ein
   Emoji oder ein eigenes (automatisch verkleinertes) Bild; die Engine
@@ -86,14 +112,15 @@ siehe unten).
 
 - **Lernszenarien (Kernlehrplan NRW):** Der „Szenarien“-Knopf lädt fertige
   Klassensätze mit Aufgaben-Kommentaren:
-  | Szenario | Stufe / KLP-Bezug | läuft im Übungsmodus? |
+  | Szenario | Stufe / KLP-Bezug | läuft auch im Notbetrieb? |
   |---|---|---|
   | Erste Schritte: Objekte & Klassen | EF · Einstieg OOP | ja |
   | Vererbung & Polymorphie (Tier/Hund/Katze) | Q1 · Wiederholung | ja |
-  | Arrays & Zählschleifen (Roboter-Gruppe) | Q1 · Wiederholung | nein → Echtes Java |
-  | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
-  | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein → Echtes Java |
-  | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein → Echtes Java |
+  | Arrays & Zählschleifen (Roboter-Gruppe) | Q1 · Wiederholung | nein |
+  | Stack: der Kistenstapel (LIFO) | Q1 · lineare Strukturen | nein |
+  | Queue: die Warteschlange (FIFO) | Q1 · lineare Strukturen | nein |
+  | List: der Zug (Listendurchlauf) | Q1 · lineare Strukturen | nein |
+  | Datenbank: der Zoo (SQL, JOIN, ER/Normalformen) | Q1 · Datenbanken | nein |
 
 - **Sichtbare Abläufe:** Bewegungen wandern in eine Aktions-Warteschlange
   und werden nacheinander animiert — ein `laufeQuadrat(100)` ist als
@@ -121,28 +148,31 @@ siehe unten).
    Java, offline)     · Natives steuern die Welt-Engine
 ```
 
-Beide Laufzeiten bedienen dieselben Abläufe (übernehmen → platzieren →
-Methoden aufrufen → Spiel starten). Der **Übungsmodus** interpretiert die
-typische Unterrichts-Teilmenge von Java selbst (Methodenaufrufe, Variablen
-mit `new`, `for`-Zählschleifen, `while (laeuft())`) und erklärt freundlich,
-wenn etwas nur mit echtem Java geht. **CheerpJ** kompiliert und führt
-vollständiges Java aus — komplett clientseitig, auch auf dem iPad.
+**Es gibt keinen Modus-Schalter:** Die App startet immer mit der echten
+Java-Laufzeit (**CheerpJ**: ECJ-Compiler + JVM, komplett clientseitig,
+auch auf dem iPad). Nur wenn CheerpJ nicht geladen werden kann, springt
+der **Übungsmodus als Notbetrieb** ein — deutlich markiert
+(„⚠ Notbetrieb“ + „erneut versuchen“-Knopf). Er interpretiert die
+typische Unterrichts-Teilmenge (Methodenaufrufe, `new`,
+`for`-Zählschleifen, `while (laeuft())`, `return`) und erklärt
+freundlich, was erst mit echtem Java geht. Beide Laufzeiten bedienen
+dieselben Abläufe (übernehmen → platzieren → Methoden aufrufen → Spiel
+starten).
 
 ## CheerpJ-Pfad validieren (einziger offener Punkt)
 
 Der CheerpJ-Pfad ist vollständig implementiert, konnte in der Build-Umgebung
 aber nicht ausgeführt werden (CDN blockiert). Bitte im Browser prüfen:
 
-1. Schalter **„Echtes Java“** → „CheerpJ bereit“ sollte erscheinen.
-   Wenn nicht: Das (Schul-)Netz blockiert `cjrtnc.leaningtech.com`
-   → CheerpJ selbst hosten (Lizenz für Schulen prüfen, Datenschutz!).
+1. Beim Laden sollte „CheerpJ bereit“ erscheinen. Zeigt der Status
+   stattdessen „⚠ Notbetrieb“, blockiert das (Schul-)Netz
+   `cjrtnc.leaningtech.com` → CheerpJ selbst hosten (Lizenz für Schulen
+   prüfen, Datenschutz!).
 2. **✓ Übernehmen** übersetzt die Klassen mit ECJ (liegt als
    `public/ecj.jar` bei); Compilerfehler erscheinen mit korrigierten
    Zeilennummern in der Konsole.
 3. Objekt platzieren, Methode aufrufen, **▶ Start** — läuft alles über
    `de.schule.jle.Steuerung` (Reflexion) bzw. die `nativ*`-Bridge.
-
-Fällt CheerpJ aus, wechselt die App automatisch zurück in den Übungsmodus.
 
 ## Projektstruktur
 
@@ -152,8 +182,8 @@ src/engine/                    Welt, Figur (Aktions-Queue), Eingabe (Touch)
 src/ui/klassenVerwaltung.ts    Quelltexte, Vorlagen, localStorage, Vererbung
 src/ui/objektbank.ts           Klassen → neu/Quelltext · Objekte · Methoden
 src/java/javaParser.ts         kleiner Java-Parser (Signaturen + Übungsmodus)
-src/java/laufzeit.ts           Interface Übungsmodus ⇄ CheerpJ
-src/java/mockLaufzeit.ts       Übungsmodus-Interpreter (offline)
+src/java/laufzeit.ts           Interface CheerpJ ⇄ Notbetrieb
+src/java/mockLaufzeit.ts       Übungsmodus-Interpreter (Notbetrieb, offline)
 src/java/cheerpjLaufzeit.ts    echtes Java im Browser (ECJ + Reflexion)
 java-framework/                Java-API (Figur, Welt, Steuerung)
                                build.sh → public/framework.jar
@@ -169,13 +199,15 @@ Quelltexten passt.
 2. Weitere Szenarien entlang des KLP NRW:
    - **Suchen & Sortieren auf linearen Strukturen** (Q1): Säulen-Figuren
      nach Größe sortieren (Bubble-/Selectionsort sichtbar animiert).
-   - **BinaryTree / BinarySearchTree** (Q1/Q2) in der Bibliothek ergänzen,
-     Szenario „Baum pflanzen“: Knoten-Figuren, die sich beim `insert`
-     als Baum anordnen; Traversierungen ablaufen lassen.
-   - **Graphen** (Q2, LK): Vertex/Edge/Graph aus den NRW-Materialien,
-     Szenario Wegsuche (Tiefensuche/Breitensuche mit Markierung).
+   - **Baum-Szenario** (Q1/Q2): Knoten-Figuren, die sich beim `insert`
+     in den BinarySearchTree als Baum anordnen; Traversierungen.
+   - **Graph-Szenario** (Q2, LK): Wegsuche (Tiefen-/Breitensuche mit
+     Markierung) auf den vorhandenen Graph-Klassen.
    - **Automaten** (Q2): Zustands-Figuren, ein Eingabewort läuft als
      Figur durch den Automaten.
+   - **Datenbank-Ausbau**: eigene Seeds pro Lerngruppe (z. B. Schulmensa,
+     Fußballliga), Highscore-Tabelle, in die das Spiel per INSERT
+     schreibt; ER-Diagramm-Ansicht in der Oberfläche.
 3. Monaco-Editor mit Java-Syntaxfarben statt `textarea`.
 4. Tastatur-/Touch-Eingabe für Spiele (`istTasteGedrueckt(...)`),
    Kollisionen (`beruehrt(...)`).

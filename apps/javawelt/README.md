@@ -75,10 +75,22 @@ siehe unten).
   (`nenne` statt Namens-Konstruktor in Unterklassen — Konstruktoren werden
   in Java nicht vererbt, und `super(...)`-Gerüst soll vermieden werden.)
 
-- **NRW-Klassenbibliothek (📚):** `Stack<ContentType>`, `Queue<ContentType>`
-  und `List<ContentType>` nach den Abiturvorgaben NRW lassen sich per Knopf
-  als **editierbare Kopie** ins Projekt holen — verwenden im GK, lesen und
-  verändern im LK. (Ausführen braucht „Echtes Java“, s. u.)
+- **NRW-Klassenbibliothek (📚):** Alle Datenstruktur-Klassen der
+  Abiturvorgaben NRW lassen sich per Knopf als **editierbare Kopie** ins
+  Projekt holen — verwenden im GK, lesen und verändern im LK:
+  `Stack`, `Queue`, `List`, `BinaryTree`, `BinarySearchTree` (+ Interface
+  `ComparableContent`), `Graph`/`Vertex`/`Edge`. Abhängigkeiten werden
+  automatisch mitinstalliert (Graph → List/Vertex/Edge, BST →
+  ComparableContent). Die Semantik aller Klassen ist mit einer echten JVM
+  getestet (inkl. aller `remove`-Fälle im Suchbaum). Ausführen braucht
+  „Echtes Java“, s. u. — die Netzwerk-/Datenbankklassen der Vorgaben sind
+  bewusst außen vor (kein Socket-/JDBC-Zugriff im Browser).
+
+- **Projekt speichern/öffnen (⬇/⬆):** Der Arbeitsstand (alle Klassen +
+  Bilder) lässt sich als JSON-Datei sichern und wieder öffnen — auf dem
+  iPad über die Dateien-App. Damit funktionieren Gerätewechsel, Sicherung
+  und Abgaben (Moodle/Teams/AirDrop). Unabhängig davon sichert die App
+  jede Eingabe zusätzlich im localStorage des Geräts.
 
 - **Bilder für Klassen (🖼):** Jede Figuren-Klasse bekommt per Knopf ein
   Emoji oder ein eigenes (automatisch verkleinertes) Bild; die Engine
@@ -124,9 +136,12 @@ siehe unten).
 Beide Laufzeiten bedienen dieselben Abläufe (übernehmen → platzieren →
 Methoden aufrufen → Spiel starten). Der **Übungsmodus** interpretiert die
 typische Unterrichts-Teilmenge von Java selbst (Methodenaufrufe, Variablen
-mit `new`, `for`-Zählschleifen, `while (laeuft())`) und erklärt freundlich,
-wenn etwas nur mit echtem Java geht. **CheerpJ** kompiliert und führt
-vollständiges Java aus — komplett clientseitig, auch auf dem iPad.
+mit `new`, `for`-Zählschleifen, `while (laeuft())`, `return`) und erklärt
+freundlich, wenn etwas nur mit echtem Java geht. **CheerpJ** kompiliert
+und führt vollständiges Java aus — komplett clientseitig, auch auf dem
+iPad. Die Wahl wird **gemerkt**: Einmal „Echtes Java“ aktiviert, startet
+die App auf dem Gerät künftig direkt mit dem echten Compiler (und fällt
+bei Netzproblemen automatisch in den Übungsmodus zurück).
 
 ## CheerpJ-Pfad validieren (einziger offener Punkt)
 

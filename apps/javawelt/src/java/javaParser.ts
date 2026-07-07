@@ -31,6 +31,8 @@ export interface MethodenDef {
 export interface KlassenDef {
   name: string;
   erbtVon: string | null;
+  /** true bei interface statt class (z. B. ComparableContent). */
+  istInterface: boolean;
   felder: Param[];
   methoden: MethodenDef[];
   /** Konstruktor ohne Parameter (falls im Quelltext vorhanden). */
@@ -173,25 +175,63 @@ function trenneArgumente(text: string): string[] {
  */
 export function parseKlasse(quelltext: string): KlassenDef {
   const quelle = entferneKommentare(quelltext);
-  // Erlaubt Generics (class Queue<ContentType>) und implements-Klauseln.
-  const kopf =
-    /(?:public\s+)?class\s+([A-Za-z_]\w*)\s*(?:<[^>{]*>)?(?:\s+extends\s+([A-Za-z_]\w*)(?:\s*<[^>{]*>)?)?(?:\s+implements\s+[^{]+?)?\s*\{/.exec(
-      quelle,
-    );
-  if (!kopf || kopf.index === undefined) {
+  const kopf = parseKopf(quelle);
+  if (!kopf) {
     throw new ParseFehler("Keine Klasse gefunden. Erwartet wird z. B.: public class Roboter extends Figur { … }");
   }
-  const name = kopf[1];
-  const erbtVon = kopf[2] ?? null;
-  const auf = kopf.index + kopf[0].length - 1; // Position der öffnenden Klammer
-  const zu = blockEnde(quelle, auf);
+  const zu = blockEnde(quelle, kopf.koerperAuf);
   if (zu < 0) {
-    throw new ParseFehler(`Klasse ${name}: Eine schließende Klammer } fehlt.`);
+    throw new ParseFehler(`Klasse ${kopf.name}: Eine schließende Klammer } fehlt.`);
   }
 
-  const def: KlassenDef = { name, erbtVon, felder: [], methoden: [], konstruktor: null };
-  parseMitglieder(quelle, auf + 1, zu, def);
+  const def: KlassenDef = {
+    name: kopf.name,
+    erbtVon: kopf.erbtVon,
+    istInterface: kopf.istInterface,
+    felder: [],
+    methoden: [],
+    konstruktor: null,
+  };
+  if (!kopf.istInterface) parseMitglieder(quelle, kopf.koerperAuf + 1, zu, def);
   return def;
+}
+
+/**
+ * Liest den Klassen-/Interface-Kopf mit einem kleinen Scanner statt einer
+ * Regex, damit auch verschachtelte Generics funktionieren, z. B.
+ * class BinarySearchTree<ContentType extends ComparableContent<ContentType>>.
+ */
+function parseKopf(
+  quelle: string,
+): { istInterface: boolean; name: string; erbtVon: string | null; koerperAuf: number } | null {
+  const m = /(?:^|\s)(class|interface)\s+([A-Za-z_]\w*)/.exec(quelle);
+  if (!m) return null;
+  let i = ueberspringeGenerics(quelle, m.index + m[0].length);
+  let erbtVon: string | null = null;
+  const ext = /^\s*extends\s+([A-Za-z_]\w*)/.exec(quelle.slice(i));
+  if (ext) {
+    erbtVon = ext[1];
+    i = ueberspringeGenerics(quelle, i + ext[0].length);
+  }
+  // Eine eventuelle implements-Klausel wird bis zur öffnenden Klammer toleriert.
+  const auf = quelle.indexOf("{", i);
+  if (auf < 0) return null;
+  return { istInterface: m[1] === "interface", name: m[2], erbtVon, koerperAuf: auf };
+}
+
+/** Überspringt ab Position i (nach Leerraum) einen balancierten <...>-Block. */
+function ueberspringeGenerics(quelle: string, i: number): number {
+  while (i < quelle.length && /\s/.test(quelle[i])) i++;
+  if (quelle[i] !== "<") return i;
+  let tiefe = 0;
+  for (; i < quelle.length; i++) {
+    if (quelle[i] === "<") tiefe++;
+    else if (quelle[i] === ">") {
+      tiefe--;
+      if (tiefe === 0) return i + 1;
+    }
+  }
+  return i;
 }
 
 const METHODEN_KOPF =

@@ -4,7 +4,7 @@ import { Objektbank } from "./ui/objektbank";
 import { KlassenVerwaltung } from "./ui/klassenVerwaltung";
 import { BilderVerwaltung, erstelleBildDialog } from "./ui/bilder";
 import { SZENARIEN } from "./ui/szenarien";
-import { NRW_BIBLIOTHEK } from "./java/nrwBibliothek";
+import { NRW_BIBLIOTHEK, bibliothekEintrag } from "./java/nrwBibliothek";
 import { JavaLaufzeit } from "./java/laufzeit";
 import { MockLaufzeit, MockAbbruch } from "./java/mockLaufzeit";
 import { CheerpJLaufzeit } from "./java/cheerpjLaufzeit";
@@ -225,6 +225,9 @@ $("leeren").addEventListener("click", () => {
 });
 
 // --- Laufzeit umschalten (Übungsmodus ⇄ echtes Java) -----------------------------------------
+// Die Wahl wird gemerkt: Einmal „Echtes Java“ eingeschaltet, startet die
+// App beim nächsten Mal direkt mit dem echten Compiler.
+const LAUFZEIT_SCHLUESSEL = "javawelt.echtesJava";
 const cheerpjBox = $<HTMLInputElement>("cheerpj");
 cheerpjBox.addEventListener("change", () => {
   void (async () => {
@@ -239,17 +242,79 @@ cheerpjBox.addEventListener("change", () => {
       initVersprechen = laufzeit.init(welt, log);
       await initVersprechen;
       status.textContent = laufzeit.name;
+      try {
+        localStorage.setItem(LAUFZEIT_SCHLUESSEL, cheerpjBox.checked ? "1" : "0");
+      } catch {
+        // ohne Speicher: Wahl gilt nur für diese Sitzung
+      }
       await uebernehmen();
     } catch (e) {
       log("✗ " + (e as Error).message);
       log("Zurück zum Übungsmodus. (Läuft das Schulnetz über einen Filter? Siehe README.)");
       cheerpjBox.checked = false;
+      try {
+        localStorage.setItem(LAUFZEIT_SCHLUESSEL, "0");
+      } catch {
+        // s. o.
+      }
       laufzeit = new MockLaufzeit();
       initVersprechen = laufzeit.init(welt, log);
       status.textContent = laufzeit.name;
       await uebernehmen();
     }
   })();
+});
+
+// --- Projekt speichern / öffnen (Datei mit Klassen + Bildern) -----------------------------------
+// localStorage sichert nur auf DIESEM Gerät/Browser. Für „mitnehmen und
+// später weitermachen“ (anderes iPad, Abgabe, Sicherung) gibt es die
+// Projektdatei: über die iPad-Dateien-App speicher- und ladbar.
+const projektDatei = $<HTMLInputElement>("projekt-datei");
+
+$("projekt-speichern").addEventListener("click", () => {
+  const daten = {
+    format: "javawelt-projekt",
+    version: 1,
+    gespeichert: new Date().toISOString(),
+    klassen: klassenVerwaltung.quelltexte(),
+    bilder: bilder.alle(),
+  };
+  const blob = new Blob([JSON.stringify(daten, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `javawelt-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log("✓ Projekt als Datei gespeichert (siehe Downloads bzw. Dateien-App).");
+});
+
+$("projekt-oeffnen").addEventListener("click", () => projektDatei.click());
+projektDatei.addEventListener("change", () => {
+  const datei = projektDatei.files?.[0];
+  projektDatei.value = "";
+  if (!datei) return;
+  void datei.text().then((text) => {
+    let daten: { format?: string; klassen?: Record<string, string>; bilder?: Record<string, never> };
+    try {
+      daten = JSON.parse(text);
+    } catch {
+      log("✗ Das ist keine lesbare Projektdatei.");
+      return;
+    }
+    const klassen = daten.klassen ?? {};
+    const namen = Object.keys(klassen).filter((n) => /^[A-Z][A-Za-z0-9]*$/.test(n));
+    if (daten.format !== "javawelt-projekt" || namen.length === 0) {
+      log("✗ Das ist keine JavaWelt-Projektdatei.");
+      return;
+    }
+    if (!confirm(`Projekt „${datei.name}“ öffnen?\nDie aktuellen Klassen werden ersetzt.`)) return;
+    klassenVerwaltung.ersetzeAlle(
+      Object.fromEntries(namen.map((n) => [n, String(klassen[n])])),
+    );
+    bilder.ersetzeAlle((daten.bilder as never) ?? {});
+    log(`✓ Projekt „${datei.name}“ geöffnet (${namen.length} Klassen).`);
+    void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  });
 });
 
 // --- Bibliothek (NRW-Klassen als editierbare Kopie) --------------------------------------------
@@ -278,14 +343,24 @@ function zeichneBibliothek(): void {
     } else {
       knopf.textContent = "Hinzufügen";
       knopf.onclick = () => {
+        // Erst die benötigten Klassen (z. B. Graph → List, Vertex, Edge).
+        const hinzugefuegt: string[] = [];
+        for (const abhaengigkeit of eintrag.benoetigt ?? []) {
+          const ab = bibliothekEintrag(abhaengigkeit);
+          if (ab && !klassenVerwaltung.gib(ab.name)) {
+            klassenVerwaltung.fuegeHinzu(ab.name, ab.code);
+            hinzugefuegt.push(ab.name);
+          }
+        }
         const fehler = klassenVerwaltung.fuegeHinzu(eintrag.name, eintrag.code);
         if (fehler) {
           log("✗ " + fehler);
           return;
         }
+        hinzugefuegt.push(eintrag.name);
         bibliothekDialog.close();
         oeffneKlasse(eintrag.name);
-        log(`✓ ${eintrag.name} als editierbare Kopie hinzugefügt.`);
+        log(`✓ Als editierbare Kopie hinzugefügt: ${hinzugefuegt.join(", ")}.`);
       };
     }
     karte.appendChild(knopf);
@@ -359,8 +434,15 @@ $("zuruecksetzen").addEventListener("click", () => {
 // --- Start -------------------------------------------------------------------------------------
 oeffneKlasse(aktiveKlasse);
 aktualisiereKnoepfe();
-void (async () => {
-  await initVersprechen;
-  status.textContent = laufzeit.name;
-  await uebernehmen().catch((e: Error) => log("✗ " + e.message));
-})();
+if (localStorage.getItem(LAUFZEIT_SCHLUESSEL) === "1") {
+  // Gemerkte Wahl: direkt mit echtem Java starten (fällt bei Fehlern
+  // automatisch in den Übungsmodus zurück).
+  cheerpjBox.checked = true;
+  cheerpjBox.dispatchEvent(new Event("change"));
+} else {
+  void (async () => {
+    await initVersprechen;
+    status.textContent = laufzeit.name;
+    await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  })();
+}

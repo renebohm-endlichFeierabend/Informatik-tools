@@ -12,6 +12,9 @@
         <h1>JavaWelt</h1>
         <span class="untertitel">Java lernen im Browser</span>
         <div class="rechts">
+          <button id="projekt-speichern" class="sekundaer" title="Projekt (Klassen + Bilder) als Datei sichern">⬇ Speichern</button>
+          <button id="projekt-oeffnen" class="sekundaer" title="Gespeicherte Projektdatei laden">⬆ Öffnen</button>
+          <input id="projekt-datei" type="file" accept=".json,application/json" hidden />
           <button id="szenarien-auf" class="sekundaer">Szenarien</button>
           <button id="hilfe-auf" class="sekundaer">Hilfe</button>
           <label class="schalter" title="Kompiliert und führt vollständiges Java im Browser aus (CheerpJ)">
@@ -131,8 +134,11 @@
           <code>while (laeuft()) { … warte(100); }</code>. <code>■ Stopp</code> beendet die Schleife.</li>
         <li><b>Bilder:</b> Über den 🖼-Knopf bekommt eine Klasse ein Emoji oder eigenes Bild.</li>
         <li><b>Bibliothek &amp; Szenarien:</b> <code>📚 Bibliothek</code> fügt die NRW-Klassen
-          (Stack, Queue, List) als editierbare Kopie hinzu; <code>Szenarien</code> (oben) lädt
-          fertige Unterrichts-Sätze mit Aufgaben.</li>
+          (Stack, Queue, List, BinaryTree, BinarySearchTree, Graph …) als editierbare Kopie
+          hinzu; <code>Szenarien</code> (oben) lädt fertige Unterrichts-Sätze mit Aufgaben.</li>
+        <li><b>Speichern &amp; Weitermachen:</b> Die App sichert automatisch auf diesem Gerät.
+          Mit <code>⬇ Speichern</code> / <code>⬆ Öffnen</code> wandert das Projekt als Datei
+          (Dateien-App) — für Gerätewechsel, Sicherung und Abgaben.</li>
       </ol>
       <h3>Übungsmodus und echtes Java</h3>
       <p>

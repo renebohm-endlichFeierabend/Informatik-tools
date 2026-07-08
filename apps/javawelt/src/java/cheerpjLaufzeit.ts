@@ -145,12 +145,16 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     // Wie die Welt: Die Datenbank startet nach jedem Übernehmen frisch.
     this.datenbank.setzeZurueck();
     const nr = ++this.laufNr;
-    const quellDir = `/str/quellen${nr}`;
     const ausgabeDir = `/files/out${nr}`;
 
+    // Quelltexte FLACH unter /str/ ablegen: CheerpJs String-Dateisystem
+    // kennt keine Unterverzeichnisse – für /str/quellen1/X.java meldete
+    // ECJ „File … is missing“. Gleiche Namen überschreiben je Lauf nur
+    // ihren Inhalt; übersetzt wird ausschließlich die aktuelle Liste
+    // `pfade`, Reste gelöschter Klassen stören also nicht.
     const pfade: string[] = [];
     for (const [name, quelle] of Object.entries(klassen)) {
-      const pfad = `${quellDir}/${name}.java`;
+      const pfad = `/str/${name}.java`;
       cheerpjAddStringFile(pfad, GERUEST + quelle);
       pfade.push(pfad);
     }
@@ -181,7 +185,7 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       const meldungen = String(await puffer.toString());
 
       if (!ok) {
-        this.ausgabe(this.lesbareFehler(meldungen, quellDir));
+        this.ausgabe(this.lesbareFehler(meldungen, "/str"));
         return false;
       }
       this.lib = await cheerpjRunLibrary(`${ausgabeDir}:${FRAMEWORK_JAR}`);

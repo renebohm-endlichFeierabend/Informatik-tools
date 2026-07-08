@@ -29,6 +29,32 @@ function nrwKlasse(name: string): string {
 
 const ROBOTER_VORLAGE = `public class Roboter extends Figur {
 
+    // ATTRIBUT (Instanzvariable): Jedes Roboter-Objekt hat hier seinen
+    // EIGENEN Wert – ein zweiter Roboter kann eine andere Schrittweite haben.
+    private int schrittweite;
+
+    // KONSTRUKTOR: heißt genau wie die Klasse und hat keinen Rückgabetyp.
+    // Er wird bei new Roboter() automatisch ausgeführt und gibt den
+    // Attributen ihre Startwerte.
+    public Roboter() {
+        schrittweite = 25;
+    }
+
+    // Sondierende Methode: verrät den Wert des Attributs.
+    public int gibSchrittweite() {
+        return schrittweite;
+    }
+
+    // Verändernde Methode: setzt das Attribut auf einen neuen Wert.
+    public void setzeSchrittweite(int neueWeite) {
+        schrittweite = neueWeite;
+    }
+
+    // Nutzt das Attribut: Jeder Roboter geht SEINE Schrittweite vor.
+    public void geheSchritt() {
+        geheVor(schrittweite);
+    }
+
     // Eigene Methode: läuft ein Quadrat mit der angegebenen Seitenlänge.
     public void laufeQuadrat(int seite) {
         for (int i = 0; i < 4; i++) {
@@ -53,11 +79,19 @@ const ERSTE_SCHRITTE_WELT = `public class MeineWelt extends Welt {
     // Das Spiel: Diese Schleife läuft, bis du auf Stopp drückst.
     public void spiele() {
         while (laeuft()) {
-            rob.geheVor(25);
+            rob.geheSchritt();
             rob.dreheDich(15);
             warte(100);
         }
     }
+
+    // AUFGABE 1: Platziere einen zweiten Roboter über die Objektbank und
+    //            rufe setzeSchrittweite(60) auf – nur ER wird schneller.
+    //            Warum? (Stichwort: Attribut = Wert PRO Objekt)
+    // AUFGABE 2: Schau in Roboter.java: Was macht der Konstruktor, und
+    //            wann wird er ausgeführt?
+    // AUFGABE 3: Gib dem Roboter ein zweites Attribut drehwinkel samt
+    //            Startwert im Konstruktor und nutze es in spiele().
 }
 `;
 
@@ -67,23 +101,41 @@ const ERSTE_SCHRITTE_WELT = `public class MeineWelt extends Welt {
 
 const TIER = `public class Tier extends Figur {
 
+    // ATTRIBUTE (Instanzvariablen): Jedes Tier-Objekt hat eigene Werte.
+    // protected: auch die Unterklassen (Hund, Katze) dürfen zugreifen.
+    protected String laut;
+    protected int alter;
+
+    // KONSTRUKTOR: wird bei new automatisch ausgeführt und setzt die
+    // Startwerte. Unterklassen führen ihn IMMER ZUERST mit aus.
+    public Tier() {
+        laut = "...";
+        alter = 1;
+    }
+
     // Jedes Tier kann sich vorstellen. WELCHER Laut dabei herauskommt,
-    // entscheidet die Unterklasse: Sie ÜBERSCHREIBT gibLaut().
+    // entscheidet die Unterklasse (Konstruktor oder Überschreiben).
     public void stelleDichVor() {
         sage(gibLaut());
     }
 
     public String gibLaut() {
-        return "...";
+        return laut;
+    }
+
+    public int gibAlter() {
+        return alter;
     }
 }
 `;
 
 const HUND = `public class Hund extends Tier {
 
-    // Überschreibt gibLaut() aus der Oberklasse Tier.
-    public String gibLaut() {
-        return "Wuff!";
+    // KONSTRUKTOR der Unterklasse: Java führt erst den Konstruktor von
+    // Tier aus, DANACH diesen – er überschreibt die geerbten Startwerte.
+    public Hund() {
+        laut = "Wuff!";
+        alter = 3;
     }
 
     // Eine zusätzliche Methode, die nur Hunde haben.
@@ -97,6 +149,12 @@ const HUND = `public class Hund extends Tier {
 
 const KATZE = `public class Katze extends Tier {
 
+    public Katze() {
+        alter = 2;
+    }
+
+    // Zweiter Weg zur Polymorphie: Katze ÜBERSCHREIBT gibLaut() –
+    // diese Version gewinnt, egal was im Attribut laut steht.
     public String gibLaut() {
         return "Miau!";
     }
@@ -128,10 +186,15 @@ const VERERBUNG_WELT = `public class MeineWelt extends Welt {
     // AUFGABE 1: Warum sagt Bello "Wuff!", obwohl stelleDichVor() in der
     //            Klasse Tier steht? (Stichwort: Polymorphie / dynamische
     //            Bindung – schaue in Tier.java und Hund.java.)
-    // AUFGABE 2: Erstelle eine eigene Klasse Kuh, die von Tier erbt, und
-    //            überschreibe gibLaut(). Platziere eine Kuh auf der Welt
-    //            und rufe stelleDichVor() über die Objektbank auf.
-    // AUFGABE 3: Gib der Katze eine eigene Methode (z. B. schleiche(int)),
+    // AUFGABE 2: Hund und Katze lösen das unterschiedlich: Hund setzt das
+    //            ATTRIBUT laut im KONSTRUKTOR um, Katze ÜBERSCHREIBT die
+    //            Methode gibLaut(). Vergleiche beide Wege.
+    // AUFGABE 3: Erstelle eine eigene Klasse Kuh, die von Tier erbt, mit
+    //            einem Konstruktor, der laut auf "Muh!" setzt. Platziere
+    //            eine Kuh und rufe stelleDichVor() über die Objektbank auf.
+    // AUFGABE 4: Rufe gibAlter() bei Bello und Minka über die Objektbank
+    //            auf. Woher kommen die Werte 3 und 2?
+    // AUFGABE 5: Gib der Katze eine eigene Methode (z. B. schleiche(int)),
     //            die es nur bei Katzen gibt.
 }
 `;
@@ -178,6 +241,26 @@ const ARRAYS_WELT = `public class MeineWelt extends Welt {
 // ---------------------------------------------------------------------------
 
 const KISTE = `public class Kiste extends Figur {
+
+    // ATTRIBUT: Jede Kiste kennt ihren eigenen Inhalt.
+    private String inhalt;
+
+    // KONSTRUKTOR: Neue Kisten sind zunächst leer.
+    public Kiste() {
+        inhalt = "leer";
+    }
+
+    public void packeEin(String neuerInhalt) {
+        inhalt = neuerInhalt;
+    }
+
+    public String gibInhalt() {
+        return inhalt;
+    }
+
+    public void zeigeInhalt() {
+        sage(inhalt);
+    }
 }
 `;
 
@@ -190,6 +273,7 @@ const STACK_WELT = `public class MeineWelt extends Welt {
         // Fünf Kisten werden gestapelt – die zuletzt gestapelte liegt OBEN.
         for (int i = 0; i < 5; i++) {
             Kiste k = new Kiste();
+            k.packeEin("Paket " + (i + 1));
             k.setzePosition(220, 400 - i * 55);
             stapel.push(k);
         }
@@ -202,15 +286,16 @@ const STACK_WELT = `public class MeineWelt extends Welt {
         while (!stapel.isEmpty()) {
             Kiste oberste = stapel.top();
             stapel.pop();
-            oberste.sage("Ich kam als " + (5 - platz) + ".");
+            oberste.zeigeInhalt();
             oberste.setzePosition(520, 400 - platz * 55);
             platz = platz + 1;
             warte(900);
         }
     }
 
-    // AUFGABE 1: Beobachte den neuen Stapel rechts: Warum ist die
-    //            Reihenfolge genau umgekehrt? (LIFO-Prinzip)
+    // AUFGABE 1: Beobachte die Sprechblasen beim Abbau: "Paket 5" kommt
+    //            zuerst. Warum ist die Reihenfolge genau umgekehrt zur
+    //            Reihenfolge des Einpackens? (LIFO-Prinzip)
     // AUFGABE 2: Fülle die Kisten beim Abbau in einen ZWEITEN Stack und
     //            baue auch den wieder ab – welche Reihenfolge entsteht?
     // AUFGABE 3 (LK): Öffne Stack.java. Erkläre anhand der inneren Klasse
@@ -223,6 +308,22 @@ const STACK_WELT = `public class MeineWelt extends Welt {
 // ---------------------------------------------------------------------------
 
 const KUNDE = `public class Kunde extends Figur {
+
+    // ATTRIBUT: Jeder Kunde hat seinen eigenen Wunsch.
+    private String wunsch;
+
+    // KONSTRUKTOR: Standardwunsch für neue Kunden.
+    public Kunde() {
+        wunsch = "eine Brezel";
+    }
+
+    public void setzeWunsch(String neuerWunsch) {
+        wunsch = neuerWunsch;
+    }
+
+    public String gibWunsch() {
+        return wunsch;
+    }
 }
 `;
 
@@ -244,7 +345,7 @@ const QUEUE_WELT = `public class MeineWelt extends Welt {
         while (laeuft()) {
             if (!schlange.isEmpty()) {
                 Kunde vorne = schlange.front();
-                vorne.sage("Ich bin dran!");
+                vorne.sage("Ich möchte " + vorne.gibWunsch() + "!");
                 warte(1000);
                 schlange.dequeue();
                 vorne.entferne();
@@ -275,9 +376,12 @@ const QUEUE_WELT = `public class MeineWelt extends Welt {
     }
 
     // AUFGABE 1: Woran erkennst du das FIFO-Prinzip im Ablauf?
-    // AUFGABE 2: Warum muss rueckeAuf() die Schlange umfüllen? Welche
+    // AUFGABE 2: Gib neuen Kunden in spiele() per setzeWunsch() einen
+    //            anderen Wunsch (z. B. "ein Eis"). Wo kommt der
+    //            Standardwunsch "eine Brezel" her? (Schau in Kunde.java)
+    // AUFGABE 3: Warum muss rueckeAuf() die Schlange umfüllen? Welche
     //            Methoden bietet Queue – und welche gerade NICHT?
-    // AUFGABE 3 (LK): Öffne Queue.java und erkläre die Rolle von head
+    // AUFGABE 4 (LK): Öffne Queue.java und erkläre die Rolle von head
     //            und tail bei enqueue() und dequeue().
 }
 `;
@@ -287,6 +391,32 @@ const QUEUE_WELT = `public class MeineWelt extends Welt {
 // ---------------------------------------------------------------------------
 
 const WAGGON = `public class Waggon extends Figur {
+
+    // ATTRIBUTE: Platz im Zug und Ladung des Waggons.
+    private int nummer;
+    private String ladung;
+
+    // KONSTRUKTOR: Startwerte für jeden neuen Waggon.
+    public Waggon() {
+        nummer = 0;
+        ladung = "leer";
+    }
+
+    public void setzeNummer(int neueNummer) {
+        nummer = neueNummer;
+    }
+
+    public int gibNummer() {
+        return nummer;
+    }
+
+    public void belade(String neueLadung) {
+        ladung = neueLadung;
+    }
+
+    public String gibLadung() {
+        return ladung;
+    }
 }
 `;
 
@@ -309,6 +439,7 @@ const LIST_WELT = `public class MeineWelt extends Welt {
         zug.toFirst();
         while (zug.hasAccess()) {
             Waggon w = zug.getContent();
+            w.setzeNummer(platz + 1);
             w.setzePosition(140 + platz * 110, 240);
             platz = platz + 1;
             zug.next();
@@ -337,12 +468,15 @@ const LIST_WELT = `public class MeineWelt extends Welt {
     }
 
     // AUFGABE 1: Hänge in bereiteVor() zwei weitere Waggons an.
-    // AUFGABE 2: Schreibe eine Methode zaehleWaggons(): Bestimme die
+    // AUFGABE 2: Belade in bereiteVor() jeden Waggon (belade("Kohle") …)
+    //            und lass ihn beim Ordnen seine Ladung sagen. Wo bekommt
+    //            ein neuer Waggon den Startwert "leer" her?
+    // AUFGABE 3: Schreibe eine Methode zaehleWaggons(): Bestimme die
     //            Zuglänge mit einem Listendurchlauf und lass den ersten
     //            Waggon sagen: "Wir sind N Waggons."
-    // AUFGABE 3: Entferne mit toFirst()/next()/remove() gezielt den
+    // AUFGABE 4: Entferne mit toFirst()/next()/remove() gezielt den
     //            DRITTEN Waggon. Was ist danach das aktuelle Objekt?
-    // AUFGABE 4 (LK): Öffne List.java. Wie findet remove() den Vorgänger
+    // AUFGABE 5 (LK): Öffne List.java. Wie findet remove() den Vorgänger
     //            des aktuellen Objekts? Welche Kosten hat das?
 }
 `;
@@ -352,6 +486,23 @@ const LIST_WELT = `public class MeineWelt extends Welt {
 // ---------------------------------------------------------------------------
 
 const ZOOTIER = `public class Zootier extends Figur {
+
+    // ATTRIBUT: die Art des Tieres (kommt später aus der Datenbank).
+    private String art;
+
+    // KONSTRUKTOR: Solange nichts aus der Datenbank geladen wurde,
+    // ist die Art unbekannt.
+    public Zootier() {
+        art = "unbekannt";
+    }
+
+    public void setzeArt(String neueArt) {
+        art = neueArt;
+    }
+
+    public String gibArt() {
+        return art;
+    }
 }
 `;
 
@@ -392,8 +543,9 @@ const DATENBANK_WELT = `public class MeineWelt extends Welt {
         for (int i = 0; i < daten.length; i++) {
             Zootier tier = new Zootier();
             tier.nenne(daten[i][0]);
+            tier.setzeArt(daten[i][1]);
             tier.setzePosition(110 + (i % 5) * 130, 130 + (i / 5) * 160);
-            tier.sage(daten[i][1]);
+            tier.sage(tier.gibArt());
         }
     }
 

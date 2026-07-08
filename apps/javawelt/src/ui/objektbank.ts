@@ -1,7 +1,8 @@
 import { Welt } from "../engine/welt";
 import { Figur } from "../engine/figur";
-import { JavaLaufzeit } from "../java/laufzeit";
+import { JavaLaufzeit, fehlerText } from "../java/laufzeit";
 import { KlassenVerwaltung, MethodenSignatur } from "./klassenVerwaltung";
+import { BildQuelle } from "./bilder";
 
 /**
  * Objektbank im Stil von BlueJ: Objekte per Antippen erzeugen und ihre
@@ -19,6 +20,8 @@ export class Objektbank {
   onPlatzieren: ((klasse: string) => void) | null = null;
   /** Bild-Knopf einer Figuren-Klasse gedrückt. */
   onBildWaehlen: ((klasse: string) => void) | null = null;
+  /** Liefert das gewählte Bild einer Klasse (Emoji/Upload) für die Anzeige. */
+  gibBild: ((klasse: string) => BildQuelle | null) | null = null;
 
   constructor(
     private readonly welt: Welt,
@@ -71,9 +74,28 @@ export class Objektbank {
     }
   }
 
+  /** Kleines Vorschau-Element für das gewählte Klassenbild (oder null). */
+  private bildSymbol(klasse: string): HTMLElement | null {
+    const quelle = this.gibBild?.(klasse) ?? null;
+    if (!quelle) return null;
+    const symbol = document.createElement("span");
+    symbol.className = "klasse-symbol";
+    if (quelle.art === "emoji") {
+      symbol.textContent = quelle.wert;
+    } else {
+      const img = document.createElement("img");
+      img.src = quelle.wert;
+      img.alt = "";
+      symbol.appendChild(img);
+    }
+    return symbol;
+  }
+
   private klassenKarte(name: string, platzierbar: boolean): HTMLElement {
     const karte = document.createElement("div");
     karte.className = "klasse";
+    const symbol = this.bildSymbol(name);
+    if (symbol) karte.appendChild(symbol);
     const titel = document.createElement("span");
     titel.className = "klasse-name";
     titel.textContent = name;
@@ -91,7 +113,9 @@ export class Objektbank {
 
       const bild = document.createElement("button");
       bild.className = "sekundaer";
-      bild.textContent = "🖼";
+      // U+FE0F erzwingt die bunte Emoji-Darstellung – ohne den Selektor
+      // zeigt z. B. iOS ein kaum lesbares Schriftzeichen.
+      bild.textContent = "🖼️";
       bild.title = `Bild für ${name} wählen`;
       bild.onclick = () => this.onBildWaehlen?.(name);
       aktionen.appendChild(bild);
@@ -168,9 +192,22 @@ export class Objektbank {
     for (const f of this.welt.alleFiguren()) {
       const el = document.createElement("div");
       el.className = "objekt" + (f === this.aktiv ? " aktiv" : "");
-      el.innerHTML = `<span class="punkt" style="background:${f.farbe}"></span>
-        <span class="objekt-name">${f.name}</span>
-        <span class="objekt-typ">: ${f.klasse}</span>`;
+      const symbol = this.bildSymbol(f.klasse);
+      if (symbol) {
+        el.appendChild(symbol);
+      } else {
+        const punkt = document.createElement("span");
+        punkt.className = "punkt";
+        punkt.style.background = f.farbe;
+        el.appendChild(punkt);
+      }
+      const objektName = document.createElement("span");
+      objektName.className = "objekt-name";
+      objektName.textContent = f.name;
+      const objektTyp = document.createElement("span");
+      objektTyp.className = "objekt-typ";
+      objektTyp.textContent = `: ${f.klasse}`;
+      el.append(objektName, " ", objektTyp);
       el.onclick = () => {
         this.welt.waehle(f.id);
         this.waehleAktiv(f);
@@ -216,7 +253,7 @@ export class Objektbank {
     del.onclick = () => {
       void this.laufzeit()
         .entferneObjekt(f.id)
-        .catch((e: Error) => this.log("✗ " + e.message));
+        .catch((e: unknown) => this.log("✗ " + fehlerText(e)));
       this.waehleAktiv(null);
     };
     this.methodenEl.appendChild(del);
@@ -258,7 +295,7 @@ export class Objektbank {
         const ergebnis = await this.laufzeit().rufeMethode(f.id, m.name, args);
         if (ergebnis !== "") this.log(`${anzeige} → ${ergebnis}`);
       } catch (e) {
-        this.log(`✗ ${anzeige}: ${(e as Error).message}`);
+        this.log(`✗ ${anzeige}: ${fehlerText(e)}`);
       }
     };
     return zeile;

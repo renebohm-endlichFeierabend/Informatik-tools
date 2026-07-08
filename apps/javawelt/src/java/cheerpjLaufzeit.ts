@@ -1,4 +1,4 @@
-import { JavaLaufzeit, Ausgabe } from "./laufzeit";
+import { JavaLaufzeit, Ausgabe, fehlerText } from "./laufzeit";
 import { Welt } from "../engine/welt";
 import { Datenbank, ZOO_SEED } from "./datenbank";
 
@@ -10,9 +10,22 @@ declare function cheerpjRunLibrary(classPath: string): Promise<any>;
 declare function cheerpjAddStringFile(pfad: string, inhalt: string): void;
 
 const LOADER_URL = "https://cjrtnc.leaningtech.com/4.2/loader.js";
-// Eclipse Compiler for Java (liegt unter public/, wird mit ausgeliefert).
-const ECJ_JAR = "/app/ecj.jar";
-const FRAMEWORK_JAR = "/app/framework.jar";
+
+/**
+ * CheerpJs virtuelles Verzeichnis /app/ zeigt auf die WURZEL des Webservers
+ * (Origin), nicht auf den Ordner der App. Auf GitHub Pages liegt die App
+ * aber unter einem Unterpfad (z. B. /Informatik-tools/javawelt/) – feste
+ * Pfade wie /app/ecj.jar liefen dort ins Leere (404), und jedes Übersetzen
+ * schlug fehl. Deshalb: Pfad aus der tatsächlichen Seitenadresse ableiten.
+ */
+function appPfad(datei: string): string {
+  return "/app" + new URL(datei, location.href).pathname;
+}
+
+// Eclipse Compiler for Java und das Framework (liegen unter public/,
+// werden mit ausgeliefert – also im selben Ordner wie die App selbst).
+const ECJ_JAR = appPfad("ecj.jar");
+const FRAMEWORK_JAR = appPfad("framework.jar");
 
 // Trennzeichen für Argumentlisten – muss zu Steuerung.TRENNER passen.
 const TRENNER = "\u001F";
@@ -41,6 +54,8 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   private lib: any = null;
   private steuerung: any = null;
   private ecj: any = null;
+  /** ecj.jar/framework.jar wurden schon einmal erfolgreich per HEAD geprüft. */
+  private dateienGeprueft = false;
   /** SQL-Datenbank (SQLite im Browser) für die NRW-Datenbankklassen. */
   private readonly datenbank = new Datenbank(ZOO_SEED);
 
@@ -115,33 +130,63 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     }
 
     this.ausgabe("Übersetze Klassen …");
-    if (!this.ecj) this.ecj = await cheerpjRunLibrary(ECJ_JAR);
-    const StringWriter = await this.ecj.java.io.StringWriter;
-    const PrintWriter = await this.ecj.java.io.PrintWriter;
-    const BatchCompiler = await this.ecj.org.eclipse.jdt.core.compiler.batch.BatchCompiler;
-    const puffer = await new StringWriter();
-    const schreiber = await new PrintWriter(puffer);
+    try {
+      if (!this.dateienGeprueft) {
+        await Promise.all([this.pruefeErreichbar(ECJ_JAR), this.pruefeErreichbar(FRAMEWORK_JAR)]);
+        this.dateienGeprueft = true;
+      }
+      if (!this.ecj) this.ecj = await cheerpjRunLibrary(ECJ_JAR);
+      const StringWriter = await this.ecj.java.io.StringWriter;
+      const PrintWriter = await this.ecj.java.io.PrintWriter;
+      const BatchCompiler = await this.ecj.org.eclipse.jdt.core.compiler.batch.BatchCompiler;
+      const puffer = await new StringWriter();
+      const schreiber = await new PrintWriter(puffer);
 
-    const kommando = [
-      "-source", "11",
-      "-target", "11",
-      "-nowarn",
-      "-cp", FRAMEWORK_JAR,
-      "-d", ausgabeDir,
-      ...pfade,
-    ].join(" ");
-    const ok = await BatchCompiler.compile(kommando, schreiber, schreiber, null);
-    await schreiber.flush();
-    const meldungen = String(await puffer.toString());
+      const kommando = [
+        "-source", "11",
+        "-target", "11",
+        "-nowarn",
+        "-cp", FRAMEWORK_JAR,
+        "-d", ausgabeDir,
+        ...pfade,
+      ].join(" ");
+      const ok = await BatchCompiler.compile(kommando, schreiber, schreiber, null);
+      await schreiber.flush();
+      const meldungen = String(await puffer.toString());
 
-    if (!ok) {
-      this.ausgabe(this.lesbareFehler(meldungen, quellDir));
-      return false;
+      if (!ok) {
+        this.ausgabe(this.lesbareFehler(meldungen, quellDir));
+        return false;
+      }
+      this.lib = await cheerpjRunLibrary(`${ausgabeDir}:${FRAMEWORK_JAR}`);
+      this.steuerung = await this.lib.de.schule.jle.Steuerung;
+      await this.steuerung.vergissAlle();
+      return true;
+    } catch (e) {
+      throw new Error("Übersetzen nicht möglich: " + fehlerText(e));
     }
-    this.lib = await cheerpjRunLibrary(`${ausgabeDir}:${FRAMEWORK_JAR}`);
-    this.steuerung = await this.lib.de.schule.jle.Steuerung;
-    await this.steuerung.vergissAlle();
-    return true;
+  }
+
+  /**
+   * Stellt sicher, dass eine mitgelieferte Datei (Jar) wirklich abrufbar
+   * ist. Ein Tippfehler im Hosting fiele sonst erst tief in CheerpJ auf –
+   * mit einer Meldung, die niemandem weiterhilft.
+   */
+  private async pruefeErreichbar(appDatei: string): Promise<void> {
+    const url = appDatei.replace(/^\/app/, "");
+    let antwort: Response | null = null;
+    try {
+      antwort = await fetch(url, { method: "HEAD" });
+    } catch {
+      // Netzfehler → unten als "nicht erreichbar" gemeldet.
+    }
+    if (!antwort?.ok) {
+      throw new Error(
+        `${url} ist nicht erreichbar` +
+          (antwort ? ` (HTTP ${antwort.status})` : "") +
+          " – die Datei muss mit der App ausgeliefert werden.",
+      );
+    }
   }
 
   /** Macht ECJ-Meldungen schülertauglich: Dateipfade kürzen, Gerüst-Zeile abziehen. */
@@ -220,7 +265,7 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
 
 /** Holt aus einem CheerpJ-/Java-Fehler eine lesbare Meldung heraus. */
 function javaFehlerText(e: unknown): string {
-  const text = e instanceof Error ? e.message : String(e);
+  const text = fehlerText(e);
   // Java-Exception-Texte wie "java.lang.Exception: eigentliche Meldung" kürzen.
   const m = /(?:^|\s)(?:[\w.]+Exception|[\w.]+Error):\s*(.+)$/.exec(text);
   return m ? m[1] : text;

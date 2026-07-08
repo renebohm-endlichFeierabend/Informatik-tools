@@ -5,14 +5,16 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9–#17) gemerged ·
+**Stand: Juli 2026 · alle bisherigen PRs (#9–#18) gemerged ·
 CheerpJ-Pfad wird gerade iterativ auf dem iPad in Betrieb genommen
 (PR #15: `version` passend zu den Jars; PR #16: konsequent Java 8 –
 CheerpJ hat kein JRT-Modul-Image – plus Warteschlange gegen „Only one
-library thread supported“; PR #17: /str/ flach) · aktueller Branch
-`claude/java-object-placement-bug-2d4xmm`: Quelltexte per Java-IO nach
-`/files/` schreiben (/str/ war für ECJ nicht sichtbar: „File … is
-missing“) + Build-Zeitstempel in der Konsole gegen Cache-Verwirrung**
+library thread supported“; PR #17/#18: Quelltexte nach `/files/` statt
+`/str/`, Build-Zeitstempel in der Konsole) · aktueller Branch
+`claude/java-object-placement-bug-2d4xmm`: Quelltexte byte-genau per
+Base64 übergeben – write(String) über die JS↔Java-Brücke lieferte
+beschädigten Inhalt, ECJs Scanner stürzte mit
+ArrayIndexOutOfBoundsException ab**
 
 ## Was ist JavaWelt?
 
@@ -185,9 +187,16 @@ Wichtige Mechanik-Details:
 - **Quelltexte NICHT über `/str/` (cheerpjAddStringFile) übergeben** –
   ECJ meldete dafür „File … is missing“ (mit und ohne Unterverzeichnis).
   Stattdessen schreibt `schreibeQuellen()` sie **aus Java heraus**
-  (java.io über die ECJ-Library, UTF-8 + `-encoding UTF-8`) nach
-  `/files/src<N>/` – dasselbe beschreibbare Dateisystem, in das auch
-  ECJs `-d`-Ausgabe geht; hinterher wird per `File.exists()` geprüft.
+  (java.io über die ECJ-Library) nach `/files/src<N>/` – dasselbe
+  beschreibbare Dateisystem, in das auch ECJs `-d`-Ausgabe geht.
+- **Quelltext-Inhalte byte-genau über die JS↔Java-Brücke:** in JS als
+  UTF-8 kodieren (`TextEncoder`), als **Base64** (reines ASCII)
+  übergeben, erst **in Java** dekodieren (`java.util.Base64`) und als
+  `byte[]`-Handle in `FileOutputStream.write` stecken; danach
+  `File.length()` gegen die erwartete Bytezahl prüfen. Ein direktes
+  `write(String)` lieferte über die Brücke beschädigten Inhalt → ECJs
+  Scanner warf `ArrayIndexOutOfBoundsException`. Passend dazu übersetzt
+  ECJ mit `-encoding UTF-8`.
 - **Build-Zeitstempel:** Die Konsole zeigt beim Start „JavaWelt-Build
   vom …“ (`__BUILD_ZEIT__` aus `vite.config.ts`). GitHub Pages/Safari
   cachen bis zu 10 Minuten – bei Fehlerberichten zuerst diese Zeile

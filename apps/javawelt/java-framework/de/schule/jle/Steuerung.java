@@ -45,7 +45,15 @@ public final class Steuerung {
    * Gibt die Engine-Id der sichtbaren Figur zurück.
    */
   public static int erzeuge(String klassenName, int x, int y, String argTexte) throws Exception {
-    Class<?> k = Class.forName(klassenName);
+    Class<?> k;
+    try {
+      // Schülerklassen liegen im Standardpaket …
+      k = Class.forName(klassenName);
+    } catch (ClassNotFoundException e) {
+      // … Framework-Klassen (die Objektbank bietet Figur selbst an)
+      // dagegen im Paket de.schule.jle.
+      k = Class.forName("de.schule.jle." + klassenName);
+    }
     String[] args = argTexte.isEmpty() ? new String[0] : argTexte.split(TRENNER, -1);
     Object o = null;
     for (Constructor<?> c : k.getDeclaredConstructors()) {

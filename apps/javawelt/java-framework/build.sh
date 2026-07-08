@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Kompiliert das Java-Framework zu public/framework.jar.
-# Wichtig: --release 11, weil CheerpJ 4.3 Java-11-Bytecode ausführt.
+# Wichtig: --release 11 – passend zu cheerpjInit({ version: 11 }) in
+# src/java/cheerpjLaufzeit.ts (CheerpJ kann seit 4.0 Java 11, Standard
+# ist aber Java 8; Version hier und dort immer zusammen ändern).
 set -euo pipefail
 
 HIER="$(cd "$(dirname "$0")" && pwd)"

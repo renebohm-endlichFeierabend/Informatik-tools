@@ -70,12 +70,12 @@ if (javacDa) {
     const szenarienDir = join(AUS, "javasrc");
     for (const d of readdirSync(szenarienDir)) {
       const quellDir = join(szenarienDir, d);
-      execSync(`javac --release 11 -nowarn -cp "${jar}" -d "${join(quellDir, "out")}" "${quellDir}"/*.java`, { stdio: "inherit" });
+      execSync(`javac --release 8 -nowarn -cp "${jar}" -d "${join(quellDir, "out")}" "${quellDir}"/*.java`, { stdio: "inherit" });
       console.log(`OK  Szenario ${d}`);
     }
     const bibDir = join(AUS, "javabib");
     if (existsSync(bibDir)) {
-      execSync(`javac --release 11 -nowarn -cp "${jar}" -d "${join(bibDir, "out")}" "${bibDir}"/*.java`, { stdio: "inherit" });
+      execSync(`javac --release 8 -nowarn -cp "${jar}" -d "${join(bibDir, "out")}" "${bibDir}"/*.java`, { stdio: "inherit" });
       console.log("OK  Bibliothek (alle NRW-Klassen + Probe)");
     }
   } catch {

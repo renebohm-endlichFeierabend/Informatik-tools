@@ -11,7 +11,7 @@ import {
   teileDateien,
 } from "./ui/teilen";
 import { NRW_BIBLIOTHEK, bibliothekEintrag } from "./java/nrwBibliothek";
-import { JavaLaufzeit } from "./java/laufzeit";
+import { JavaLaufzeit, fehlerText } from "./java/laufzeit";
 import { MockLaufzeit, MockAbbruch } from "./java/mockLaufzeit";
 import { CheerpJLaufzeit } from "./java/cheerpjLaufzeit";
 
@@ -59,7 +59,7 @@ async function starteLaufzeit(): Promise<void> {
     await laufzeit.init(welt, log);
     status.textContent = laufzeit.name;
   } catch (e) {
-    log("✗ " + (e as Error).message);
+    log("✗ " + fehlerText(e));
     log("⚠ Echtes Java (CheerpJ) ist nicht erreichbar – Notbetrieb im eingeschränkten Übungsmodus. Internet/Filter prüfen, dann oben „erneut versuchen“.");
     laufzeit = new MockLaufzeit();
     notbetrieb = true;
@@ -80,7 +80,7 @@ laufzeitNeuKnopf.addEventListener("click", () => {
     geaendert = true;
     initVersprechen = starteLaufzeit();
     await initVersprechen;
-    await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+    await uebernehmen().catch((e: unknown) => log("✗ " + fehlerText(e)));
   })();
 });
 
@@ -98,6 +98,9 @@ const objektbank = new Objektbank(
 );
 eingabe.onAuswahl = (f) => objektbank.waehleAktiv(f);
 objektbank.onBildWaehlen = erstelleBildDialog(bilder, log);
+objektbank.gibBild = (klasse) => bilder.gib(klasse);
+// Neues Bild gewählt → Klassen- und Objektliste zeigen es sofort.
+bilder.onAenderung = () => objektbank.aktualisiere();
 
 // --- Quelltext-Editor ------------------------------------------------------------
 const codeEl = $<HTMLTextAreaElement>("klassen-code");
@@ -134,10 +137,22 @@ codeEl.addEventListener("input", () => {
 });
 
 // Tab rückt ein (4 Leerzeichen), statt den Fokus zu verlieren.
+// Enter übernimmt die Einrückung der aktuellen Zeile und rückt nach einer
+// öffnenden Klammer { eine Stufe weiter ein – niemand soll nach jedem
+// Absatz von Hand zur richtigen Stelle tippen müssen.
 codeEl.addEventListener("keydown", (e) => {
-  if (e.key === "Tab" && !codeEl.readOnly) {
+  if (codeEl.readOnly || e.isComposing) return;
+  if (e.key === "Tab") {
     e.preventDefault();
     codeEl.setRangeText("    ", codeEl.selectionStart, codeEl.selectionEnd, "end");
+    klassenVerwaltung.setzeCode(aktiveKlasse, codeEl.value);
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    const davor = codeEl.value.slice(0, codeEl.selectionStart);
+    const zeile = davor.slice(davor.lastIndexOf("\n") + 1);
+    let einrueckung = /^[ \t]*/.exec(zeile)![0];
+    if (/\{\s*$/.test(zeile)) einrueckung += "    ";
+    codeEl.setRangeText("\n" + einrueckung, codeEl.selectionStart, codeEl.selectionEnd, "end");
     klassenVerwaltung.setzeCode(aktiveKlasse, codeEl.value);
   }
 });
@@ -187,19 +202,35 @@ async function stelleUebernommenSicher(): Promise<void> {
 }
 
 uebernehmenKnopf.addEventListener("click", () => {
-  void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  void uebernehmen().catch((e: unknown) => log("✗ " + fehlerText(e)));
 });
 
 // --- Platzieren ------------------------------------------------------------------------
 const platzierenHinweis = $("platzieren-hinweis");
+// Konstruktor-Argumente für das nächste Platzieren (vom Dialog gewählt).
+let platzierenArgs: string[] = [];
+
+function startePlatzieren(klasse: string, args: string[]): void {
+  platzierenArgs = args;
+  eingabe.starte(klasse);
+  platzierenHinweis.textContent = `Tippe auf die Welt, um ein ${klasse}-Objekt zu platzieren.`;
+  platzierenHinweis.hidden = false;
+}
+
 objektbank.onPlatzieren = (klasse) => {
   if (eingabe.platzierenKlasse === klasse) {
     eingabe.brichAb();
     return;
   }
-  eingabe.starte(klasse);
-  platzierenHinweis.textContent = `Tippe auf die Welt, um ein ${klasse}-Objekt zu platzieren.`;
-  platzierenHinweis.hidden = false;
+  // Hat die Klasse nur den (impliziten) Konstruktor ohne Parameter, geht es
+  // direkt los; sonst wählt ein Dialog den Konstruktor samt Argumenten
+  // (wie in BlueJ).
+  const konstruktoren = klassenVerwaltung.konstruktorenFuer(klasse);
+  if (konstruktoren.length === 1 && konstruktoren[0].params.length === 0) {
+    startePlatzieren(klasse, []);
+  } else {
+    objektbank.zeigeKonstruktorDialog(klasse, konstruktoren, (args) => startePlatzieren(klasse, args));
+  }
 };
 eingabe.onPlatzierenEnde = () => {
   platzierenHinweis.hidden = true;
@@ -208,11 +239,11 @@ eingabe.onPlatziere = (klasse, x, y) => {
   void (async () => {
     try {
       await stelleUebernommenSicher();
-      const id = await laufzeit.erzeugeObjekt(klasse, x, y);
+      const id = await laufzeit.erzeugeObjekt(klasse, x, y, platzierenArgs);
       welt.waehle(id);
       objektbank.waehleAktiv(welt.figur(id));
     } catch (e) {
-      log("✗ " + (e as Error).message);
+      log("✗ " + fehlerText(e));
     }
   })();
 };
@@ -245,7 +276,7 @@ startKnopf.addEventListener("click", () => {
       await laufzeit.starteSpiel(weltKlasse);
       log("■ Spiel beendet.");
     } catch (e) {
-      if (!(e instanceof MockAbbruch)) log("✗ " + (e as Error).message);
+      if (!(e instanceof MockAbbruch)) log("✗ " + fehlerText(e));
     } finally {
       spielLaeuft = false;
       aktualisiereKnoepfe();
@@ -308,7 +339,7 @@ function uebernimmProjektDaten(roh: unknown, quelle: string): boolean {
   );
   bilder.ersetzeAlle(daten.bilder ?? {});
   log(`✓ Projekt „${quelle}“ geöffnet (${namen.length} Klassen).`);
-  void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  void uebernehmen().catch((e: unknown) => log("✗ " + fehlerText(e)));
   return true;
 }
 
@@ -352,7 +383,7 @@ $("link-erstellen").addEventListener("click", () => {
       linkText.value = `${location.origin}${location.pathname}#projekt=${kode}`;
       linkDialog.showModal();
     } catch (e) {
-      log("✗ Link konnte nicht erzeugt werden: " + (e as Error).message);
+      log("✗ Link konnte nicht erzeugt werden: " + fehlerText(e));
     }
   })();
 });
@@ -469,7 +500,7 @@ function ladeSzenario(szenario: Szenario): boolean {
   if (szenario.hinweis && notbetrieb) {
     log(`⚠ Dieses Szenario ${szenario.hinweis} – zurzeit läuft nur der Notbetrieb (oben „erneut versuchen“).`);
   }
-  void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  void uebernehmen().catch((e: unknown) => log("✗ " + fehlerText(e)));
   return true;
 }
 
@@ -515,7 +546,7 @@ $("zuruecksetzen").addEventListener("click", () => {
   if (!confirm("Wirklich alle Klassen auf die Ausgangs-Vorlagen zurücksetzen? Eigener Code geht verloren.")) return;
   klassenVerwaltung.zuruecksetzen();
   hilfe.close();
-  void uebernehmen().catch((e: Error) => log("✗ " + e.message));
+  void uebernehmen().catch((e: unknown) => log("✗ " + fehlerText(e)));
 });
 
 // --- Aufgaben-Links (Deep-Links) -----------------------------------------------------------------
@@ -544,7 +575,7 @@ async function verarbeiteStartLink(): Promise<boolean> {
     try {
       return uebernimmProjektDaten(await dekodiereProjektAusLink(projektImLink), "Aufgaben-Link");
     } catch (e) {
-      log("✗ " + (e as Error).message);
+      log("✗ " + fehlerText(e));
       return false;
     }
   }
@@ -554,7 +585,7 @@ async function verarbeiteStartLink(): Promise<boolean> {
     const name = projektUrl!.split("/").pop() || projektUrl!;
     return uebernimmProjektDaten(await antwort.json(), name);
   } catch (e) {
-    log(`✗ Projekt aus dem Link konnte nicht geladen werden (${(e as Error).message}).`);
+    log(`✗ Projekt aus dem Link konnte nicht geladen werden (${fehlerText(e)}).`);
     return false;
   }
 }
@@ -567,6 +598,6 @@ void (async () => {
   const linkGeladen = await verarbeiteStartLink().catch(() => false);
   if (!linkGeladen) {
     await initVersprechen;
-    await uebernehmen().catch((e: Error) => log("✗ " + e.message));
+    await uebernehmen().catch((e: unknown) => log("✗ " + fehlerText(e)));
   }
 })();

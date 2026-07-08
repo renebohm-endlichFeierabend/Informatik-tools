@@ -1,7 +1,9 @@
 import { Welt } from "../engine/welt";
 import { Figur } from "../engine/figur";
-import { JavaLaufzeit } from "../java/laufzeit";
+import { JavaLaufzeit, fehlerText } from "../java/laufzeit";
 import { KlassenVerwaltung, MethodenSignatur } from "./klassenVerwaltung";
+import { BildQuelle } from "./bilder";
+import { Param } from "../java/javaParser";
 
 /**
  * Objektbank im Stil von BlueJ: Objekte per Antippen erzeugen und ihre
@@ -12,6 +14,7 @@ import { KlassenVerwaltung, MethodenSignatur } from "./klassenVerwaltung";
  */
 export class Objektbank {
   private aktiv: Figur | null = null;
+  private konstruktorDialog: HTMLDialogElement | null = null;
 
   /** „Quelltext“-Knopf einer Klasse gedrückt. */
   onKlasseOeffnen: ((name: string) => void) | null = null;
@@ -19,6 +22,8 @@ export class Objektbank {
   onPlatzieren: ((klasse: string) => void) | null = null;
   /** Bild-Knopf einer Figuren-Klasse gedrückt. */
   onBildWaehlen: ((klasse: string) => void) | null = null;
+  /** Liefert das gewählte Bild einer Klasse (Emoji/Upload) für die Anzeige. */
+  gibBild: ((klasse: string) => BildQuelle | null) | null = null;
 
   constructor(
     private readonly welt: Welt,
@@ -71,9 +76,28 @@ export class Objektbank {
     }
   }
 
+  /** Kleines Vorschau-Element für das gewählte Klassenbild (oder null). */
+  private bildSymbol(klasse: string): HTMLElement | null {
+    const quelle = this.gibBild?.(klasse) ?? null;
+    if (!quelle) return null;
+    const symbol = document.createElement("span");
+    symbol.className = "klasse-symbol";
+    if (quelle.art === "emoji") {
+      symbol.textContent = quelle.wert;
+    } else {
+      const img = document.createElement("img");
+      img.src = quelle.wert;
+      img.alt = "";
+      symbol.appendChild(img);
+    }
+    return symbol;
+  }
+
   private klassenKarte(name: string, platzierbar: boolean): HTMLElement {
     const karte = document.createElement("div");
     karte.className = "klasse";
+    const symbol = this.bildSymbol(name);
+    if (symbol) karte.appendChild(symbol);
     const titel = document.createElement("span");
     titel.className = "klasse-name";
     titel.textContent = name;
@@ -91,7 +115,9 @@ export class Objektbank {
 
       const bild = document.createElement("button");
       bild.className = "sekundaer";
-      bild.textContent = "🖼";
+      // U+FE0F erzwingt die bunte Emoji-Darstellung – ohne den Selektor
+      // zeigt z. B. iOS ein kaum lesbares Schriftzeichen.
+      bild.textContent = "🖼️";
       bild.title = `Bild für ${name} wählen`;
       bild.onclick = () => this.onBildWaehlen?.(name);
       aktionen.appendChild(bild);
@@ -161,6 +187,64 @@ export class Objektbank {
     this.neueKlasseEl.append(knopf, formular);
   }
 
+  // ---- Konstruktor-Auswahl (wie BlueJ) -------------------------------------
+
+  /**
+   * Zeigt die deklarierten Konstruktoren einer Klasse mit Eingabefeldern
+   * für die Parameter; die Auswahl startet dann das Platzieren.
+   */
+  zeigeKonstruktorDialog(
+    name: string,
+    konstruktoren: { params: Param[] }[],
+    onWahl: (args: string[]) => void,
+  ): void {
+    if (!this.konstruktorDialog) {
+      this.konstruktorDialog = document.createElement("dialog");
+      this.konstruktorDialog.id = "konstruktor-dialog";
+      document.body.appendChild(this.konstruktorDialog);
+    }
+    const dialog = this.konstruktorDialog;
+    dialog.innerHTML = "";
+
+    const titel = document.createElement("h2");
+    titel.textContent = `Neues ${name}-Objekt`;
+    const hinweis = document.createElement("p");
+    hinweis.className = "leer";
+    hinweis.textContent = `Konstruktor wählen – so wie im Quelltext bei new ${name}(…).`;
+    dialog.append(titel, hinweis);
+
+    for (const k of konstruktoren) {
+      const zeile = document.createElement("div");
+      zeile.className = "methode";
+      const knopf = document.createElement("button");
+      const signatur = k.params.map((p) => `${p.typ} ${p.name}`).join(", ");
+      knopf.textContent = `new ${name}(${k.params.length > 0 ? "…" : ""})`;
+      knopf.title = `new ${name}(${signatur})`;
+      zeile.appendChild(knopf);
+      const eingaben: HTMLInputElement[] = [];
+      for (const p of k.params) {
+        const eingabe = parameterEingabe(p);
+        eingaben.push(eingabe);
+        zeile.appendChild(eingabe);
+      }
+      knopf.onclick = () => {
+        dialog.close();
+        onWahl(eingaben.map((e) => e.value));
+      };
+      dialog.appendChild(zeile);
+    }
+
+    const aktionen = document.createElement("div");
+    aktionen.className = "dialog-aktionen";
+    const zu = document.createElement("button");
+    zu.className = "sekundaer";
+    zu.textContent = "Abbrechen";
+    zu.onclick = () => dialog.close();
+    aktionen.appendChild(zu);
+    dialog.appendChild(aktionen);
+    dialog.showModal();
+  }
+
   // ---- Objekte -----------------------------------------------------------------
 
   private zeichneObjekte(): void {
@@ -168,9 +252,22 @@ export class Objektbank {
     for (const f of this.welt.alleFiguren()) {
       const el = document.createElement("div");
       el.className = "objekt" + (f === this.aktiv ? " aktiv" : "");
-      el.innerHTML = `<span class="punkt" style="background:${f.farbe}"></span>
-        <span class="objekt-name">${f.name}</span>
-        <span class="objekt-typ">: ${f.klasse}</span>`;
+      const symbol = this.bildSymbol(f.klasse);
+      if (symbol) {
+        el.appendChild(symbol);
+      } else {
+        const punkt = document.createElement("span");
+        punkt.className = "punkt";
+        punkt.style.background = f.farbe;
+        el.appendChild(punkt);
+      }
+      const objektName = document.createElement("span");
+      objektName.className = "objekt-name";
+      objektName.textContent = f.name;
+      const objektTyp = document.createElement("span");
+      objektTyp.className = "objekt-typ";
+      objektTyp.textContent = `: ${f.klasse}`;
+      el.append(objektName, " ", objektTyp);
       el.onclick = () => {
         this.welt.waehle(f.id);
         this.waehleAktiv(f);
@@ -216,7 +313,7 @@ export class Objektbank {
     del.onclick = () => {
       void this.laufzeit()
         .entferneObjekt(f.id)
-        .catch((e: Error) => this.log("✗ " + e.message));
+        .catch((e: unknown) => this.log("✗ " + fehlerText(e)));
       this.waehleAktiv(null);
     };
     this.methodenEl.appendChild(del);
@@ -234,19 +331,7 @@ export class Objektbank {
 
     const eingaben: HTMLInputElement[] = [];
     for (const p of m.params) {
-      const eingabe = document.createElement("input");
-      if (p.typ === "int" || p.typ === "double") {
-        eingabe.type = "number";
-        eingabe.value = p.typ === "int" ? "50" : "1.0";
-      } else if (p.typ === "boolean") {
-        eingabe.type = "text";
-        eingabe.value = "true";
-      } else {
-        eingabe.type = "text";
-        eingabe.value = "Hallo!";
-      }
-      eingabe.title = `${p.typ} ${p.name}`;
-      eingabe.placeholder = p.name;
+      const eingabe = parameterEingabe(p);
       eingaben.push(eingabe);
       zeile.appendChild(eingabe);
     }
@@ -258,9 +343,27 @@ export class Objektbank {
         const ergebnis = await this.laufzeit().rufeMethode(f.id, m.name, args);
         if (ergebnis !== "") this.log(`${anzeige} → ${ergebnis}`);
       } catch (e) {
-        this.log(`✗ ${anzeige}: ${(e as Error).message}`);
+        this.log(`✗ ${anzeige}: ${fehlerText(e)}`);
       }
     };
     return zeile;
   }
+}
+
+/** Eingabefeld für einen Parameter (Methode oder Konstruktor), mit Vorgabewert. */
+function parameterEingabe(p: Param): HTMLInputElement {
+  const eingabe = document.createElement("input");
+  if (p.typ === "int" || p.typ === "double") {
+    eingabe.type = "number";
+    eingabe.value = p.typ === "int" ? "50" : "1.0";
+  } else if (p.typ === "boolean") {
+    eingabe.type = "text";
+    eingabe.value = "true";
+  } else {
+    eingabe.type = "text";
+    eingabe.value = "Hallo!";
+  }
+  eingabe.title = `${p.typ} ${p.name}`;
+  eingabe.placeholder = p.name;
+  return eingabe;
 }

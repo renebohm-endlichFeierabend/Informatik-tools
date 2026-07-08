@@ -1,5 +1,6 @@
 package de.schule.jle;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -37,17 +38,37 @@ public final class Steuerung {
   }
 
   /**
-   * Erzeugt ein Objekt der Klasse (parameterloser Konstruktor) und setzt es
-   * an die Position (x, y). Gibt die Engine-Id der sichtbaren Figur zurück.
+   * Erzeugt ein Objekt der Klasse und setzt es an die Position (x, y).
+   * Die Konstruktor-Argumente kommen als ein String, getrennt durch
+   * {@link #TRENNER} (leer = Konstruktor ohne Parameter), und werden anhand
+   * der Parametertypen umgewandelt (int, double, boolean, String).
+   * Gibt die Engine-Id der sichtbaren Figur zurück.
    */
-  public static int erzeuge(String klassenName, int x, int y) throws Exception {
+  public static int erzeuge(String klassenName, int x, int y, String argTexte) throws Exception {
     Class<?> k = Class.forName(klassenName);
-    Object o;
-    try {
-      o = k.getDeclaredConstructor().newInstance();
-    } catch (NoSuchMethodException e) {
-      throw new Exception(
-          "Die Klasse " + klassenName + " braucht einen Konstruktor ohne Parameter.");
+    String[] args = argTexte.isEmpty() ? new String[0] : argTexte.split(TRENNER, -1);
+    Object o = null;
+    for (Constructor<?> c : k.getDeclaredConstructors()) {
+      if (c.getParameterCount() != args.length) {
+        continue;
+      }
+      Object[] werte = wandleAlle(args, c.getParameterTypes());
+      if (werte == null) {
+        continue;
+      }
+      try {
+        o = c.newInstance(werte);
+      } catch (InvocationTargetException e) {
+        Throwable ursache = e.getCause() == null ? e : e.getCause();
+        throw new Exception(ursache.toString());
+      }
+      break;
+    }
+    if (o == null) {
+      throw new Exception(args.length == 0
+          ? "Die Klasse " + klassenName + " braucht einen Konstruktor ohne Parameter."
+          : "Die Klasse " + klassenName + " hat keinen passenden Konstruktor mit "
+              + args.length + " Parameter(n).");
     }
     if (!(o instanceof Figur)) {
       throw new Exception("Die Klasse " + klassenName + " erbt nicht von Figur.");

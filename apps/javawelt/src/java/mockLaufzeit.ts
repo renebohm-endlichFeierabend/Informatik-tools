@@ -4,6 +4,7 @@ import {
   Anweisung,
   Ausdruck,
   KlassenDef,
+  KonstruktorDef,
   MethodenDef,
   ParseFehler,
   parseKlasse,
@@ -103,8 +104,8 @@ export class MockLaufzeit implements JavaLaufzeit {
     return true;
   }
 
-  async erzeugeObjekt(klasse: string, x: number, y: number): Promise<number> {
-    return this.erzeuge(klasse, x, y, this.generation);
+  async erzeugeObjekt(klasse: string, x: number, y: number, args: string[] = []): Promise<number> {
+    return this.erzeuge(klasse, x, y, this.generation, args.map(textZuWert));
   }
 
   async rufeMethode(id: number, methode: string, args: string[]): Promise<string> {
@@ -149,29 +150,53 @@ export class MockLaufzeit implements JavaLaufzeit {
 
   // ---- Objekterzeugung ----------------------------------------------------
 
-  private async erzeuge(klasse: string, x: number, y: number, gen: number): Promise<number> {
+  private async erzeuge(klasse: string, x: number, y: number, gen: number, args: Wert[] = []): Promise<number> {
     if (!this.erbtVonFigur(klasse)) {
       throw new LaufFehler(`Die Klasse ${klasse} erbt nicht von Figur – nur Figuren können auf der Welt stehen.`);
     }
-    const id = this.welt.erzeugeFigur("", klasse, x, y);
     const def = this.klassen.get(klasse);
+    // Wie in Java: Der Konstruktor muss zur Anzahl der Argumente passen.
+    // Ohne deklarierte Konstruktoren gibt es nur den impliziten ohne Parameter.
+    const eigene = def?.konstruktoren ?? [];
+    const passend = eigene.find((k) => k.params.length === args.length) ?? null;
+    if (!passend && (args.length > 0 || eigene.length > 0)) {
+      throw new LaufFehler(
+        `new ${klasse}(…): ${klasse} hat keinen Konstruktor mit ${args.length} Parameter(n)` +
+          (args.length > 0
+            ? ` – Konstruktoren werden nicht vererbt. Deklariere ihn in ${klasse}.java oder nutze new ${klasse}() und nenne("…").`
+            : "."),
+      );
+    }
+    const id = this.welt.erzeugeFigur("", klasse, x, y);
     const objekt: MockObjekt = {
       id,
       klasse,
       felder: def ? this.feldStandardwerte(def) : new Map(),
     };
     this.objekte.set(id, objekt);
-    // Konstruktor ohne Parameter ausführen, falls vorhanden (ganze Kette).
-    for (const d of this.klassenKette(klasse).reverse()) {
-      if (d.konstruktor) {
-        try {
-          await this.fuehreAnweisungenAus(objekt, d.konstruktor, new Map(), gen, 0);
-        } catch (e) {
-          if (!(e instanceof RueckgabeSignal)) throw e;
-        }
-      }
+    // Wie super(): erst die parameterlosen Konstruktoren der Oberklassen,
+    // dann der passende Konstruktor der eigenen Klasse.
+    for (const d of this.klassenKette(klasse).slice(1).reverse()) {
+      const basis = d.konstruktoren.find((k) => k.params.length === 0);
+      if (basis) await this.fuehreKonstruktorAus(objekt, basis, [], gen);
     }
+    if (passend) await this.fuehreKonstruktorAus(objekt, passend, args, gen);
     return id;
+  }
+
+  private async fuehreKonstruktorAus(
+    objekt: MockObjekt,
+    konstruktor: KonstruktorDef,
+    args: Wert[],
+    gen: number,
+  ): Promise<void> {
+    const umgebung = new Map<string, Wert>();
+    konstruktor.params.forEach((p, i) => umgebung.set(p.name, wandle(args[i], p.typ, objekt.klasse)));
+    try {
+      await this.fuehreAnweisungenAus(objekt, konstruktor.body, umgebung, gen, 0);
+    } catch (e) {
+      if (!(e instanceof RueckgabeSignal)) throw e;
+    }
   }
 
   private feldStandardwerte(def: KlassenDef): Map<string, Wert> {
@@ -377,23 +402,20 @@ export class MockLaufzeit implements JavaLaufzeit {
     gen: number,
     tiefe: number,
   ): Promise<Wert> {
-    if (args.length > 1) {
-      throw new LaufFehler(`new ${klasse}(…): Der Übungsmodus unterstützt nur new ${klasse}() oder new Figur("Name").`);
+    const werte: Wert[] = [];
+    for (const a of args) {
+      werte.push(await this.werteAusdruck(a, selbst, umgebung, gen, tiefe));
     }
-    // Wie in echtem Java: Konstruktoren werden NICHT vererbt. new Hund("Bello")
-    // geht nur, wenn Hund selbst so einen Konstruktor hätte – Figur hat ihn.
-    if (args.length === 1 && klasse !== "Figur") {
-      throw new LaufFehler(
-        `new ${klasse}("…"): ${klasse} hat keinen Konstruktor mit einem Namen – Konstruktoren werden nicht vererbt. ` +
-          `Nutze new ${klasse}() und danach nenne("…").`,
-      );
-    }
-    const id = await this.erzeuge(klasse, this.welt.breite / 2, this.welt.hoehe / 2, gen);
-    if (args.length === 1) {
-      const name = await this.werteAusdruck(args[0], selbst, umgebung, gen, tiefe);
+    // Sonderfall wie im Framework: Figur("Name") setzt den Namen direkt.
+    if (klasse === "Figur" && werte.length === 1) {
+      const id = await this.erzeuge(klasse, this.welt.breite / 2, this.welt.hoehe / 2, gen);
       const figur = this.welt.figur(id);
-      if (figur && typeof name === "string") figur.name = name;
+      if (figur && typeof werte[0] === "string") figur.name = werte[0];
+      return this.objekte.get(id) ?? null;
     }
+    // Sonst wie in Java: erzeuge() prüft, ob die Klasse selbst einen
+    // passenden Konstruktor DEKLARIERT (Konstruktoren werden nicht vererbt).
+    const id = await this.erzeuge(klasse, this.welt.breite / 2, this.welt.hoehe / 2, gen, werte);
     return this.objekte.get(id) ?? null;
   }
 

@@ -13,6 +13,8 @@
  * Schülerinnen und Schüler reproduzierbar mit denselben Daten.
  */
 
+import { fehlerText } from "./laufzeit";
+
 declare function initSqlJs(config?: Record<string, unknown>): Promise<any>;
 
 const ZEILE = "\u001E";
@@ -95,7 +97,7 @@ export class Datenbank {
       const daten = zeilen.map((z) => z.map((w) => (w === null || w === undefined ? "" : String(w))).join(FELD));
       return [...kopf, ...daten].join(ZEILE);
     } catch (e) {
-      return "fehler" + ZEILE + (e as Error).message;
+      return "fehler" + ZEILE + fehlerText(e);
     }
   }
 

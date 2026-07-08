@@ -5,9 +5,12 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9, #10, #11) gemerged ·
-Aufgaben-Links + Abgabe-Knopf umgesetzt (Branch
-`claude/ai-task-integration-dev-pkon6e`)**
+**Stand: Juli 2026 · alle bisherigen PRs (#9, #10, #11, #12, #13) gemerged ·
+Praxis-Fixes nach erstem iPad-Test (Branch
+`claude/java-environment-fixes-3502jp`): CheerpJ-Jars unter
+Unterpfad-Hosting, Auto-Einrückung, Klassenbild-Anzeige, Szenarien mit
+Attributen + Konstruktoren, Konstruktoren mit Parametern (inkl.
+Objektbank-Dialog wie BlueJ)**
 
 ## Was ist JavaWelt?
 
@@ -30,7 +33,13 @@ Datenbanken (ER, Normalformen, SQL, NRW-Klassen).
 2. **Objekte benennen über `nenne(String)`,** nicht über Konstruktoren —
    Konstruktoren werden in Java nicht vererbt, und Schüler sollen keine
    `super`-Aufrufe schreiben müssen. Der Übungsmodus lehnt
-   `new Hund("Rex")` genauso ab wie javac.
+   `new Hund("Rex")` genauso ab wie javac, **solange `Hund` keinen
+   solchen Konstruktor deklariert.** Selbst deklarierte Konstruktoren
+   (auch überladene, mit Parametern) werden dagegen überall unterstützt:
+   im Code, im Übungsmodus und beim Platzieren („neu“ fragt die
+   Parameter wie BlueJ ab). Wichtig bleibt: Jede Figuren-Klasse der
+   Szenarien behält einen parameterlosen Konstruktor, damit Unterklassen
+   ohne `super(...)` auskommen.
 3. **Immer echtes Java.** Die App startet immer mit CheerpJ (ECJ-Compiler
    + JVM als WASM im Browser, vom CDN `cjrtnc.leaningtech.com`). Es gibt
    **keinen Modus-Schalter**. Nur wenn CheerpJ nicht lädt, springt der
@@ -67,8 +76,20 @@ Datenbanken (ER, Normalformen, SQL, NRW-Klassen).
   Rückfrage): Erste Schritte (EF) · Vererbung & Polymorphie (Q1, läuft
   auch im Notbetrieb) · Arrays (Q1) · Stack/Queue/List (Q1) ·
   Datenbank „Zoo“ (Q1) — mit AUFGABE-Kommentaren im Code.
-- Bilder pro Figuren-Klasse (🖼: Emoji-Raster oder Upload, verkleinert,
-  rotiert mit Blickrichtung).
+- Bilder pro Figuren-Klasse (🖼️: Emoji-Raster oder Upload, verkleinert,
+  rotiert mit Blickrichtung); das gewählte Bild erscheint auch neben dem
+  Klassennamen und in der Objektliste.
+- Editor: Tab rückt ein, Enter übernimmt die Einrückung der aktuellen
+  Zeile (nach `{` eine Stufe tiefer).
+- Alle Szenario-Klassen zeigen Attribute (Instanzvariablen) und
+  Konstruktoren mit didaktischen Kommentaren (Roboter, Tier/Hund/Katze,
+  Kiste, Kunde, Waggon, Zootier); Kiste/Kunde/Waggon/Zootier zusätzlich
+  **überladen** (z. B. `Kiste()` und `Kiste(String pInhalt)`).
+- **Konstruktoren mit Parametern** überall: `new Kiste("Paket 1")` läuft
+  in echtem Java und im Übungsmodus (sofern deklariert – nicht vererbt,
+  wie in Java); „neu“ in der Objektbank öffnet bei mehreren/parametrigen
+  Konstruktoren einen Auswahl-Dialog mit Eingabefeldern (BlueJ-Stil),
+  `Steuerung.erzeuge` wählt per Reflexion den passenden Konstruktor.
 - **Persistenz:** localStorage (automatisch, gerätegebunden) + Projekt
   als JSON-Datei speichern/öffnen (⬇/⬆ im Header; Klassen + Bilder) —
   für Gerätewechsel und Abgaben über die Dateien-App.
@@ -128,6 +149,14 @@ Wichtige Mechanik-Details:
 
 - **CheerpJ-Natives** heißen `Java_de_schule_jle_<Klasse>_nativ<Name>`
   und liegen in `cheerpjLaufzeit.ts`. Natives dürfen async sein.
+- **CheerpJs virtuelles `/app/` zeigt auf die Origin-Wurzel**, nicht auf
+  den Ordner der App. Auf GitHub Pages (Unterpfad `/<repo>/javawelt/`)
+  liefen feste Pfade wie `/app/ecj.jar` ins Leere → jedes Übersetzen
+  scheiterte („✗ undefined“). Jar-Pfade deshalb immer über `appPfad()`
+  in `cheerpjLaufzeit.ts` aus `location.href` ableiten; vor dem ersten
+  Übersetzen wird die Erreichbarkeit per HEAD geprüft und verständlich
+  gemeldet. Fehlertexte aus beliebigen geworfenen Werten liefert
+  `fehlerText()` (`laufzeit.ts`) — nie `(e as Error).message` direkt.
 - Pro Kompilierlauf entsteht ein neues Ausgabeverzeichnis + neues
   `cheerpjRunLibrary` (frische Klassen, `Steuerung.vergissAlle()`).
 - **Steuerzeichen niemals als rohe Zeichen in Quelltexte schreiben** —

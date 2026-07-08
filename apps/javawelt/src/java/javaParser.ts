@@ -28,6 +28,11 @@ export interface MethodenDef {
   zeile: number;
 }
 
+export interface KonstruktorDef {
+  params: Param[];
+  body: Anweisung[];
+}
+
 export interface KlassenDef {
   name: string;
   erbtVon: string | null;
@@ -35,8 +40,8 @@ export interface KlassenDef {
   istInterface: boolean;
   felder: Param[];
   methoden: MethodenDef[];
-  /** Konstruktor ohne Parameter (falls im Quelltext vorhanden). */
-  konstruktor: Anweisung[] | null;
+  /** Alle deklarierten Konstruktoren (leer = nur der implizite ohne Parameter). */
+  konstruktoren: KonstruktorDef[];
 }
 
 export type Ausdruck =
@@ -190,7 +195,7 @@ export function parseKlasse(quelltext: string): KlassenDef {
     istInterface: kopf.istInterface,
     felder: [],
     methoden: [],
-    konstruktor: null,
+    konstruktoren: [],
   };
   if (!kopf.istInterface) parseMitglieder(quelle, kopf.koerperAuf + 1, zu, def);
   return def;
@@ -256,9 +261,10 @@ function parseMitglieder(quelle: string, von: number, bis: number, def: KlassenD
       const koerperAuf = i + konstruktor[0].length - 1;
       const koerperZu = blockEnde(quelle, koerperAuf);
       if (koerperZu < 0) break;
-      if (konstruktor[3].trim() === "") {
-        def.konstruktor = parseAnweisungen(quelle, koerperAuf + 1, koerperZu);
-      }
+      def.konstruktoren.push({
+        params: parseParams(konstruktor[3]),
+        body: parseAnweisungen(quelle, koerperAuf + 1, koerperZu),
+      });
       i = koerperZu + 1;
       continue;
     }

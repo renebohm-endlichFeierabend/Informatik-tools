@@ -14,6 +14,20 @@ export type Ausgabe = (zeile: string) => void;
  * Klassen übernehmen (kompilieren) → Objekte erzeugen/platzieren →
  * Methoden aufrufen → Spiel (Weltklasse) starten/stoppen.
  */
+/**
+ * Holt aus einem beliebigen geworfenen Wert eine lesbare Meldung heraus.
+ * CheerpJ wirft auch Java-Exception-Proxys und andere Nicht-Error-Werte –
+ * `(e as Error).message` wäre dann undefined („✗ undefined“ in der Konsole).
+ */
+export function fehlerText(e: unknown): string {
+  const nachricht = (e as { message?: unknown } | null)?.message;
+  if (typeof nachricht === "string" && nachricht !== "") return nachricht;
+  const text = String(e);
+  return text === "[object Object]" || text === "undefined" || text === "null"
+    ? "Unerwarteter Fehler (keine Meldung verfügbar)."
+    : text;
+}
+
 export interface JavaLaufzeit {
   readonly name: string;
 
@@ -27,8 +41,12 @@ export interface JavaLaufzeit {
    */
   kompiliere(klassen: Record<string, string>): Promise<boolean>;
 
-  /** Erzeugt ein Objekt der Klasse an (x, y); gibt die Engine-Id zurück. */
-  erzeugeObjekt(klasse: string, x: number, y: number): Promise<number>;
+  /**
+   * Erzeugt ein Objekt der Klasse an (x, y); gibt die Engine-Id zurück.
+   * `args` sind Konstruktor-Argumente als Text (leer = Konstruktor ohne
+   * Parameter); sie werden anhand der deklarierten Parametertypen gewandelt.
+   */
+  erzeugeObjekt(klasse: string, x: number, y: number, args?: string[]): Promise<number>;
 
   /**
    * Ruft eine öffentliche Methode des Objekts auf. Argumente kommen als

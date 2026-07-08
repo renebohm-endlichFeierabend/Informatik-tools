@@ -108,8 +108,36 @@ const test5 = parseKlasse(`public class Test extends Figur {
     public void los() { geheVor(5); }
 }
 `);
-pruefe("Konstruktor erkannt", test5.konstruktor !== null && test5.konstruktor!.length === 1, test5.konstruktor);
+pruefe(
+  "Konstruktor erkannt",
+  test5.konstruktoren.length === 1 && test5.konstruktoren[0].params.length === 0 && test5.konstruktoren[0].body.length === 1,
+  test5.konstruktoren,
+);
 pruefe("Methode nach Konstruktor", test5.methoden.length === 1 && test5.methoden[0].name === "los");
+
+// --- Überladene Konstruktoren (mit und ohne Parameter) --------------------------
+const test5b = parseKlasse(`public class Kiste extends Figur {
+    private String inhalt;
+    public Kiste() {
+        inhalt = "leer";
+    }
+    public Kiste(String pInhalt) {
+        inhalt = pInhalt;
+    }
+    public String gibInhalt() {
+        return inhalt;
+    }
+}
+`);
+pruefe("Beide Konstruktoren erkannt", test5b.konstruktoren.length === 2, test5b.konstruktoren);
+pruefe(
+  "Konstruktor-Parameter erkannt",
+  test5b.konstruktoren[1].params.length === 1 &&
+    test5b.konstruktoren[1].params[0].typ === "String" &&
+    test5b.konstruktoren[1].params[0].name === "pInhalt",
+  test5b.konstruktoren[1].params,
+);
+pruefe("Methoden trotz Konstruktoren vollständig", test5b.methoden.length === 1 && test5b.methoden[0].name === "gibInhalt");
 
 // --- Neu: return, Generics, Zuweisung mit Ausdruck --------------------------
 const tier = parseKlasse(`public class Hund extends Tier {

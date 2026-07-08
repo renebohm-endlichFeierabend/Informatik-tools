@@ -236,6 +236,20 @@ label.schalter input {
   font-weight: 600;
 }
 
+/* Gewähltes Klassenbild (Emoji oder eigenes Bild) neben dem Namen. */
+.klasse-symbol {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.klasse-symbol img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 .klassen-trenner {
   color: var(--gedimmt);
   font-size: 11px;

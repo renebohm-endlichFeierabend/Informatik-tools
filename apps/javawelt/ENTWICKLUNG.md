@@ -5,13 +5,14 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9–#15) gemerged ·
-Praxis-Fixes nach erstem iPad-Test (PR #14/#15) · aktueller Branch
-`claude/java-object-placement-bug-2d4xmm`: Kompilieren im echten
-CheerpJ-Pfad repariert – alles konsequent auf **Java 8** (PR #15 hatte
-`version: 11` versucht, aber CheerpJ 4.2 hat kein JRT-Modul-Image →
-ECJ-NPE bei jedem Übersetzen) und alle CheerpJ-Aufrufe serialisiert
-(„Only one library thread supported“)**
+**Stand: Juli 2026 · alle bisherigen PRs (#9–#16) gemerged ·
+CheerpJ-Pfad wird gerade iterativ auf dem iPad in Betrieb genommen
+(PR #15: `version` passend zu den Jars; PR #16: konsequent Java 8 –
+CheerpJ hat kein JRT-Modul-Image – plus Warteschlange gegen „Only one
+library thread supported“) · aktueller Branch
+`claude/java-object-placement-bug-2d4xmm`: Quelltexte flach unter
+`/str/` ablegen – CheerpJs String-Dateisystem kennt keine
+Unterverzeichnisse, ECJ meldete sonst „File … is missing“**
 
 ## Was ist JavaWelt?
 
@@ -181,6 +182,11 @@ Wichtige Mechanik-Details:
   `fehlerText()` (`laufzeit.ts`) — nie `(e as Error).message` direkt.
 - Pro Kompilierlauf entsteht ein neues Ausgabeverzeichnis + neues
   `cheerpjRunLibrary` (frische Klassen, `Steuerung.vergissAlle()`).
+- **`/str/` (cheerpjAddStringFile) ist flach** – keine
+  Unterverzeichnisse. Quelltexte liegen als `/str/<Klasse>.java` und
+  werden je Lauf überschrieben; mit `/str/quellen<N>/…` fand ECJ die
+  Dateien nicht („File … is missing“). Übersetzt wird immer nur die
+  explizit übergebene Dateiliste, Reste gelöschter Klassen stören nicht.
 - **Steuerzeichen niemals als rohe Zeichen in Quelltexte schreiben** —
   immer Escapes der Form Backslash-u001E/-u001F (rohe Zeichen sind schon zweimal
   unbemerkt in Dateien gelandet; die Bash-Sandbox blockiert sie zudem).

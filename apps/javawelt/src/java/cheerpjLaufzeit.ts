@@ -58,18 +58,35 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   private dateienGeprueft = false;
   /** SQL-Datenbank (SQLite im Browser) für die NRW-Datenbankklassen. */
   private readonly datenbank = new Datenbank(ZOO_SEED);
+  /** Warteschlange: CheerpJ verträgt nur EINEN Java-Aufruf gleichzeitig. */
+  private warteschlange: Promise<unknown> = Promise.resolve();
+
+  /**
+   * Reiht einen Java-Aufruf hinter alle laufenden ein. CheerpJ im
+   * Library-Modus erlaubt nur einen Aufruf zur Zeit („Only one library
+   * thread supported“) – ohne Warteschlange kollidierte z. B. das Laden
+   * eines Szenarios mit der noch laufenden Start-Kompilierung.
+   */
+  private nacheinander<T>(aufgabe: () => Promise<T>): Promise<T> {
+    const ergebnis = this.warteschlange.then(aufgabe);
+    this.warteschlange = ergebnis.catch(() => undefined);
+    return ergebnis;
+  }
 
   async init(welt: Welt, ausgabe: Ausgabe): Promise<void> {
     this.welt = welt;
     this.ausgabe = ausgabe;
     this.ausgabe("Lade CheerpJ …");
     await this.ladeLoader();
-    // version: 11 ist Pflicht: Ohne die Option startet CheerpJ eine
-    // Java-8-JVM, aber ecj.jar (verlangt JavaSE-11) und framework.jar
-    // (--release 11) sind Java-11-Bytecode. Unter Java 8 lädt schon der
-    // Compiler nicht (UnsupportedClassVersionError) – jedes Übersetzen
-    // scheiterte, und es ließ sich kein Objekt platzieren.
-    await cheerpjInit({ version: 11, natives: this.natives() });
+    // Bewusst die Java-8-Laufzeit: Nur dort findet der Compiler die
+    // JDK-Klassen über sun.boot.class.path (so kompiliert auch CheerpJs
+    // eigenes JavaFiddle im Browser). Unter version: 11 sucht ECJ das
+    // JRT-Modul-Image (lib/modules), das es in CheerpJs Dateisystem
+    // nicht gibt → NullPointerException in JRTUtil.walkModuleImage bei
+    // jedem Übersetzen. Passend dazu: ecj.jar ist ECJ 3.20 (läuft auf
+    // Java 8), framework.jar wird mit --release 8 gebaut, kompiliert
+    // wird mit -source/-target 1.8 – immer zusammen ändern.
+    await cheerpjInit({ version: 8, natives: this.natives() });
     this.bereit = true;
     this.ausgabe("CheerpJ bereit – es läuft echtes Java im Browser.");
   }
@@ -118,7 +135,11 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
 
   // ---- Kompilieren ---------------------------------------------------------
 
-  async kompiliere(klassen: Record<string, string>): Promise<boolean> {
+  kompiliere(klassen: Record<string, string>): Promise<boolean> {
+    return this.nacheinander(() => this.kompiliereJetzt(klassen));
+  }
+
+  private async kompiliereJetzt(klassen: Record<string, string>): Promise<boolean> {
     this.pruefeBereit();
     this.laeuftFlag = false;
     // Wie die Welt: Die Datenbank startet nach jedem Übernehmen frisch.
@@ -148,8 +169,8 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       const schreiber = await new PrintWriter(puffer);
 
       const kommando = [
-        "-source", "11",
-        "-target", "11",
+        "-source", "1.8",
+        "-target", "1.8",
         "-nowarn",
         "-cp", FRAMEWORK_JAR,
         "-d", ausgabeDir,
@@ -208,7 +229,9 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     this.pruefeKompiliert();
     try {
       return Number(
-        await this.steuerung.erzeuge(klasse, Math.round(x), Math.round(y), args.join(TRENNER)),
+        await this.nacheinander(() =>
+          this.steuerung.erzeuge(klasse, Math.round(x), Math.round(y), args.join(TRENNER)),
+        ),
       );
     } catch (e) {
       throw new Error(javaFehlerText(e));
@@ -218,7 +241,9 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   async rufeMethode(id: number, methode: string, args: string[]): Promise<string> {
     this.pruefeKompiliert();
     try {
-      const ergebnis = await this.steuerung.rufe(id, methode, args.join(TRENNER));
+      const ergebnis = await this.nacheinander(() =>
+        this.steuerung.rufe(id, methode, args.join(TRENNER)),
+      );
       return ergebnis === null || ergebnis === undefined ? "" : String(ergebnis);
     } catch (e) {
       throw new Error(javaFehlerText(e));
@@ -230,14 +255,18 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       this.welt.entferne(id);
       return;
     }
-    await this.steuerung.entferne(id);
+    await this.nacheinander(() => this.steuerung.entferne(id));
     this.welt.entferne(id); // falls das Objekt der Java-Seite unbekannt war
   }
 
   // ---- Spiel (Weltklasse) ------------------------------------------------------
 
-  async starteSpiel(weltKlasse: string): Promise<void> {
+  starteSpiel(weltKlasse: string): Promise<void> {
     this.pruefeKompiliert();
+    return this.nacheinander(() => this.starteSpielJetzt(weltKlasse));
+  }
+
+  private async starteSpielJetzt(weltKlasse: string): Promise<void> {
     // Frischer Lauf: Welt und Java-Objekte zurücksetzen.
     await this.steuerung.vergissAlle();
     this.welt.leeren();

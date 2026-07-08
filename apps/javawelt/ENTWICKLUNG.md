@@ -5,14 +5,13 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9–#14) gemerged ·
-Praxis-Fixes nach erstem iPad-Test (PR #14): CheerpJ-Jars unter
-Unterpfad-Hosting, Auto-Einrückung, Klassenbild-Anzeige, Szenarien mit
-Attributen + Konstruktoren, Konstruktoren mit Parametern (inkl.
-Objektbank-Dialog wie BlueJ) · danach (Branch
-`claude/java-object-placement-bug-2d4xmm`): Platzieren-Fix –
-CheerpJ startet jetzt mit `version: 11` (vorher Java-8-JVM, die die
-Java-11-Jars nicht laden konnte → jedes Übersetzen scheiterte)**
+**Stand: Juli 2026 · alle bisherigen PRs (#9–#15) gemerged ·
+Praxis-Fixes nach erstem iPad-Test (PR #14/#15) · aktueller Branch
+`claude/java-object-placement-bug-2d4xmm`: Kompilieren im echten
+CheerpJ-Pfad repariert – alles konsequent auf **Java 8** (PR #15 hatte
+`version: 11` versucht, aber CheerpJ 4.2 hat kein JRT-Modul-Image →
+ECJ-NPE bei jedem Übersetzen) und alle CheerpJ-Aufrufe serialisiert
+(„Only one library thread supported“)**
 
 ## Was ist JavaWelt?
 
@@ -151,12 +150,23 @@ Wichtige Mechanik-Details:
 
 - **CheerpJ-Natives** heißen `Java_de_schule_jle_<Klasse>_nativ<Name>`
   und liegen in `cheerpjLaufzeit.ts`. Natives dürfen async sein.
-- **CheerpJ braucht `cheerpjInit({ version: 11, … })`.** Ohne die Option
-  startet CheerpJ eine **Java-8**-JVM; ecj.jar (verlangt JavaSE-11) und
-  framework.jar (`--release 11`) sind aber Java-11-Bytecode. Folge war:
-  „Übersetzen nicht möglich“ (UnsupportedClassVersionError) und damit
-  kein Platzieren. Java-Zielversion (build.sh, `-source`/`-target` im
-  Kompilierkommando) und `version` immer zusammen ändern.
+- **CheerpJ startet eine Java-8-JVM, die alle Jars laden können muss** –
+  deshalb bleibt **alles konsequent auf Java 8**:
+  `cheerpjInit({ version: 8 })`, ecj.jar = ECJ 3.20 (letzte auf Java 8
+  lauffähige Reihe), framework.jar mit `--release 8`, Kompilieren mit
+  `-source/-target 1.8`, Tests mit `javac --release 8`. **Java 11 geht
+  NICHT:** CheerpJ 4.2 liefert kein JRT-Modul-Image (`lib/modules`) –
+  ECJ stürzt dann bei jedem Übersetzen mit einer NPE in
+  `JRTUtil.walkModuleImage` ab. Unter Java 8 findet der Compiler die
+  JDK-Klassen über `sun.boot.class.path` (so kompiliert auch CheerpJs
+  JavaFiddle). Java-Zielversion überall nur zusammen ändern.
+- **CheerpJ verträgt nur EINEN Java-Aufruf gleichzeitig** („Only one
+  library thread supported“). Alle Aufrufe (Kompilieren, Objekt
+  erzeugen, Methoden, Spielstart) laufen deshalb durch die Warteschlange
+  `nacheinander()` in `cheerpjLaufzeit.ts` – vorher kollidierte z. B.
+  das Szenario-Laden mit der noch laufenden Start-Kompilierung.
+  `stoppeSpiel()` bleibt bewusst außerhalb (setzt nur das JS-Flag und
+  beendet so die Spielschleife, die die Warteschlange blockiert).
 - `Steuerung.erzeuge` sucht Klassen erst im Standardpaket
   (Schülerklassen), dann in `de.schule.jle` – die Objektbank bietet auch
   `Figur` selbst zum Platzieren an, und `Class.forName("Figur")` allein

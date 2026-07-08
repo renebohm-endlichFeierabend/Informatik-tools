@@ -38,15 +38,80 @@ public final class Steuerung {
   }
 
   /**
+   * Sucht die Klasse zum Namen – robust gegenüber der Laufzeitumgebung:
+   * {@code Class.forName(String)} nutzt den ClassLoader des Aufrufers, was
+   * in der Browser-JVM (CheerpJ) nicht zuverlässig der Loader ist, der die
+   * Schülerklassen kennt. Deshalb wird ausdrücklich auch über den Loader
+   * dieser Klasse und den Kontext-Loader gesucht – und für Framework-Klassen
+   * wie Figur zusätzlich im Paket {@code de.schule.jle}.
+   */
+  private static Class<?> findeKlasse(String name) throws ClassNotFoundException {
+    ClassLoader[] loaders = {
+        Steuerung.class.getClassLoader(),
+        Thread.currentThread().getContextClassLoader(),
+    };
+    String[] kandidaten = { name, "de.schule.jle." + name };
+    for (String kandidat : kandidaten) {
+      try {
+        return Class.forName(kandidat);
+      } catch (ClassNotFoundException | LinkageError ignoriert) {
+        // weiter mit den expliziten Loadern
+      }
+      for (ClassLoader loader : loaders) {
+        if (loader == null) {
+          continue;
+        }
+        try {
+          return Class.forName(kandidat, true, loader);
+        } catch (ClassNotFoundException | LinkageError ignoriert) {
+          // nächster Kandidat
+        }
+      }
+    }
+    throw new ClassNotFoundException(name);
+  }
+
+  /** Zerlegt die Argumentliste; die Anzahl kommt getrennt mit, weil sich
+   *  "keine Argumente" und "ein leerer Text" im String nicht unterscheiden. */
+  private static String[] zerlegeArgs(int argAnzahl, String argTexte) throws Exception {
+    if (argAnzahl <= 0) {
+      return new String[0];
+    }
+    String[] args = argTexte.split(TRENNER, -1);
+    if (args.length != argAnzahl) {
+      throw new Exception("Interner Fehler: " + argAnzahl + " Argument(e) erwartet, "
+          + args.length + " erhalten.");
+    }
+    return args;
+  }
+
+  /** Macht aus dem Grund eines Reflexions-Fehlers eine verständliche Meldung. */
+  private static Exception verstaendlich(Throwable ursache) {
+    if (ursache instanceof UnsatisfiedLinkError) {
+      return new Exception("Interner Fehler: Die Verbindung zur Welt-Anzeige fehlt ("
+          + ursache.getMessage() + "). Bitte die Seite neu laden.");
+    }
+    String meldung = ursache.getMessage();
+    return new Exception(meldung == null || meldung.isEmpty() ? ursache.toString() : meldung);
+  }
+
+  /**
    * Erzeugt ein Objekt der Klasse und setzt es an die Position (x, y).
    * Die Konstruktor-Argumente kommen als ein String, getrennt durch
-   * {@link #TRENNER} (leer = Konstruktor ohne Parameter), und werden anhand
-   * der Parametertypen umgewandelt (int, double, boolean, String).
-   * Gibt die Engine-Id der sichtbaren Figur zurück.
+   * {@link #TRENNER}, plus ihre Anzahl (0 = Konstruktor ohne Parameter),
+   * und werden anhand der Parametertypen umgewandelt (int, double,
+   * boolean, String). Gibt die Engine-Id der sichtbaren Figur zurück.
    */
-  public static int erzeuge(String klassenName, int x, int y, String argTexte) throws Exception {
-    Class<?> k = Class.forName(klassenName);
-    String[] args = argTexte.isEmpty() ? new String[0] : argTexte.split(TRENNER, -1);
+  public static int erzeuge(String klassenName, int x, int y, int argAnzahl, String argTexte)
+      throws Exception {
+    Class<?> k;
+    try {
+      k = findeKlasse(klassenName);
+    } catch (ClassNotFoundException e) {
+      throw new Exception("Die Klasse " + klassenName
+          + " wurde in den übersetzten Klassen nicht gefunden – bitte zuerst ✓ Übernehmen drücken.");
+    }
+    String[] args = zerlegeArgs(argAnzahl, argTexte);
     Object o = null;
     for (Constructor<?> c : k.getDeclaredConstructors()) {
       if (c.getParameterCount() != args.length) {
@@ -59,8 +124,10 @@ public final class Steuerung {
       try {
         o = c.newInstance(werte);
       } catch (InvocationTargetException e) {
-        Throwable ursache = e.getCause() == null ? e : e.getCause();
-        throw new Exception(ursache.toString());
+        throw verstaendlich(e.getCause() == null ? e : e.getCause());
+      } catch (InstantiationException e) {
+        throw new Exception("Die Klasse " + klassenName
+            + " ist abstrakt – platziere ein Objekt einer Unterklasse.");
       }
       break;
     }
@@ -88,16 +155,17 @@ public final class Steuerung {
 
   /**
    * Ruft eine öffentliche Methode des Objekts auf. Die Argumente kommen als
-   * ein String, getrennt durch {@link #TRENNER}, und werden anhand der
-   * Parametertypen umgewandelt (int, double, boolean, String).
-   * Gibt den Rückgabewert als Text zurück ("" bei void).
+   * ein String, getrennt durch {@link #TRENNER}, plus ihre Anzahl, und
+   * werden anhand der Parametertypen umgewandelt (int, double, boolean,
+   * String). Gibt den Rückgabewert als Text zurück ("" bei void).
    */
-  public static String rufe(int id, String methodenName, String argTexte) throws Exception {
+  public static String rufe(int id, String methodenName, int argAnzahl, String argTexte)
+      throws Exception {
     Figur f = figuren.get(id);
     if (f == null) {
       throw new Exception("Objekt nicht (mehr) bekannt – Welt neu befüllen.");
     }
-    String[] args = argTexte.isEmpty() ? new String[0] : argTexte.split(TRENNER, -1);
+    String[] args = zerlegeArgs(argAnzahl, argTexte);
     for (Method m : f.getClass().getMethods()) {
       if (!m.getName().equals(methodenName) || m.getParameterCount() != args.length) {
         continue;
@@ -110,8 +178,7 @@ public final class Steuerung {
         Object ergebnis = m.invoke(f, werte);
         return ergebnis == null ? "" : String.valueOf(ergebnis);
       } catch (InvocationTargetException e) {
-        Throwable ursache = e.getCause() == null ? e : e.getCause();
-        throw new Exception(ursache.toString());
+        throw verstaendlich(e.getCause() == null ? e : e.getCause());
       }
     }
     throw new Exception(

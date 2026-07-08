@@ -161,6 +161,23 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       this.lib = await cheerpjRunLibrary(`${ausgabeDir}:${FRAMEWORK_JAR}`);
       this.steuerung = await this.lib.de.schule.jle.Steuerung;
       await this.steuerung.vergissAlle();
+      // Frühkontrolle: Ist eine frisch übersetzte Klasse über die neue
+      // Library wirklich auffindbar? Sonst scheitert erst das Platzieren –
+      // mit einer Meldung, die nach Schülerfehler aussieht.
+      const probeName = Object.keys(klassen)[0];
+      if (probeName) {
+        let probe: unknown = null;
+        try {
+          probe = await this.lib[probeName];
+        } catch {
+          // unten einheitlich gemeldet
+        }
+        if (!probe) {
+          throw new Error(
+            `Die übersetzte Klasse ${probeName} ist über den Klassenpfad ${ausgabeDir} nicht ladbar.`,
+          );
+        }
+      }
       return true;
     } catch (e) {
       throw new Error("Übersetzen nicht möglich: " + fehlerText(e));
@@ -202,8 +219,12 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   async erzeugeObjekt(klasse: string, x: number, y: number, args: string[] = []): Promise<number> {
     this.pruefeKompiliert();
     try {
+      // Die Argument-ANZAHL geht getrennt mit: args=[""] (ein leeres Feld)
+      // und args=[] ergeben denselben String – Java braucht den Unterschied.
       return Number(
-        await this.steuerung.erzeuge(klasse, Math.round(x), Math.round(y), args.join(TRENNER)),
+        await this.steuerung.erzeuge(
+          klasse, Math.round(x), Math.round(y), args.length, args.join(TRENNER),
+        ),
       );
     } catch (e) {
       throw new Error(javaFehlerText(e));
@@ -213,7 +234,7 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   async rufeMethode(id: number, methode: string, args: string[]): Promise<string> {
     this.pruefeKompiliert();
     try {
-      const ergebnis = await this.steuerung.rufe(id, methode, args.join(TRENNER));
+      const ergebnis = await this.steuerung.rufe(id, methode, args.length, args.join(TRENNER));
       return ergebnis === null || ergebnis === undefined ? "" : String(ergebnis);
     } catch (e) {
       throw new Error(javaFehlerText(e));

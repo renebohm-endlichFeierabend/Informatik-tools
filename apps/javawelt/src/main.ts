@@ -179,18 +179,28 @@ klassenVerwaltung.onListeGeaendert = () => {
 };
 
 // --- Übernehmen (Kompilieren) ------------------------------------------------------
-async function uebernehmen(): Promise<boolean> {
-  await initVersprechen;
-  const ok = await laufzeit.kompiliere(klassenVerwaltung.quelltexte());
-  if (ok) {
-    welt.leeren();
-    uebernommen = true;
-    geaendert = false;
-    objektbank.aktualisiere();
-    log("✓ Klassen übernommen – die Welt wurde geleert.");
-  }
-  aktualisiereKnoepfe();
-  return ok;
+// Läuft schon ein Übernehmen (z. B. das automatische beim Start), hängen sich
+// weitere Aufrufe an DENSELBEN Lauf – sonst leert der Nachzügler die Welt und
+// wirft gerade platzierte Objekte wieder weg.
+let uebernehmenLauf: Promise<boolean> | null = null;
+
+function uebernehmen(): Promise<boolean> {
+  uebernehmenLauf ??= (async () => {
+    await initVersprechen;
+    const ok = await laufzeit.kompiliere(klassenVerwaltung.quelltexte());
+    if (ok) {
+      welt.leeren();
+      uebernommen = true;
+      geaendert = false;
+      objektbank.aktualisiere();
+      log("✓ Klassen übernommen – die Welt wurde geleert.");
+    }
+    aktualisiereKnoepfe();
+    return ok;
+  })().finally(() => {
+    uebernehmenLauf = null;
+  });
+  return uebernehmenLauf;
 }
 
 /** Stellt sicher, dass der aktuelle Quelltext übersetzt ist. */

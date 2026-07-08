@@ -5,12 +5,14 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9, #10, #11, #12, #13) gemerged ·
-Praxis-Fixes nach erstem iPad-Test (Branch
-`claude/java-environment-fixes-3502jp`): CheerpJ-Jars unter
-Unterpfad-Hosting, Auto-Einrückung, Klassenbild-Anzeige, Szenarien mit
-Attributen + Konstruktoren, Konstruktoren mit Parametern (inkl.
-Objektbank-Dialog wie BlueJ)**
+**Stand: Juli 2026 · alle bisherigen PRs (#9–#14) gemerged ·
+aktuell (Branch `claude/object-placement-learning-env-xyxml3`):
+Platzieren in echtem Java robust gemacht — Klassenauflösung in
+`Steuerung` ohne Verlass auf Caller-ClassLoader (Basisklasse Figur war
+damit nie platzierbar), Argument-Anzahl im UI↔Java-Protokoll (leeres
+Eingabefeld ≠ „keine Argumente“), verständliche Fehlermeldungen,
+Ladbarkeits-Frühkontrolle nach dem Übernehmen, kein doppeltes
+Auto-Übernehmen mehr; neuer JVM-Protokolltest `tests/testSteuerung.mjs`**
 
 ## Was ist JavaWelt?
 
@@ -169,7 +171,9 @@ Wichtige Mechanik-Details:
 ```bash
 cd apps/javawelt
 npm test          # Parser, Interpreter, SQL (echte SQLite),
-                  # javac-Kompilierung aller Szenarien + Bibliothek
+                  # javac-Kompilierung aller Szenarien + Bibliothek,
+                  # Steuerung-Protokoll auf der JVM (Platzieren/Aufrufe
+                  # mit gestubbten nativ*-Methoden, tests/testSteuerung.mjs)
 npm run build     # Typecheck + Vite-Build
 
 # UI-Tests (brauchen Playwright + Chromium):
@@ -185,13 +189,23 @@ Bibliothek und Protokolle), nicht end-to-end im Browser gelaufen.
 
 ## Offene Punkte
 
-1. **CheerpJ im Schulnetz validieren** (wichtigster Punkt vor dem
+1. **Platzieren auf dem iPad erneut testen** (Meldung Juli 2026:
+   „Platzieren funktioniert noch nicht“; im Notbetrieb/Chromium war es
+   nie reproduzierbar — alle Platzieren-Pfade laufen dort grün). Der
+   echte CheerpJ-Pfad ist jetzt gegen die plausiblen Ursachen gehärtet
+   (Klassenauflösung, Protokoll, Frühkontrolle) und per JVM-Test
+   abgesichert; CheerpJ selbst ist in der Sandbox nicht ausführbar
+   (CDN blockiert). **Falls es weiterhin scheitert: Die Konsole zeigt
+   jetzt eine aussagekräftige Meldung — bitte deren Wortlaut notieren,**
+   damit die Ursache eindeutig zuzuordnen ist (Klassen nicht ladbar ↔
+   Natives fehlen ↔ anderes).
+2. **CheerpJ im Schulnetz validieren** (wichtigster Punkt vor dem
    Einsatz): Seite auf einem Schul-iPad öffnen → erscheint „CheerpJ
    bereit“ oder „⚠ Notbetrieb“? Bei Blockade: CheerpJ self-hosten
    (Lizenzbedingungen für Schulen prüfen, Datenschutz klären).
-2. ECJ-Ausgabe/Loader-Versionen ggf. abstimmen (README-Abschnitt
+3. ECJ-Ausgabe/Loader-Versionen ggf. abstimmen (README-Abschnitt
    „CheerpJ-Pfad validieren“).
-3. Safari kann localStorage lange unbenutzter Seiten löschen →
+4. Safari kann localStorage lange unbenutzter Seiten löschen →
    Projektdatei ist der verlässliche Speicher; ggf. Erinnerung in der UI.
 
 ## Roadmap (nächster Schwerpunkt: Didaktik-Verzahnung mit OneNote)

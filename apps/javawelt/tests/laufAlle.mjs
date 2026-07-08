@@ -81,6 +81,13 @@ if (javacDa) {
   } catch {
     fehlgeschlagen++;
   }
+
+  console.log("\n=== Steuerung-Protokoll auf der JVM (Platzieren/Methodenaufruf) ===");
+  try {
+    execFileSync(process.execPath, [join(HIER, "testSteuerung.mjs")], { stdio: "inherit", cwd: WURZEL });
+  } catch {
+    fehlgeschlagen++;
+  }
 }
 
 console.log(fehlgeschlagen === 0 ? "\n✓ Alle Test-Schritte bestanden." : `\n✗ ${fehlgeschlagen} Test-Schritt(e) fehlgeschlagen.`);

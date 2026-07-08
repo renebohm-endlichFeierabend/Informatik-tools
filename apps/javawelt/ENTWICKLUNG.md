@@ -5,14 +5,14 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9–#16) gemerged ·
+**Stand: Juli 2026 · alle bisherigen PRs (#9–#17) gemerged ·
 CheerpJ-Pfad wird gerade iterativ auf dem iPad in Betrieb genommen
 (PR #15: `version` passend zu den Jars; PR #16: konsequent Java 8 –
 CheerpJ hat kein JRT-Modul-Image – plus Warteschlange gegen „Only one
-library thread supported“) · aktueller Branch
-`claude/java-object-placement-bug-2d4xmm`: Quelltexte flach unter
-`/str/` ablegen – CheerpJs String-Dateisystem kennt keine
-Unterverzeichnisse, ECJ meldete sonst „File … is missing“**
+library thread supported“; PR #17: /str/ flach) · aktueller Branch
+`claude/java-object-placement-bug-2d4xmm`: Quelltexte per Java-IO nach
+`/files/` schreiben (/str/ war für ECJ nicht sichtbar: „File … is
+missing“) + Build-Zeitstempel in der Konsole gegen Cache-Verwirrung**
 
 ## Was ist JavaWelt?
 
@@ -182,11 +182,16 @@ Wichtige Mechanik-Details:
   `fehlerText()` (`laufzeit.ts`) — nie `(e as Error).message` direkt.
 - Pro Kompilierlauf entsteht ein neues Ausgabeverzeichnis + neues
   `cheerpjRunLibrary` (frische Klassen, `Steuerung.vergissAlle()`).
-- **`/str/` (cheerpjAddStringFile) ist flach** – keine
-  Unterverzeichnisse. Quelltexte liegen als `/str/<Klasse>.java` und
-  werden je Lauf überschrieben; mit `/str/quellen<N>/…` fand ECJ die
-  Dateien nicht („File … is missing“). Übersetzt wird immer nur die
-  explizit übergebene Dateiliste, Reste gelöschter Klassen stören nicht.
+- **Quelltexte NICHT über `/str/` (cheerpjAddStringFile) übergeben** –
+  ECJ meldete dafür „File … is missing“ (mit und ohne Unterverzeichnis).
+  Stattdessen schreibt `schreibeQuellen()` sie **aus Java heraus**
+  (java.io über die ECJ-Library, UTF-8 + `-encoding UTF-8`) nach
+  `/files/src<N>/` – dasselbe beschreibbare Dateisystem, in das auch
+  ECJs `-d`-Ausgabe geht; hinterher wird per `File.exists()` geprüft.
+- **Build-Zeitstempel:** Die Konsole zeigt beim Start „JavaWelt-Build
+  vom …“ (`__BUILD_ZEIT__` aus `vite.config.ts`). GitHub Pages/Safari
+  cachen bis zu 10 Minuten – bei Fehlerberichten zuerst diese Zeile
+  vergleichen, sonst debuggt man einen alten Stand.
 - **Steuerzeichen niemals als rohe Zeichen in Quelltexte schreiben** —
   immer Escapes der Form Backslash-u001E/-u001F (rohe Zeichen sind schon zweimal
   unbemerkt in Dateien gelandet; die Bash-Sandbox blockiert sie zudem).

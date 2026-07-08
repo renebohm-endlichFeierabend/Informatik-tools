@@ -7,7 +7,6 @@ import { Datenbank, ZOO_SEED } from "./datenbank";
 // CheerpJ-Version anpassen (siehe https://cheerpj.com/docs/).
 declare function cheerpjInit(opts?: Record<string, unknown>): Promise<void>;
 declare function cheerpjRunLibrary(classPath: string): Promise<any>;
-declare function cheerpjAddStringFile(pfad: string, inhalt: string): void;
 
 const LOADER_URL = "https://cjrtnc.leaningtech.com/4.2/loader.js";
 
@@ -145,19 +144,8 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     // Wie die Welt: Die Datenbank startet nach jedem Übernehmen frisch.
     this.datenbank.setzeZurueck();
     const nr = ++this.laufNr;
+    const quellDir = `/files/src${nr}`;
     const ausgabeDir = `/files/out${nr}`;
-
-    // Quelltexte FLACH unter /str/ ablegen: CheerpJs String-Dateisystem
-    // kennt keine Unterverzeichnisse – für /str/quellen1/X.java meldete
-    // ECJ „File … is missing“. Gleiche Namen überschreiben je Lauf nur
-    // ihren Inhalt; übersetzt wird ausschließlich die aktuelle Liste
-    // `pfade`, Reste gelöschter Klassen stören also nicht.
-    const pfade: string[] = [];
-    for (const [name, quelle] of Object.entries(klassen)) {
-      const pfad = `/str/${name}.java`;
-      cheerpjAddStringFile(pfad, GERUEST + quelle);
-      pfade.push(pfad);
-    }
 
     this.ausgabe("Übersetze Klassen …");
     try {
@@ -166,6 +154,13 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
         this.dateienGeprueft = true;
       }
       if (!this.ecj) this.ecj = await cheerpjRunLibrary(ECJ_JAR);
+
+      // Quelltexte AUS JAVA HERAUS nach /files/ schreiben (CheerpJs
+      // beschreibbares Dateisystem, in das auch ECJs -d-Ausgabe geht).
+      // Der /str/-Weg (cheerpjAddStringFile) war für ECJ nicht sichtbar:
+      // „File … is missing“ für jede Quelldatei.
+      const pfade = await this.schreibeQuellen(klassen, quellDir);
+
       const StringWriter = await this.ecj.java.io.StringWriter;
       const PrintWriter = await this.ecj.java.io.PrintWriter;
       const BatchCompiler = await this.ecj.org.eclipse.jdt.core.compiler.batch.BatchCompiler;
@@ -175,6 +170,7 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       const kommando = [
         "-source", "1.8",
         "-target", "1.8",
+        "-encoding", "UTF-8",
         "-nowarn",
         "-cp", FRAMEWORK_JAR,
         "-d", ausgabeDir,
@@ -185,7 +181,7 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
       const meldungen = String(await puffer.toString());
 
       if (!ok) {
-        this.ausgabe(this.lesbareFehler(meldungen, "/str"));
+        this.ausgabe(this.lesbareFehler(meldungen, quellDir));
         return false;
       }
       this.lib = await cheerpjRunLibrary(`${ausgabeDir}:${FRAMEWORK_JAR}`);
@@ -195,6 +191,42 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     } catch (e) {
       throw new Error("Übersetzen nicht möglich: " + fehlerText(e));
     }
+  }
+
+  /**
+   * Schreibt die Schülerquelltexte über Java-IO (aus der ECJ-Library)
+   * nach /files/ – mit UTF-8, passend zu -encoding im Kompilierkommando.
+   * cheerpjAddStringFile/​/str/ war für ECJ nicht sichtbar; /files/ ist
+   * derselbe Speicher, in den ECJ auch seine .class-Ausgabe schreibt.
+   * Gibt die geschriebenen Pfade zurück; wirft eine verständliche
+   * Meldung, wenn die Dateien hinterher nicht lesbar sind.
+   */
+  private async schreibeQuellen(
+    klassen: Record<string, string>,
+    quellDir: string,
+  ): Promise<string[]> {
+    const File = await this.ecj.java.io.File;
+    const FileOutputStream = await this.ecj.java.io.FileOutputStream;
+    const OutputStreamWriter = await this.ecj.java.io.OutputStreamWriter;
+    const dir = await new File(quellDir);
+    await dir.mkdirs();
+    const pfade: string[] = [];
+    for (const [name, quelle] of Object.entries(klassen)) {
+      const pfad = `${quellDir}/${name}.java`;
+      const strom = await new FileOutputStream(pfad);
+      const schreiber = await new OutputStreamWriter(strom, "UTF-8");
+      await schreiber.write(GERUEST + quelle);
+      await schreiber.close();
+      pfade.push(pfad);
+    }
+    // Kontrolle aus Java-Sicht: Genau das prüft ECJ gleich auch.
+    const probe = await new File(pfade[0]);
+    if (!(await probe.exists())) {
+      throw new Error(
+        `Quelltexte konnten nicht ins CheerpJ-Dateisystem geschrieben werden (${pfade[0]} fehlt).`,
+      );
+    }
+    return pfade;
   }
 
   /**

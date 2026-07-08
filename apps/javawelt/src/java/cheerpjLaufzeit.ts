@@ -195,11 +195,14 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
 
   /**
    * Schreibt die Schülerquelltexte über Java-IO (aus der ECJ-Library)
-   * nach /files/ – mit UTF-8, passend zu -encoding im Kompilierkommando.
-   * cheerpjAddStringFile/​/str/ war für ECJ nicht sichtbar; /files/ ist
-   * derselbe Speicher, in den ECJ auch seine .class-Ausgabe schreibt.
-   * Gibt die geschriebenen Pfade zurück; wirft eine verständliche
-   * Meldung, wenn die Dateien hinterher nicht lesbar sind.
+   * nach /files/ – dasselbe Dateisystem, in das auch ECJs -d-Ausgabe
+   * geht. Der Inhalt geht BYTE-GENAU über die JS↔Java-Brücke: in JS als
+   * UTF-8 kodiert, als Base64 (reines ASCII) übergeben und erst IN Java
+   * dekodiert – ein direktes write(String) lieferte über die Brücke
+   * beschädigten Quelltext (ECJ-Scanner stürzte mit
+   * ArrayIndexOutOfBoundsException ab), und /str/ (cheerpjAddStringFile)
+   * war für ECJ gar nicht sichtbar. Nach jedem Schreiben wird die
+   * Dateigröße byte-genau gegen den erwarteten Wert geprüft.
    */
   private async schreibeQuellen(
     klassen: Record<string, string>,
@@ -207,24 +210,28 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
   ): Promise<string[]> {
     const File = await this.ecj.java.io.File;
     const FileOutputStream = await this.ecj.java.io.FileOutputStream;
-    const OutputStreamWriter = await this.ecj.java.io.OutputStreamWriter;
-    const dir = await new File(quellDir);
-    await dir.mkdirs();
+    const Base64 = await this.ecj.java.util.Base64;
+    const dekodierer = await Base64.getDecoder();
+    const kodierer = new TextEncoder();
+    await (await new File(quellDir)).mkdirs();
     const pfade: string[] = [];
     for (const [name, quelle] of Object.entries(klassen)) {
       const pfad = `${quellDir}/${name}.java`;
+      const bytes = kodierer.encode(GERUEST + quelle);
+      // decode() liefert ein Java-byte[], das als Handle in Java bleibt –
+      // die Rohdaten überqueren die Brücke nie ungeschützt.
+      const javaBytes = await dekodierer.decode(alsBase64(bytes));
       const strom = await new FileOutputStream(pfad);
-      const schreiber = await new OutputStreamWriter(strom, "UTF-8");
-      await schreiber.write(GERUEST + quelle);
-      await schreiber.close();
+      await strom.write(javaBytes);
+      await strom.close();
+      const laenge = Number(await (await new File(pfad)).length());
+      if (laenge !== bytes.length) {
+        throw new Error(
+          `Der Quelltext ${name}.java kam beschädigt im CheerpJ-Dateisystem an ` +
+            `(${laenge} statt ${bytes.length} Bytes).`,
+        );
+      }
       pfade.push(pfad);
-    }
-    // Kontrolle aus Java-Sicht: Genau das prüft ECJ gleich auch.
-    const probe = await new File(pfade[0]);
-    if (!(await probe.exists())) {
-      throw new Error(
-        `Quelltexte konnten nicht ins CheerpJ-Dateisystem geschrieben werden (${pfade[0]} fehlt).`,
-      );
     }
     return pfade;
   }
@@ -333,6 +340,16 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     this.pruefeBereit();
     if (!this.lib) throw new Error("Bitte zuerst „Übernehmen“ drücken (Klassen übersetzen).");
   }
+}
+
+/** Kodiert Bytes als Base64 – blockweise, damit große Dateien nicht am Argumentlimit scheitern. */
+function alsBase64(bytes: Uint8Array): string {
+  let binaer = "";
+  const BLOCK = 0x8000;
+  for (let i = 0; i < bytes.length; i += BLOCK) {
+    binaer += String.fromCharCode(...bytes.subarray(i, i + BLOCK));
+  }
+  return btoa(binaer);
 }
 
 /** Holt aus einem CheerpJ-/Java-Fehler eine lesbare Meldung heraus. */

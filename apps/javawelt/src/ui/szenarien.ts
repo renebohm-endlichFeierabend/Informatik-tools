@@ -245,9 +245,15 @@ const KISTE = `public class Kiste extends Figur {
     // ATTRIBUT: Jede Kiste kennt ihren eigenen Inhalt.
     private String inhalt;
 
-    // KONSTRUKTOR: Neue Kisten sind zunächst leer.
+    // KONSTRUKTOR ohne Parameter: Neue Kisten sind zunächst leer.
     public Kiste() {
         inhalt = "leer";
+    }
+
+    // ÜBERLADENER KONSTRUKTOR: gleicher Name, andere Parameterliste.
+    // new Kiste("Paket 1") packt den Inhalt direkt beim Erzeugen ein.
+    public Kiste(String pInhalt) {
+        inhalt = pInhalt;
     }
 
     public void packeEin(String neuerInhalt) {
@@ -271,9 +277,9 @@ const STACK_WELT = `public class MeineWelt extends Welt {
     public void bereiteVor() {
         stapel = new Stack<Kiste>();
         // Fünf Kisten werden gestapelt – die zuletzt gestapelte liegt OBEN.
+        // Der Konstruktor mit Parameter packt den Inhalt direkt ein.
         for (int i = 0; i < 5; i++) {
-            Kiste k = new Kiste();
-            k.packeEin("Paket " + (i + 1));
+            Kiste k = new Kiste("Paket " + (i + 1));
             k.setzePosition(220, 400 - i * 55);
             stapel.push(k);
         }
@@ -312,9 +318,15 @@ const KUNDE = `public class Kunde extends Figur {
     // ATTRIBUT: Jeder Kunde hat seinen eigenen Wunsch.
     private String wunsch;
 
-    // KONSTRUKTOR: Standardwunsch für neue Kunden.
+    // KONSTRUKTOR ohne Parameter: Standardwunsch für neue Kunden.
     public Kunde() {
         wunsch = "eine Brezel";
+    }
+
+    // ÜBERLADENER KONSTRUKTOR: new Kunde("ein Eis") setzt den Wunsch
+    // direkt beim Erzeugen.
+    public Kunde(String pWunsch) {
+        wunsch = pWunsch;
     }
 
     public void setzeWunsch(String neuerWunsch) {
@@ -352,7 +364,7 @@ const QUEUE_WELT = `public class MeineWelt extends Welt {
                 rueckeAuf();
             }
             if (zufallszahl(1, 3) == 1) {
-                Kunde neu = new Kunde();
+                Kunde neu = new Kunde("ein Eis");
                 schlange.enqueue(neu);
                 rueckeAuf();
             }
@@ -376,9 +388,10 @@ const QUEUE_WELT = `public class MeineWelt extends Welt {
     }
 
     // AUFGABE 1: Woran erkennst du das FIFO-Prinzip im Ablauf?
-    // AUFGABE 2: Gib neuen Kunden in spiele() per setzeWunsch() einen
-    //            anderen Wunsch (z. B. "ein Eis"). Wo kommt der
-    //            Standardwunsch "eine Brezel" her? (Schau in Kunde.java)
+    // AUFGABE 2: In bereiteVor() entsteht jeder Kunde mit new Kunde(),
+    //            in spiele() mit new Kunde("ein Eis"). Vergleiche die
+    //            beiden Konstruktoren in Kunde.java – woran erkennt Java,
+    //            welcher gemeint ist? (Stichwort: Überladung)
     // AUFGABE 3: Warum muss rueckeAuf() die Schlange umfüllen? Welche
     //            Methoden bietet Queue – und welche gerade NICHT?
     // AUFGABE 4 (LK): Öffne Queue.java und erkläre die Rolle von head
@@ -396,10 +409,16 @@ const WAGGON = `public class Waggon extends Figur {
     private int nummer;
     private String ladung;
 
-    // KONSTRUKTOR: Startwerte für jeden neuen Waggon.
+    // KONSTRUKTOR ohne Parameter: Startwerte für jeden neuen Waggon.
     public Waggon() {
         nummer = 0;
         ladung = "leer";
+    }
+
+    // ÜBERLADENER KONSTRUKTOR: new Waggon("Kohle") belädt sofort.
+    public Waggon(String pLadung) {
+        nummer = 0;
+        ladung = pLadung;
     }
 
     public void setzeNummer(int neueNummer) {
@@ -451,7 +470,7 @@ const LIST_WELT = `public class MeineWelt extends Welt {
         // Ein Speisewagen wird VOR dem zweiten Waggon eingefügt:
         zug.toFirst();
         zug.next();
-        Waggon speisewagen = new Waggon();
+        Waggon speisewagen = new Waggon("Speisen");
         speisewagen.nenne("Speisewagen");
         zug.insert(speisewagen);
         speisewagen.sage("Neu dabei!");
@@ -490,10 +509,16 @@ const ZOOTIER = `public class Zootier extends Figur {
     // ATTRIBUT: die Art des Tieres (kommt später aus der Datenbank).
     private String art;
 
-    // KONSTRUKTOR: Solange nichts aus der Datenbank geladen wurde,
-    // ist die Art unbekannt.
+    // KONSTRUKTOR ohne Parameter: Solange nichts aus der Datenbank
+    // geladen wurde, ist die Art unbekannt.
     public Zootier() {
         art = "unbekannt";
+    }
+
+    // ÜBERLADENER KONSTRUKTOR: new Zootier("Pinguin") setzt die Art
+    // direkt beim Erzeugen – so nutzt ihn zeigeTiere() in MeineWelt.
+    public Zootier(String pArt) {
+        art = pArt;
     }
 
     public void setzeArt(String neueArt) {
@@ -541,9 +566,8 @@ const DATENBANK_WELT = `public class MeineWelt extends Welt {
         }
         String[][] daten = ergebnis.getData();
         for (int i = 0; i < daten.length; i++) {
-            Zootier tier = new Zootier();
+            Zootier tier = new Zootier(daten[i][1]);
             tier.nenne(daten[i][0]);
-            tier.setzeArt(daten[i][1]);
             tier.setzePosition(110 + (i % 5) * 130, 130 + (i / 5) * 160);
             tier.sage(tier.gibArt());
         }

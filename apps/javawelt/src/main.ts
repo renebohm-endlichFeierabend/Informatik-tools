@@ -207,14 +207,30 @@ uebernehmenKnopf.addEventListener("click", () => {
 
 // --- Platzieren ------------------------------------------------------------------------
 const platzierenHinweis = $("platzieren-hinweis");
+// Konstruktor-Argumente für das nächste Platzieren (vom Dialog gewählt).
+let platzierenArgs: string[] = [];
+
+function startePlatzieren(klasse: string, args: string[]): void {
+  platzierenArgs = args;
+  eingabe.starte(klasse);
+  platzierenHinweis.textContent = `Tippe auf die Welt, um ein ${klasse}-Objekt zu platzieren.`;
+  platzierenHinweis.hidden = false;
+}
+
 objektbank.onPlatzieren = (klasse) => {
   if (eingabe.platzierenKlasse === klasse) {
     eingabe.brichAb();
     return;
   }
-  eingabe.starte(klasse);
-  platzierenHinweis.textContent = `Tippe auf die Welt, um ein ${klasse}-Objekt zu platzieren.`;
-  platzierenHinweis.hidden = false;
+  // Hat die Klasse nur den (impliziten) Konstruktor ohne Parameter, geht es
+  // direkt los; sonst wählt ein Dialog den Konstruktor samt Argumenten
+  // (wie in BlueJ).
+  const konstruktoren = klassenVerwaltung.konstruktorenFuer(klasse);
+  if (konstruktoren.length === 1 && konstruktoren[0].params.length === 0) {
+    startePlatzieren(klasse, []);
+  } else {
+    objektbank.zeigeKonstruktorDialog(klasse, konstruktoren, (args) => startePlatzieren(klasse, args));
+  }
 };
 eingabe.onPlatzierenEnde = () => {
   platzierenHinweis.hidden = true;
@@ -223,7 +239,7 @@ eingabe.onPlatziere = (klasse, x, y) => {
   void (async () => {
     try {
       await stelleUebernommenSicher();
-      const id = await laufzeit.erzeugeObjekt(klasse, x, y);
+      const id = await laufzeit.erzeugeObjekt(klasse, x, y, platzierenArgs);
       welt.waehle(id);
       objektbank.waehleAktiv(welt.figur(id));
     } catch (e) {

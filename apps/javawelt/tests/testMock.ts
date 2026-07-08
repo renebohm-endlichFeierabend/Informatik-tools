@@ -234,5 +234,57 @@ try {
 }
 pruefe("new Hund(\"Rex\") wird wie in Java abgelehnt", meldung3.includes("nenne"), meldung3);
 
+// --- Deklarierte Konstruktoren mit Parametern werden ausgeführt -----------------
+const KISTE = `public class Kiste extends Figur {
+    private String inhalt;
+    public Kiste() {
+        inhalt = "leer";
+    }
+    public Kiste(String pInhalt) {
+        inhalt = pInhalt;
+    }
+    public String gibInhalt() {
+        return inhalt;
+    }
+}`;
+const KWELT = `public class MeineWelt extends Welt {
+    Kiste voll;
+    Kiste leer;
+    public void bereiteVor() {
+        voll = new Kiste("Paket 1");
+        leer = new Kiste();
+    }
+    public void spiele() {
+    }
+}`;
+const kok = await laufzeit.kompiliere({ Kiste: KISTE, MeineWelt: KWELT });
+pruefe("Kisten-Projekt kompiliert", kok, konsole.slice(-3));
+await laufzeit.starteSpiel("MeineWelt");
+const kisten = [...welt.figuren.values()];
+pruefe("Beide Kisten erzeugt", kisten.length === 2, kisten.length);
+const inhalt1 = await laufzeit.rufeMethode(kisten[0].id, "gibInhalt", []);
+const inhalt2 = await laufzeit.rufeMethode(kisten[1].id, "gibInhalt", []);
+pruefe("Konstruktor mit Parameter setzt Attribut", inhalt1 === "Paket 1", inhalt1);
+pruefe("Überladener Konstruktor ohne Parameter", inhalt2 === "leer", inhalt2);
+
+// Platzieren über die Objektbank mit Konstruktor-Argumenten (Text-Args).
+const pid = await laufzeit.erzeugeObjekt("Kiste", 100, 100, ["Bücher"]);
+const pinhalt = await laufzeit.rufeMethode(pid, "gibInhalt", []);
+pruefe("erzeugeObjekt mit Konstruktor-Argument", pinhalt === "Bücher", pinhalt);
+
+// Falsche Parameteranzahl bleibt ein Fehler (wie javac).
+let meldung4 = "";
+try {
+  await laufzeit.kompiliere({ Kiste: KISTE, MeineWelt: `public class MeineWelt extends Welt {
+    public void bereiteVor() {
+        Kiste k = new Kiste("a", "b");
+    }
+}` });
+  await laufzeit.starteSpiel("MeineWelt");
+} catch (e) {
+  meldung4 = (e as Error).message;
+}
+pruefe("new Kiste(\"a\", \"b\") wird abgelehnt", meldung4.includes("Konstruktor"), meldung4);
+
 console.log(fehler === 0 ? "\nAlle Mock-Tests bestanden." : `\n${fehler} Fehler`);
 process.exit(fehler === 0 ? 0 : 1);

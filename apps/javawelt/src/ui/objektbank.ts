@@ -3,6 +3,7 @@ import { Figur } from "../engine/figur";
 import { JavaLaufzeit, fehlerText } from "../java/laufzeit";
 import { KlassenVerwaltung, MethodenSignatur } from "./klassenVerwaltung";
 import { BildQuelle } from "./bilder";
+import { Param } from "../java/javaParser";
 
 /**
  * Objektbank im Stil von BlueJ: Objekte per Antippen erzeugen und ihre
@@ -13,6 +14,7 @@ import { BildQuelle } from "./bilder";
  */
 export class Objektbank {
   private aktiv: Figur | null = null;
+  private konstruktorDialog: HTMLDialogElement | null = null;
 
   /** „Quelltext“-Knopf einer Klasse gedrückt. */
   onKlasseOeffnen: ((name: string) => void) | null = null;
@@ -185,6 +187,64 @@ export class Objektbank {
     this.neueKlasseEl.append(knopf, formular);
   }
 
+  // ---- Konstruktor-Auswahl (wie BlueJ) -------------------------------------
+
+  /**
+   * Zeigt die deklarierten Konstruktoren einer Klasse mit Eingabefeldern
+   * für die Parameter; die Auswahl startet dann das Platzieren.
+   */
+  zeigeKonstruktorDialog(
+    name: string,
+    konstruktoren: { params: Param[] }[],
+    onWahl: (args: string[]) => void,
+  ): void {
+    if (!this.konstruktorDialog) {
+      this.konstruktorDialog = document.createElement("dialog");
+      this.konstruktorDialog.id = "konstruktor-dialog";
+      document.body.appendChild(this.konstruktorDialog);
+    }
+    const dialog = this.konstruktorDialog;
+    dialog.innerHTML = "";
+
+    const titel = document.createElement("h2");
+    titel.textContent = `Neues ${name}-Objekt`;
+    const hinweis = document.createElement("p");
+    hinweis.className = "leer";
+    hinweis.textContent = `Konstruktor wählen – so wie im Quelltext bei new ${name}(…).`;
+    dialog.append(titel, hinweis);
+
+    for (const k of konstruktoren) {
+      const zeile = document.createElement("div");
+      zeile.className = "methode";
+      const knopf = document.createElement("button");
+      const signatur = k.params.map((p) => `${p.typ} ${p.name}`).join(", ");
+      knopf.textContent = `new ${name}(${k.params.length > 0 ? "…" : ""})`;
+      knopf.title = `new ${name}(${signatur})`;
+      zeile.appendChild(knopf);
+      const eingaben: HTMLInputElement[] = [];
+      for (const p of k.params) {
+        const eingabe = parameterEingabe(p);
+        eingaben.push(eingabe);
+        zeile.appendChild(eingabe);
+      }
+      knopf.onclick = () => {
+        dialog.close();
+        onWahl(eingaben.map((e) => e.value));
+      };
+      dialog.appendChild(zeile);
+    }
+
+    const aktionen = document.createElement("div");
+    aktionen.className = "dialog-aktionen";
+    const zu = document.createElement("button");
+    zu.className = "sekundaer";
+    zu.textContent = "Abbrechen";
+    zu.onclick = () => dialog.close();
+    aktionen.appendChild(zu);
+    dialog.appendChild(aktionen);
+    dialog.showModal();
+  }
+
   // ---- Objekte -----------------------------------------------------------------
 
   private zeichneObjekte(): void {
@@ -271,19 +331,7 @@ export class Objektbank {
 
     const eingaben: HTMLInputElement[] = [];
     for (const p of m.params) {
-      const eingabe = document.createElement("input");
-      if (p.typ === "int" || p.typ === "double") {
-        eingabe.type = "number";
-        eingabe.value = p.typ === "int" ? "50" : "1.0";
-      } else if (p.typ === "boolean") {
-        eingabe.type = "text";
-        eingabe.value = "true";
-      } else {
-        eingabe.type = "text";
-        eingabe.value = "Hallo!";
-      }
-      eingabe.title = `${p.typ} ${p.name}`;
-      eingabe.placeholder = p.name;
+      const eingabe = parameterEingabe(p);
       eingaben.push(eingabe);
       zeile.appendChild(eingabe);
     }
@@ -300,4 +348,22 @@ export class Objektbank {
     };
     return zeile;
   }
+}
+
+/** Eingabefeld für einen Parameter (Methode oder Konstruktor), mit Vorgabewert. */
+function parameterEingabe(p: Param): HTMLInputElement {
+  const eingabe = document.createElement("input");
+  if (p.typ === "int" || p.typ === "double") {
+    eingabe.type = "number";
+    eingabe.value = p.typ === "int" ? "50" : "1.0";
+  } else if (p.typ === "boolean") {
+    eingabe.type = "text";
+    eingabe.value = "true";
+  } else {
+    eingabe.type = "text";
+    eingabe.value = "Hallo!";
+  }
+  eingabe.title = `${p.typ} ${p.name}`;
+  eingabe.placeholder = p.name;
+  return eingabe;
 }

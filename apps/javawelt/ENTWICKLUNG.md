@@ -9,7 +9,8 @@
 Praxis-Fixes nach erstem iPad-Test (Branch
 `claude/java-environment-fixes-3502jp`): CheerpJ-Jars unter
 Unterpfad-Hosting, Auto-Einrückung, Klassenbild-Anzeige, Szenarien mit
-Attributen + Konstruktoren**
+Attributen + Konstruktoren, Konstruktoren mit Parametern (inkl.
+Objektbank-Dialog wie BlueJ)**
 
 ## Was ist JavaWelt?
 
@@ -32,7 +33,13 @@ Datenbanken (ER, Normalformen, SQL, NRW-Klassen).
 2. **Objekte benennen über `nenne(String)`,** nicht über Konstruktoren —
    Konstruktoren werden in Java nicht vererbt, und Schüler sollen keine
    `super`-Aufrufe schreiben müssen. Der Übungsmodus lehnt
-   `new Hund("Rex")` genauso ab wie javac.
+   `new Hund("Rex")` genauso ab wie javac, **solange `Hund` keinen
+   solchen Konstruktor deklariert.** Selbst deklarierte Konstruktoren
+   (auch überladene, mit Parametern) werden dagegen überall unterstützt:
+   im Code, im Übungsmodus und beim Platzieren („neu“ fragt die
+   Parameter wie BlueJ ab). Wichtig bleibt: Jede Figuren-Klasse der
+   Szenarien behält einen parameterlosen Konstruktor, damit Unterklassen
+   ohne `super(...)` auskommen.
 3. **Immer echtes Java.** Die App startet immer mit CheerpJ (ECJ-Compiler
    + JVM als WASM im Browser, vom CDN `cjrtnc.leaningtech.com`). Es gibt
    **keinen Modus-Schalter**. Nur wenn CheerpJ nicht lädt, springt der
@@ -75,8 +82,14 @@ Datenbanken (ER, Normalformen, SQL, NRW-Klassen).
 - Editor: Tab rückt ein, Enter übernimmt die Einrückung der aktuellen
   Zeile (nach `{` eine Stufe tiefer).
 - Alle Szenario-Klassen zeigen Attribute (Instanzvariablen) und
-  parameterlose Konstruktoren mit didaktischen Kommentaren (Roboter,
-  Tier/Hund/Katze, Kiste, Kunde, Waggon, Zootier).
+  Konstruktoren mit didaktischen Kommentaren (Roboter, Tier/Hund/Katze,
+  Kiste, Kunde, Waggon, Zootier); Kiste/Kunde/Waggon/Zootier zusätzlich
+  **überladen** (z. B. `Kiste()` und `Kiste(String pInhalt)`).
+- **Konstruktoren mit Parametern** überall: `new Kiste("Paket 1")` läuft
+  in echtem Java und im Übungsmodus (sofern deklariert – nicht vererbt,
+  wie in Java); „neu“ in der Objektbank öffnet bei mehreren/parametrigen
+  Konstruktoren einen Auswahl-Dialog mit Eingabefeldern (BlueJ-Stil),
+  `Steuerung.erzeuge` wählt per Reflexion den passenden Konstruktor.
 - **Persistenz:** localStorage (automatisch, gerätegebunden) + Projekt
   als JSON-Datei speichern/öffnen (⬇/⬆ im Header; Klassen + Bilder) —
   für Gerätewechsel und Abgaben über die Dateien-App.

@@ -1,6 +1,6 @@
 import figurQuelle from "../../java-framework/de/schule/jle/Figur.java?raw";
 import weltQuelle from "../../java-framework/de/schule/jle/Welt.java?raw";
-import { KlassenDef, parseKlasse } from "../java/javaParser";
+import { KlassenDef, Param, parseKlasse } from "../java/javaParser";
 import { STANDARD_KLASSEN } from "./szenarien";
 
 const SPEICHER_SCHLUESSEL = "javawelt.klassen.v2";
@@ -197,6 +197,22 @@ export class KlassenVerwaltung {
       if (this.erbtVon(name) === "Welt") return name;
     }
     return null;
+  }
+
+  /**
+   * Konstruktoren einer Klasse für das Platzieren über die Objektbank.
+   * Nur die SELBST deklarierten zählen (Konstruktoren werden nicht vererbt);
+   * ohne deklarierte Konstruktoren gibt es den impliziten ohne Parameter.
+   * Konstruktoren mit Parametertypen, die die Oberfläche nicht abfragen
+   * kann, werden ausgeblendet.
+   */
+  konstruktorenFuer(klasse: string): { params: Param[] }[] {
+    const def = this.parse(klasse);
+    const deklariert = (def?.konstruktoren ?? []).filter((k) =>
+      k.params.every((p) => ["int", "double", "boolean", "String"].includes(p.typ)),
+    );
+    if (deklariert.length === 0) return [{ params: [] }];
+    return deklariert.map((k) => ({ params: k.params }));
   }
 
   /**

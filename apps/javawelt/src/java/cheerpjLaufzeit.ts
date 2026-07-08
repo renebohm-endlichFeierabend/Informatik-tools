@@ -199,10 +199,12 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
 
   // ---- Objekte und Methoden --------------------------------------------------
 
-  async erzeugeObjekt(klasse: string, x: number, y: number): Promise<number> {
+  async erzeugeObjekt(klasse: string, x: number, y: number, args: string[] = []): Promise<number> {
     this.pruefeKompiliert();
     try {
-      return Number(await this.steuerung.erzeuge(klasse, Math.round(x), Math.round(y)));
+      return Number(
+        await this.steuerung.erzeuge(klasse, Math.round(x), Math.round(y), args.join(TRENNER)),
+      );
     } catch (e) {
       throw new Error(javaFehlerText(e));
     }

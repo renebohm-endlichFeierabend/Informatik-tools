@@ -41,8 +41,12 @@ export interface JavaLaufzeit {
    */
   kompiliere(klassen: Record<string, string>): Promise<boolean>;
 
-  /** Erzeugt ein Objekt der Klasse an (x, y); gibt die Engine-Id zurück. */
-  erzeugeObjekt(klasse: string, x: number, y: number): Promise<number>;
+  /**
+   * Erzeugt ein Objekt der Klasse an (x, y); gibt die Engine-Id zurück.
+   * `args` sind Konstruktor-Argumente als Text (leer = Konstruktor ohne
+   * Parameter); sie werden anhand der deklarierten Parametertypen gewandelt.
+   */
+  erzeugeObjekt(klasse: string, x: number, y: number, args?: string[]): Promise<number>;
 
   /**
    * Ruft eine öffentliche Methode des Objekts auf. Argumente kommen als

@@ -5,12 +5,14 @@
 > größeren Änderungen mitpflegen — insbesondere „Stand“, „Offene Punkte“
 > und „Roadmap“.
 
-**Stand: Juli 2026 · alle bisherigen PRs (#9, #10, #11, #12, #13) gemerged ·
-Praxis-Fixes nach erstem iPad-Test (Branch
-`claude/java-environment-fixes-3502jp`): CheerpJ-Jars unter
+**Stand: Juli 2026 · alle bisherigen PRs (#9–#14) gemerged ·
+Praxis-Fixes nach erstem iPad-Test (PR #14): CheerpJ-Jars unter
 Unterpfad-Hosting, Auto-Einrückung, Klassenbild-Anzeige, Szenarien mit
 Attributen + Konstruktoren, Konstruktoren mit Parametern (inkl.
-Objektbank-Dialog wie BlueJ)**
+Objektbank-Dialog wie BlueJ) · danach (Branch
+`claude/java-object-placement-bug-2d4xmm`): Platzieren-Fix –
+CheerpJ startet jetzt mit `version: 11` (vorher Java-8-JVM, die die
+Java-11-Jars nicht laden konnte → jedes Übersetzen scheiterte)**
 
 ## Was ist JavaWelt?
 
@@ -149,6 +151,16 @@ Wichtige Mechanik-Details:
 
 - **CheerpJ-Natives** heißen `Java_de_schule_jle_<Klasse>_nativ<Name>`
   und liegen in `cheerpjLaufzeit.ts`. Natives dürfen async sein.
+- **CheerpJ braucht `cheerpjInit({ version: 11, … })`.** Ohne die Option
+  startet CheerpJ eine **Java-8**-JVM; ecj.jar (verlangt JavaSE-11) und
+  framework.jar (`--release 11`) sind aber Java-11-Bytecode. Folge war:
+  „Übersetzen nicht möglich“ (UnsupportedClassVersionError) und damit
+  kein Platzieren. Java-Zielversion (build.sh, `-source`/`-target` im
+  Kompilierkommando) und `version` immer zusammen ändern.
+- `Steuerung.erzeuge` sucht Klassen erst im Standardpaket
+  (Schülerklassen), dann in `de.schule.jle` – die Objektbank bietet auch
+  `Figur` selbst zum Platzieren an, und `Class.forName("Figur")` allein
+  fände sie nicht.
 - **CheerpJs virtuelles `/app/` zeigt auf die Origin-Wurzel**, nicht auf
   den Ordner der App. Auf GitHub Pages (Unterpfad `/<repo>/javawelt/`)
   liefen feste Pfade wie `/app/ecj.jar` ins Leere → jedes Übersetzen

@@ -64,7 +64,12 @@ export class CheerpJLaufzeit implements JavaLaufzeit {
     this.ausgabe = ausgabe;
     this.ausgabe("Lade CheerpJ …");
     await this.ladeLoader();
-    await cheerpjInit({ natives: this.natives() });
+    // version: 11 ist Pflicht: Ohne die Option startet CheerpJ eine
+    // Java-8-JVM, aber ecj.jar (verlangt JavaSE-11) und framework.jar
+    // (--release 11) sind Java-11-Bytecode. Unter Java 8 lädt schon der
+    // Compiler nicht (UnsupportedClassVersionError) – jedes Übersetzen
+    // scheiterte, und es ließ sich kein Objekt platzieren.
+    await cheerpjInit({ version: 11, natives: this.natives() });
     this.bereit = true;
     this.ausgabe("CheerpJ bereit – es läuft echtes Java im Browser.");
   }

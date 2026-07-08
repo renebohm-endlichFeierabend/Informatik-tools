@@ -15,6 +15,9 @@ import { JavaLaufzeit, fehlerText } from "./java/laufzeit";
 import { MockLaufzeit, MockAbbruch } from "./java/mockLaufzeit";
 import { CheerpJLaufzeit } from "./java/cheerpjLaufzeit";
 
+// Wird von Vite beim Bauen ersetzt (siehe vite.config.ts).
+declare const __BUILD_ZEIT__: string;
+
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 // --- Welt und Eingabe ------------------------------------------------------
@@ -37,6 +40,9 @@ const log = (zeile: string) => {
   konsole.scrollTop = konsole.scrollHeight;
 };
 $("konsole-leeren").addEventListener("click", () => (konsole.innerHTML = ""));
+// Welcher Stand läuft wirklich? (GitHub Pages/Safari cachen bis zu 10 min –
+// bei Fehlerberichten zuerst diese Zeile vergleichen.)
+log(`JavaWelt-Build vom ${new Date(__BUILD_ZEIT__).toLocaleString("de-DE")}`);
 
 // --- Laufzeit: immer echtes Java (CheerpJ) -----------------------------------
 // Es gibt keinen Modus-Schalter: Der echte Compiler ist der Normalfall.

@@ -312,6 +312,11 @@ Das Schlosssymbol im Browser bedeutet genau das.
 
 *Rätseltypen:* Schlösser verteilen, Kisten richtig verschließen, den
 Fehler finden (jemand verschickt seinen geheimen Schlüssel mit).
+*Meisterprüfung (optional):* Klaras Farbenwerkstatt — zwei Malerinnen
+mischen jeweils ihre geheime Farbe in dieselbe öffentlich bekannte
+Grundfarbe, tauschen die Töpfe und mischen erneut. Beide landen bei
+demselben Ton, den der Lauscher aus den getauschten Töpfen nicht
+herstellen kann. Der Diffie-Hellman-Gedanke ohne eine einzige Zahl.
 *Buchbezug:* S. 85.
 
 ### Finale — Der Fall des Lauschers (K7, K11, Transfer)
@@ -411,9 +416,15 @@ und keine Rangfolge. Der Fachschaftsbeschluss zur Leistungsbewertung
 Unterrichtsbeiträge ab — nicht auf Spielfortschritt.
 
 Was der Spielstand leistet, ist **Diagnose**: Die Lehrkraft sieht, wer
-wo steht und an welcher Stelle es hakt, und kann gezielt nachsteuern.
-Das ist etwas anderes als Bewertung, und es muss den Schülerinnen und
-Schülern auch so gesagt werden — transparent, zu Beginn der Einheit.
+wo steht, und kann gezielt nachsteuern. Das ist etwas anderes als
+Bewertung, und es muss den Schülerinnen und Schülern auch so gesagt
+werden — transparent, zu Beginn der Einheit.
+
+Die Lehrkraft-Ansicht ist deshalb bewusst schmal gehalten: Sie zeigt je
+Kind und Kapitel nur **gelöst oder offen**. Keine Bearbeitungszeiten,
+keine Zahl der Fehlversuche, keine Hilfenutzung. Was wie eine
+Leistungsmessung aussehen könnte, wird gar nicht erst erhoben — das ist
+zugleich die datensparsamste Lösung.
 
 Beiträge, die sich aus der Arbeit mit dem Spiel für die „Sonstigen
 Leistungen" ergeben, entstehen **außerhalb** des Spiels: im
@@ -433,6 +444,9 @@ danach:
 - **Pseudonyme statt Klarnamen.** Der Anmeldename ist ein von der
   Lehrkraft vergebenes Kürzel oder ein frei gewählter Spielname. Keine
   Nachnamen, keine E-Mail-Adressen, keine Geburtsdaten.
+- **Keine Selbstregistrierung.** Konten legt ausschließlich die
+  Lehrkraft per Namensliste an. Damit gibt es keinen Grund, irgendwelche
+  Kontaktdaten zur Bestätigung zu erheben.
 - **Datensparsamkeit.** Gespeichert wird ausschließlich, was das Spiel
   zum Funktionieren braucht: Anmeldename, Passwort-Hash, Spielfortschritt.
 - **Passwörter nie im Klartext.** Serverseitig nur als Hash mit einem
@@ -456,21 +470,32 @@ danach:
 
 ---
 
-## 11 Offene Fragen an die Fachschaft
+## 11 Getroffene Entscheidungen
 
-1. **Reihenfolge:** Der schulinterne Lehrplan nennt QR-Code und
-   Public-Key nach der Kryptoanalyse. Ist die hier gewählte Reihenfolge
-   (Steganographie → QR → Public-Key) so gewollt, oder soll QR direkt
-   an das Binärkapitel anschließen?
-2. **Umfang Public-Key:** Reicht die Schloss-Analogie, oder soll ein
-   Zahlenbeispiel (Farbmischung, Diffie-Hellman-Idee) dazukommen?
-3. **Eigene Nachrichten zwischen Schülern:** gewünscht oder lieber
-   weglassen?
-4. **Gildenbuch-Export:** als PDF zum Abheften, oder reicht die
-   Bildschirmansicht?
-5. **Klasse 5:** Das Konzept ist auf Klasse 6 zugeschnitten. Soll
-   perspektivisch auch Kapitel 1 (Digitaler Informationsaustausch)
-   spielbar werden, oder bleibt es bei der Kryptologie?
+Stand 02.08.2026, abgestimmt mit der Fachlehrkraft:
+
+| Frage | Entscheidung |
+|---|---|
+| Kapitelreihenfolge | Bleibt wie oben: Steganographie → QR-Code → Public-Key, dem Lehrwerk folgend |
+| Tiefe beim Public-Key | Die Schloss-Analogie trägt das Kapitel; das Zahlen-/Farbmischungsbeispiel kommt als Meisterprüfung für Schnelle dazu |
+| Eigene Nachrichten zwischen Schülern | Ja, in der codebasierten Form ohne Chatfunktion (siehe Abschnitt 7 und 10) |
+| Gildenbuch-Export | Als PDF zum Abheften, passend zur Heftführung |
+| Erweiterung auf Klasse 5 | Perspektivisch gewünscht. Zuerst wird die Kryptologie fertig; die Architektur wird so gebaut, dass Kapitel 1 der Klasse 5 später ohne Umbau ergänzt werden kann |
+| Figurennamen | Bestätigt |
+| Umlautbehandlung | Ä→AE, Ö→OE, Ü→UE, ß→SS vor dem Verschlüsseln, im Spiel erklärt |
+| Lehrkraft-Ansicht | Ja, bewusst reduziert: nur „Kapitel gelöst / offen", keine Bearbeitungszeiten, keine Fehlversuche |
+| Kontenverwaltung | Die Lehrkraft legt Konten per Namensliste an; keine Selbstregistrierung |
+| Veröffentlichung | Zunächst nur für die LFSM. Eine spätere Weitergabe an andere Schulen wird offengehalten — deshalb wird bei Grafik und Ton konsequent auf CC0 gesetzt, damit diese Tür nicht zufällt |
+
+## 12 Weiterhin offen
+
+- **Zeithorizont** für den ersten Klasseneinsatz: bewusst offengelassen.
+- **Serverumgebung** (Schulserver, VPS, Schulträger): noch nicht
+  entschieden. Das Konzept hält beide Betriebsarten offen; die lokale
+  Speicherstufe funktioniert unabhängig davon (siehe TECHNIK.md).
+- **Herkunft der Charaktergrafik**: CC0-Grundlage steht fest, ein
+  begleitender Kunst- oder Wahlpflichtkurs für die Figuren ist
+  gewünscht, aber noch nicht organisiert.
 
 ---
 

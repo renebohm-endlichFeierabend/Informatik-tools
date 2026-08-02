@@ -5,7 +5,8 @@ Klasse 6 (Informatik, LFSM). 2D-Rollenspiel im Stil der
 Game-Boy-Advance-Ära, bedienbar per Touch auf dem iPad und per Tastatur
 am PC.
 
-**Stand: Konzeptphase.** Es gibt noch keinen Code.
+**Stand: Konzept abgestimmt, Umsetzung noch nicht begonnen.**
+Es gibt noch keinen Code.
 
 | Dokument | Inhalt |
 |---|---|
@@ -26,8 +27,13 @@ Alle Kompetenzerwartungen des schulinternen Lehrplans zu Kapitel 3 der
 Klasse 6 sind abgedeckt; die Kapitel sind einzeln anwählbar und auch
 ohne die vorherigen spielbar.
 
-## Nächster Schritt
+## Wenn es losgeht
 
-Etappen 1 und 2 aus [TECHNIK.md](TECHNIK.md#12-umsetzung-in-etappen):
-begehbare Karte mit beiden Bedienwegen auf einem echten iPad 9 testen,
+Empfohlener Einstieg sind die Etappen 1 und 2 aus
+[TECHNIK.md](TECHNIK.md#12-umsetzung-in-etappen): eine begehbare Karte
+mit Touch- und Tastaturbedienung, auf einem echten iPad 9 getestet,
 danach das Cäsar-Kapitel vollständig als Muster für alle weiteren.
+Danach lässt sich der Gesamtaufwand belastbar schätzen.
+
+Noch offen: Zeithorizont, Serverumgebung und die Organisation der
+Charaktergrafik.

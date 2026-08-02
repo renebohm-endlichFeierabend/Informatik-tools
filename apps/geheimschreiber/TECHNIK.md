@@ -2,8 +2,11 @@
 
 Umsetzungskonzept zum didaktischen Entwurf in [DIDAKTIK.md](DIDAKTIK.md).
 
-> **Status:** Konzeptentwurf. Versionsangaben sind zum 02.08.2026
-> geprüft (`npm view`), alles Weitere ist begründeter Vorschlag.
+> **Status:** Konzept. Die inhaltlichen Festlegungen sind mit der
+> Fachlehrkraft abgestimmt (siehe DIDAKTIK.md, Abschnitt 11), die
+> Umsetzung ist noch nicht begonnen. Versionsangaben sind zum
+> 02.08.2026 geprüft (`npm view`), alles Weitere ist begründeter
+> Vorschlag.
 
 ---
 
@@ -283,11 +286,23 @@ geschriebenen Gildenbuch-Texten gewinnt der neuere Zeitstempel.
 
 ### Server-Entwurf
 
-**Stack:** Node 22 + Fastify + SQLite (`better-sqlite3`). Begründung:
-Das Repository bringt die Node-Werkzeugkette bereits mit, SQLite braucht
-keinen eigenen Datenbankdienst, das Ganze läuft als ein Prozess in einem
-Container. Falls der Schulserver nur PHP anbietet, ist dieselbe API in
-PHP 8 + SQLite mit überschaubarem Aufwand umsetzbar.
+> **Die Zielumgebung steht noch nicht fest** und wird bewusst
+> offengehalten. Deshalb ist unten die *Schnittstelle* festgelegt, nicht
+> die Technik dahinter: Solange Frontend und Server nur über die
+> beschriebenen HTTP-Aufrufe reden, lässt sich der Server später ohne
+> Änderung am Spiel austauschen. Die lokale Speicherstufe funktioniert
+> unabhängig davon — das Spiel ist zu keinem Zeitpunkt vom Server
+> abhängig.
+
+**Stack, falls frei wählbar:** Node 22 + Fastify + SQLite
+(`better-sqlite3`). Begründung: Das Repository bringt die
+Node-Werkzeugkette bereits mit, SQLite braucht keinen eigenen
+Datenbankdienst, das Ganze läuft als ein Prozess in einem Container.
+
+**Falls der Schulserver nur PHP anbietet:** Dieselbe API in PHP 8 +
+SQLite, mit `password_hash()` und dem Algorithmus `PASSWORD_ARGON2ID`.
+Der Aufwand ist überschaubar, weil die Schnittstelle klein ist — sieben
+Endpunkte, zwei Tabellen.
 
 **Schnittstelle:**
 
@@ -298,8 +313,12 @@ PHP 8 + SQLite mit überschaubarem Aufwand umsetzbar.
 | `POST` | `/api/passwort` | eigenes Passwort ändern |
 | `GET` | `/api/spielstand` | Spielstand laden |
 | `PUT` | `/api/spielstand` | Spielstand sichern |
-| `GET` | `/api/lehrkraft/klasse/:id` | Fortschrittsübersicht (nur Rolle Lehrkraft) |
+| `GET` | `/api/lehrkraft/klasse/:id` | Fortschrittsübersicht, ausschließlich „gelöst / offen" je Kapitel (nur Rolle Lehrkraft) |
 | `POST` | `/api/lehrkraft/konten` | Konten anlegen, Passwort zurücksetzen |
+
+Eine Selbstregistrierung gibt es nicht — Konten legt allein die
+Lehrkraft an. Damit entfällt jede Notwendigkeit, Kontaktdaten zur
+Verifikation zu erheben.
 
 **Datenmodell:**
 
@@ -367,14 +386,28 @@ Material auf einer öffentlich erreichbaren Schulseite ist ein reales
 Risiko und sollte nicht verwendet werden, auch nicht „nur für den
 Prototyp": Solche Platzhalter überleben Projekte erfahrungsgemäß.
 
-Sauberer Weg: **CC0-Grundlage plus eigene Grafik.**
+**Festgelegter Weg: CC0-Grundlage plus eigene Grafik**, ergänzt um
+Charakterentwürfe aus einem begleitenden Kunst- oder Wahlpflichtkurs der
+Schule.
 
 - **Kenney.nl** — CC0, keine Namensnennung nötig, umfangreiche
-  Top-Down-Pakete. Erste Wahl für den Schulkontext.
+  Top-Down-Pakete. Grundlage für Tilesets und Objekte.
 - **OpenGameArt / itch.io**, konsequent auf CC0 gefiltert.
 - **Liberated Pixel Cup (LPC)** — sehr passender Stil, aber CC-BY-SA:
-  Namensnennung und Weitergabe unter gleichen Bedingungen. Nutzbar,
-  erfordert aber Buchführung über die Herkunft jeder Grafik.
+  Namensnennung und Weitergabe unter gleichen Bedingungen. Nur im
+  Notfall, weil es Buchführung über die Herkunft jeder Grafik erzwingt.
+
+**Warum CC0, obwohl das Spiel zunächst nur an der LFSM laufen soll:**
+Eine spätere Weitergabe an andere Schulen ist ausdrücklich offengehalten.
+Lizenzen lassen sich nachträglich nicht mehr wechseln, ohne Grafik
+auszutauschen — die Entscheidung fällt also faktisch jetzt. CC0 von
+Anfang an kostet nichts und hält die Tür offen.
+
+Für Grafiken aus einem Schulkurs gilt dasselbe: Wer zeichnet, sollte
+vorab wissen und schriftlich zustimmen, dass die Bilder im Spiel
+verwendet und ggf. weitergegeben werden. Bei minderjährigen
+Urheberinnen und Urhebern gehört die Einwilligung der Eltern dazu.
+Eine Nennung im Abspann des Spiels ist ohnehin selbstverständlich.
 
 ### Was ich beisteuern kann
 
@@ -447,9 +480,17 @@ apps/geheimschreiber/
     └── schema.sql
 ```
 
-**Namensvorschlag.** Ordner und URL-Pfad `geheimschreiber`, Spieltitel
-„Die Gilde der Geheimschreiber". Alternativen, falls die Fachschaft
-etwas anderes möchte: `codria`, `chiffre`, `siegelstadt`.
+**Name (festgelegt).** Ordner und URL-Pfad `geheimschreiber`,
+Spieltitel „Die Gilde der Geheimschreiber".
+
+**Erweiterbarkeit auf Klasse 5.** Kapitel 1 der Klasse 5 („Digitaler
+Informationsaustausch") soll perspektivisch ergänzt werden können. Die
+Struktur trägt das bereits: Kapitel sind Datenobjekte, Orte sind
+eigenständige Karten, der Spielstand kennt Kapitel nur über ihre `id`.
+Nötig wäre lediglich ein zweiter Städte-Abschnitt und eine
+Jahrgangsauswahl beim Start — kein Umbau. Damit das so bleibt, darf
+nirgends im Code eine feste Kapitelliste stehen; die Kapitel werden
+ausschließlich aus `src/inhalte/` eingelesen.
 
 ---
 

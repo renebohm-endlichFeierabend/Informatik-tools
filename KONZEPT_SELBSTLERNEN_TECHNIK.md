@@ -145,6 +145,61 @@ Logik entstehen. Das ist ausdrücklich Teil von Etappe S1.
 
 ---
 
+## 4a Ablage, Umgebung und Auslieferung
+
+### Wo der Code hingehört
+
+```
+apps/lernserver/          <- neu, dein Teil
+  src/                    Server (Endpunkte, Regeln, Gateway)
+  migrationen/            versionierte SQL-Dateien
+  tests/
+  README.md               Start, Konfiguration, Backup, Wiederherstellung
+  package.json
+```
+
+Die Konventionen des Repositorys gelten (`CLAUDE.md`): **Deutsch** in
+Bezeichnern, Meldungen und Commits; eigener Arbeitsbranch, kleine
+thematisch geschlossene Pull Requests; `npm test` und `npm run build`
+müssen vor jedem Push grün sein.
+
+**Abgrenzung:** `apps/lernserver/` ist dein Bereich. Die
+Lernumgebung (`apps/javawelt/`), die Werkbank und die Inhalte kommen von
+der didaktischen Seite. Berührungspunkt ist ausschließlich die
+Schnittstelle in Abschnitt 5 — dann können beide Seiten parallel
+arbeiten, ohne sich in die Dateien zu fassen. Eine Ausnahme ist
+abgesprochen: die Umstellung von `java_analyse_tool.html` auf das
+Gateway (Etappe S3).
+
+### Umgebungsvariablen
+
+Keine Pfade, Ports oder Schlüssel im Code. Vorschlag für die Namen:
+
+| Variable | Bedeutung | Beispiel |
+|---|---|---|
+| `PORT` | Port des Servers | `8080` |
+| `DB_PFAD` | Datei der SQLite-Datenbank | `/daten/lernserver.db` |
+| `SITZUNG_GEHEIMNIS` | Schlüssel zum Signieren der Sitzungs-Cookies | (langer Zufallswert) |
+| `KI_SCHLUESSEL` | API-Schlüssel für das Gateway | — |
+| `KI_MODELL` | Modellbezeichner | `deepseek/deepseek-chat` |
+| `KI_BUDGET_SITZUNG` | Obergrenze Modellaufrufe je Sitzung | `20` |
+| `HINTER_PROXY` | ob ein Reverse Proxy davor steht (beeinflusst Cookie und IP-Erkennung) | `true` |
+
+Ohne gesetzten `KI_SCHLUESSEL` startet der Server trotzdem und
+verhält sich wie bei einem Gateway-Ausfall — das ist der Normalzustand
+während der Entwicklung.
+
+### Auslieferung: alles unter einem Ursprung
+
+Der Server liefert **auch die statischen Dateien** des Frontends aus
+(den Vite-Build von JavaWelt) — unter demselben Host und Port wie die
+`/api/...`-Pfade. Zwei Gründe: Es gibt dann **kein CORS** zu
+konfigurieren, und das Sitzungs-Cookie funktioniert ohne Sonderfälle
+(`SameSite=Lax` reicht). Ein zusätzlicher Webserver ist nicht nötig.
+
+Praktisch: alles, was nicht mit `/api/` beginnt, wird aus dem
+Build-Verzeichnis bedient, unbekannte Pfade auf `index.html`.
+
 ## 5 Schnittstelle
 
 Alle Antworten JSON, alle Fehler mit passendem HTTP-Status und einem
@@ -219,6 +274,78 @@ Endpunkt für Nachrichten zwischen Lernenden** — bewusst nicht.
 
 `/api/lehrkraft/muster` liefert **nur Summen**, keine Namen — die
 Endpunktform erzwingt, was in der Didaktik festgelegt ist.
+
+### Nutzlasten der Kern-Endpunkte
+
+Damit Frontend und Server nicht aneinander vorbeibauen, hier die Form
+der vier wichtigsten Aufrufe. Feldnamen sind verbindlich, Reihenfolge
+und zusätzliche Felder nicht.
+
+**Anmelden**
+
+```jsonc
+// POST /api/anmelden
+{ "anmeldename": "held07", "passwort": "..." }
+// 200: setzt Cookie, liefert
+{ "anmeldename": "held07", "rolle": "schueler", "kurs": "Q1-LK",
+  "mussPasswortAendern": false }
+// 401: { "fehler": "Anmeldename oder Passwort stimmt nicht." }
+```
+
+**Lernstand lesen**
+
+```jsonc
+// GET /api/lernstand   -> 200
+{ "eintraege": [
+    { "baustein": "q1w.vererbung.modell",
+      "operatorgruppe": "implementieren",
+      "status": "belegt",
+      "belege": [ { "check": "parser:Kriegerin erbt von Held",
+                    "am": "2026-08-18T10:14:00Z" } ],
+      "fehlermuster": ["signatur_abweichend"],
+      "hilfestufeMax": 2,
+      "geaendertAm": "2026-08-18T10:14:00Z" }
+  ] }
+```
+
+**Versuch melden** — der Client meldet Tatsachen, der Server entscheidet
+über den Status und antwortet mit dem neuen Stand:
+
+```jsonc
+// POST /api/versuch
+{ "sitzungId": 42,
+  "bezug": "ue.inventar.ereignisfolge",     // Baustein-Teil oder Uebung
+  "format": "F3",
+  "ergebnis": "bestanden",
+  "fehlermuster": [] }
+// 200:
+{ "baustein": "q1w.arrays.inventar",
+  "operatorgruppe": "analysieren",
+  "statusNeu": "belegt",
+  "naechsterVorschlag": "q1w.arrays.objektfeld" }
+```
+
+Mehrere nachgetragene Versuche gehen als Liste im Feld `versuche` an
+denselben Endpunkt — nötig für den Offline-Nachtrag, und das Ergebnis
+muss **reihenfolgeunabhängig** sein (Abschnitt 11).
+
+**Hilfe anfordern**
+
+```jsonc
+// POST /api/hilfe
+{ "bezug": "q1w.vererbung.modell", "stufe": 2,
+  "reflexion": "Ich dachte, Kriegerin bekommt gibAngriff automatisch." }
+// 200:
+{ "stufe": 2, "quelle": "statisch",          // oder "ki"
+  "text": "Was muesste in Kriegerin stehen, damit ..." }
+// 200 bei Ausfall des Gateways:
+{ "stufe": 2, "quelle": "statisch", "text": "...", "hinweis": "ohne KI" }
+```
+
+Die **Reflexionsschranke** (Konzept, Abschnitt 9) wird serverseitig
+geprüft: Stufe 2 und höher ohne Feld `reflexion` gibt `400` mit einer
+verständlichen Meldung — nicht als Gängelung, sondern damit die Regel
+nicht am Frontend hängt.
 
 ---
 
@@ -369,6 +496,8 @@ werden. Dieselben Punkte wie in `apps/geheimschreiber/TECHNIK.md`:
   Klartextliste ist der Fund, den man auf einem Schulserver am wenigsten
   hinterlassen will.
 - **Nur HTTPS.** Sitzungs-Cookie `HttpOnly`, `Secure`, `SameSite=Lax`.
+  Auf einem kleinen Server im Informatikraum ist das der Punkt, an dem
+  es praktisch klemmt — dazu Abschnitt 8a.
 - **Anmeldeversuche begrenzen** (z. B. 10 pro Minute je Konto und je
   IP-Adresse).
 - **Erstpasswörter** erzeugt die Lehrkraft als Liste; beim ersten
@@ -387,6 +516,34 @@ werden. Dieselben Punkte wie in `apps/geheimschreiber/TECHNIK.md`:
   mit). SQL nur mit gebundenen Parametern, nie zusammengesetzt.
 
 ---
+
+## 8a HTTPS auf einem Server im Informatikraum
+
+Ein Rechner im Schulnetz hat meist keinen öffentlichen Namen, und ohne
+Namen gibt es kein normales Zertifikat. Damit steht die
+Anmeldung — Passwörter über das Netz — vor einer echten Hürde. Drei
+Wege, in der Reihenfolge, in der ich sie versuchen würde:
+
+1. **Interner Name plus eigene Zertifizierungsstelle.** Wenn der
+   Schulserver einen Namen im lokalen Netz hat (z. B.
+   `lernserver.schule.intern`), lässt sich mit einer schuleigenen CA ein
+   Zertifikat ausstellen. Die iPads brauchen dann einmalig das
+   CA-Profil — das kann die Geräteverwaltung ausrollen. Sauberste
+   Lösung, hängt aber an der Schul-IT.
+2. **Reverse Proxy mit echtem Zertifikat**, falls die Schule einen
+   erreichbaren Hostnamen vergeben kann. Der Server selbst bleibt dann
+   auf HTTP hinter dem Proxy (`HINTER_PROXY=true`).
+3. **Nur zur Entwicklung: HTTP im lokalen Netz**, `Secure` am Cookie
+   aus. Das ist ein bewusster Kompromiss und **kein Zustand für den
+   Klasseneinsatz**: Wer im gleichen WLAN mitliest, sieht Passwörter im
+   Klartext, und Lernende verwenden Passwörter erfahrungsgemäß mehrfach.
+   Solange dieser Zustand gilt: Testkonten mit Wegwerf-Passwörtern, keine
+   echten Schülerdaten.
+
+Die Entscheidung gehört nicht in den Code, sondern zur Absprache mit der
+Schul-IT — und sie sollte **vor** Etappe S2 fallen, weil an ihr die
+Kontenanlage hängt. Für die Entwicklung selbst reicht `localhost`, dort
+gilt HTTP als sicherer Ursprung.
 
 ## 9 Datenschutz in der Entwicklung
 
@@ -494,7 +651,19 @@ Was grün sein muss, bevor eine Etappe als fertig gilt:
   Dateien nach Schlüsselmustern durchsucht.
 
 Die Testkonventionen des Repositorys gelten (`npm test` läuft durch,
-`npm run build` ist grün, siehe `CLAUDE.md`).
+`npm run build` ist grün, siehe `CLAUDE.md`). Ein zusätzliches
+Testframework ist nicht nötig — der eingebaute Testläufer von Node
+(`node:test`) reicht für diese Art Prüfungen und hält die
+Abhängigkeiten klein.
+
+**Der Geheimschreiber braucht später dieselbe Kontenverwaltung.**
+`apps/geheimschreiber/TECHNIK.md` beschreibt einen Server mit
+Konten, Rollen und Argon2id-Hashes — dieselbe `konto`-Tabelle, dieselbe
+Anmeldung. Wenn du den Kontenteil von Anfang an so schneidest, dass er
+nicht von den Lerndaten abhängt, kann die zweite Anwendung ihn später
+mitbenutzen, statt dass die Schule zwei Anmeldesysteme betreibt. Das
+ist eine Anregung, keine Anforderung — der Geheimschreiber ist noch
+nicht gebaut, und Klasse 6 ist eine andere Nutzergruppe als die Q1.
 
 ---
 

@@ -15,7 +15,8 @@ Code-Bezeichnern, Commits und PRs: **Deutsch**.
 | `java_analyse_tool.html` | KI-gestützte Java-Analyse (OpenRouter, `OPENROUTER_KEY`); kennt die NRW-Klassen-APIs als Beschreibungstexte. ⚠ Der Schlüssel wird beim Deploy in das öffentliche HTML eingesetzt — mit Server auf ein Gateway umstellen |
 | `apps/javawelt/` | **Hauptprojekt**: browserbasierte Java-Lernumgebung (BlueJ-Objektbank + Greenfoot-Spielwelt, echtes Java via CheerpJ, NRW-Klassenbibliothek, SQL/SQLite, Lernszenarien) |
 | `apps/geheimschreiber/` | Lernspiel Kryptologie Klasse 6 (Konzept: `DIDAKTIK.md`, `TECHNIK.md`; noch nicht umgesetzt) |
-| `KONZEPT_SELBSTLERNEN.md` | Konzept für das KI-gestützte Java-Selbstlernprogramm (geführte Lernsitzung, Lernstand, Serverseite) — **vor Arbeiten daran lesen** |
+| `KONZEPT_SELBSTLERNEN.md` | KI-gestütztes Java-Selbstlernprogramm, **Didaktik**: geführte Lernsitzung, Aufgabenformate (Abiturbezug), Werkbank, Lernstand, Sozialformen — **vor Arbeiten daran lesen** |
+| `KONZEPT_SELBSTLERNEN_TECHNIK.md` | dasselbe Projekt, **Infrastruktur** als Auftrag: Server, Schnittstelle, Datenmodell, KI-Gateway, Abnahmekriterien (wird von einem Schüler umgesetzt) |
 
 ## Vor der Arbeit an JavaWelt
 

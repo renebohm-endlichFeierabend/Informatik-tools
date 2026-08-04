@@ -1,22 +1,20 @@
-# KI-gestütztes Selbstlernprogramm Java — Konzept
+# KI-gestütztes Selbstlernprogramm Java — Didaktisches Konzept
 
 Ein geführtes Selbstlernangebot für **Java in der gymnasialen Oberstufe
 (Kernlehrplan NRW)**, aufbauend auf den vorhandenen Werkzeugen dieses
 Repositorys und auf dem Schulserver mit Backend.
 
 > **Status:** Konzeptentwurf, noch nicht umgesetzt. Die didaktischen
-> Festlegungen sind Vorschläge zur Abstimmung; die technischen sind
-> begründete Empfehlungen unter den in Abschnitt 13 genannten offenen
-> Entscheidungen. Recherchestand: 04.08.2026.
+> Festlegungen sind Vorschläge zur Abstimmung. Recherchestand:
+> 04.08.2026.
 
-**Verhältnis zu den anderen Dokumenten:** Dieses Papier beschreibt die
-*Lernsitzung* und die *Serverseite*. Was innerhalb einer Aufgabe
-passiert — Teilszenarien, Checks, visuelles Feedback, Hilfestufen,
-Gamification-Regeln — ist bereits in
-[`apps/javawelt/KONZEPT_AUFGABEN.md`](apps/javawelt/KONZEPT_AUFGABEN.md)
-entschieden und wird hier **nicht neu verhandelt, sondern eingebettet**.
-Der technische Stand der Lernumgebung steht in
-[`apps/javawelt/ENTWICKLUNG.md`](apps/javawelt/ENTWICKLUNG.md).
+**Die anderen Dokumente:**
+
+| Datei | Inhalt |
+|---|---|
+| [`KONZEPT_SELBSTLERNEN_TECHNIK.md`](KONZEPT_SELBSTLERNEN_TECHNIK.md) | Infrastruktur: Server, Schnittstelle, Datenmodell, KI-Gateway — als Auftrag formuliert (siehe 2) |
+| [`apps/javawelt/KONZEPT_AUFGABEN.md`](apps/javawelt/KONZEPT_AUFGABEN.md) | Aufgaben *innerhalb* der Entwicklungsumgebung: Teilszenarien, Checks, visuelles Feedback, Hilfestufen, Gamification. **Bereits entschieden**, wird hier eingebettet, nicht neu verhandelt |
+| [`apps/javawelt/ENTWICKLUNG.md`](apps/javawelt/ENTWICKLUNG.md) | technischer Stand der Lernumgebung |
 
 ---
 
@@ -26,151 +24,362 @@ Der technische Stand der Lernumgebung steht in
 
 | Baustein | Zustand | Rolle im Selbstlernprogramm |
 |---|---|---|
-| **JavaWelt** (`apps/javawelt/`) | in Betrieb, echtes Java per CheerpJ, 7 Szenarien, NRW-Klassenbibliothek, SQL | **Der Arbeitsplatz.** Hier wird programmiert, hier entsteht das Feedback |
+| **JavaWelt** (`apps/javawelt/`) | in Betrieb, echtes Java per CheerpJ, 7 Szenarien, NRW-Klassenbibliothek, SQL | **Der Arbeitsplatz** für Programmieraufgaben |
 | **Java-Analyse-Tool** (`java_analyse_tool.html`) | in Betrieb, OpenRouter, kennt die NRW-Klassen-APIs | Vorlage für die KI-Anbindung; wird durch das Server-Gateway ersetzt |
-| **Aufgabenkonzept** (`KONZEPT_AUFGABEN.md`) | entschieden, Umsetzung in Phasen | **Die Aufgabendidaktik.** Teilszenarien, Checks, Hilfestufen 0–4 |
-| **Schulserver mit Backend** | im Aufbau | **Der Ermöglicher.** Lernstand, Gateway, Lehrkraft-Sicht |
+| **Aufgabenkonzept** (`KONZEPT_AUFGABEN.md`) | entschieden, Umsetzung in Phasen | Teilszenarien, Checks, Hilfestufen 0–4 |
+| **Schulserver mit Backend** | im Aufbau | Lernstand, Gateway, Lehrkraft-Sicht |
 
 ### Was der Server ändert
 
-Drei Kompromisse des bisherigen Konzepts fallen damit weg:
+Drei Kompromisse des bisherigen Konzepts fallen weg:
 
 1. **Der API-Schlüssel muss nicht mehr ins Frontend.** Aktuell setzt
    `.github/workflows/deploy.yml` das Secret `OPENROUTER_KEY` per `sed`
    in `java_analyse_tool.html` ein — der Schlüssel steht damit im
-   Klartext im öffentlich abrufbaren HTML auf GitHub Pages. Für eine
-   Einzelnutzung ein Kostenrisiko, als Grundlage für Klassensätze
-   untragbar. Mit Server geht jeder KI-Aufruf über ein Gateway, der
-   Schlüssel bleibt serverseitig.
-2. **Der Lernstand kann bestehen bleiben.** Bisher: `localStorage`
-   (gerätegebunden, von Safari löschbar) plus Projektdatei von Hand.
-   Ein geführter Einstieg („was war letztes Mal?") braucht dagegen ein
-   Gedächtnis über Sitzungen und Geräte hinweg.
+   Klartext im öffentlich abrufbaren HTML. Für Einzelnutzung ein
+   Kostenrisiko, für Klassensätze untragbar.
+2. **Der Lernstand bleibt bestehen**, geräteunabhängig. Ein geführter
+   Einstieg („was war letztes Mal?") braucht ein Gedächtnis.
 3. **Die Lehrkraft-Sicht ist nicht mehr zurückgestellt.**
-   `KONZEPT_AUFGABEN.md` hatte das Dashboard ausdrücklich vertagt, weil
-   es zentrale Datenhaltung braucht. Die ist jetzt vorhanden.
 
 Was der Server **nicht** ändert: Java läuft weiter im Browser
-(CheerpJ). Ein serverseitiger Java-Runner ist nicht nötig und wird
-bewusst zurückgestellt — er brächte Sandboxing, Ressourcenlimits und
-Warteschlangen als neue Probleme ein (siehe 12).
+(CheerpJ). Ein serverseitiger Java-Runner bleibt draußen.
 
 ### Vorbedingung, die noch offen ist
 
 `ENTWICKLUNG.md`, offener Punkt 1: **Läuft CheerpJ im Schulnetz auf dem
 iPad?** Solange das ungeprüft ist, ist unklar, ob die Lernumgebung im
-Vollbetrieb oder im Notbetrieb landet. Ein Selbstlernprogramm auf einer
-Umgebung im Notbetrieb aufzubauen wäre die falsche Reihenfolge — dieser
-Test steht vor Phase 1 (siehe 12).
+Vollbetrieb oder im Notbetrieb landet. Der Test steht vor allem anderen.
 
 ---
 
-## 2 Leitbild: die Lernsitzung als geführter Zyklus
+## 2 Arbeitsteilung
 
-Der Wunsch ist ein Ablauf, der sich wie Unterricht anfühlt: erst
-sprechen und anknüpfen, dann arbeiten, dann sichern. Genau das ist die
-klassische Artikulation einer Stunde — Einstieg, Erarbeitung, Sicherung
-— nur für eine Person. Sechs Phasen:
+Das Projekt hat zwei Stränge, die getrennt voneinander vorankommen:
+
+| Strang | Wer | Ergebnis |
+|---|---|---|
+| **Didaktik und Inhalte** | Lehrkraft, gemeinsam erarbeitet | dieses Papier, Bausteine, Aufgabenformate, Hilfen, Prüffälle |
+| **Infrastruktur** | ein Schüler als Projektarbeit | Server, Schnittstelle, Datenhaltung, Gateway nach [`KONZEPT_SELBSTLERNEN_TECHNIK.md`](KONZEPT_SELBSTLERNEN_TECHNIK.md) |
+
+Das hat Folgen für die Form beider Papiere: Das Technikpapier ist als
+**abgeschlossener Auftrag** geschrieben — Anforderungen, Schnittstelle,
+Abnahmekriterien, ausdrückliche Nicht-Ziele —, damit daran ohne
+Rückfragen zu jedem Detail gearbeitet werden kann. Dieses Papier
+beschreibt, *was* das System didaktisch leisten soll, und legt die
+Datenfelder fest, die dafür gebraucht werden.
+
+**Die Schnittstelle ist der Vertrag.** Solange sich beide Seiten an die
+in Abschnitt 5 des Technikpapiers festgelegten Endpunkte halten, können
+Inhalte und Infrastruktur unabhängig entstehen — und die Inhalte lassen
+sich vom ersten Tag an gegen einen Attrappen-Server entwickeln.
+
+**Zwei Punkte, die aus der Konstellation folgen** und im Technikpapier,
+Abschnitt 9, ausgeführt sind: Ein Schüler, der die Infrastruktur baut,
+arbeitet **ausschließlich mit Testdaten** und bekommt **keinen Zugriff
+auf Produktivdaten** von Mitschülern. Und die Verantwortung für den
+Betrieb liegt nicht bei ihm, sondern bei der Schule. Beides ist keine
+Misstrauensfrage, sondern folgt daraus, dass hier Daten Minderjähriger
+verarbeitet werden.
+
+---
+
+## 3 Leitbild: die Lernsitzung als geführter Zyklus
+
+Der Ablauf soll sich wie Unterricht anfühlen: erst sprechen und
+anknüpfen, dann arbeiten, dann sichern. Das ist die klassische
+Artikulation einer Stunde, für eine Person.
 
 | # | Phase | Ort | ca. | Wer führt |
 |---|---|---|---|---|
 | 1 | **Anknüpfen** — Rückblick, 2–3 Wiederholungsfragen | Chat (groß) | 3–6 min | Tutor fragt |
 | 2 | **Zielklärung** — was heute dran ist und warum | Chat (groß) | 1–2 min | Tutor schlägt vor, Lernende:r wählt |
-| 3 | **Erarbeitung / Übung** | JavaWelt, Chat als Seitenleiste | 20–40 min | Lernende:r arbeitet |
+| 3 | **Arbeitsphase** — Format und Ort je nach Diagnose (siehe 5) | Umgebung, Werkbank oder analog | 15–40 min | Lernende:r arbeitet |
 | 4 | **Begleitung** — Hilfestufen 0–4 auf Anforderung | Seitenleiste | laufend | Lernende:r fordert an |
-| 5 | **Sicherung** — Regel selbst formulieren, Abgabe | Chat (groß) | 5–8 min | Tutor fragt, Lernende:r formuliert |
+| 5 | **Sicherung** — Erkenntnis selbst formulieren, Abgabe | Chat (groß) | 5–8 min | Tutor fragt, Lernende:r formuliert |
 | 6 | **Abschluss** — was sitzt, was kommt | Chat (groß) | 1–2 min | Tutor |
 
-Fünf Festlegungen dazu:
+Fünf Festlegungen:
 
-**1. Ein Fenster, kein Werkzeugwechsel.** Chat und Entwicklungsumgebung
-sind dieselbe Seite. In den Phasen 1, 2, 5 und 6 nimmt der Chat den
-Hauptteil des Bildschirms ein; in Phase 3 schrumpft er zur
-Seitenleiste, ohne den Verlauf zu verlieren. Auf einem iPad im
-Hochformat (Viewport 810 × 1080 pt) ist ein Nebeneinander von Chat,
-Editor und Welt nicht darstellbar — der Chat wird dort zur
-einklappbaren Lasche.
+**1. Ein Fenster, kein Werkzeugwechsel.** Chat, Werkbank und
+Entwicklungsumgebung sind dieselbe Seite. In den Phasen 1, 2, 5 und 6
+nimmt der Chat den Hauptteil ein; in Phase 3 schrumpft er zur
+Seitenleiste, ohne den Verlauf zu verlieren. Auf dem iPad im Hochformat
+(Viewport 810 × 1080 pt) wird er zur einklappbaren Lasche.
 
 **2. Die Wiederholung ist echt, nicht dekorativ.** Die Fragen in Phase 1
-werden aus dem Lernstand gezogen, und zwar bevorzugt aus den
-**Fehlermustern der letzten Sitzungen** und aus Bausteinen, deren letzte
-Bearbeitung länger zurückliegt (Prinzip verteiltes Üben). Wer letzte
-Woche `nenne()` und Konstruktor verwechselt hat, wird genau daran
-angeknüpft.
+kommen aus dem Lernstand: bevorzugt aus den **Fehlermustern der letzten
+Sitzungen** und aus Bausteinen, deren letzte Bearbeitung länger
+zurückliegt (verteiltes Üben).
 
-**3. Der Übergang in die Aufgabe ist ein Sprung, kein Link.** Am Ende
-von Phase 2 lädt die Umgebung das Teilszenario, legt die Klassen an und
-zeigt den Aufgabentext — im selben Zustand, in dem eine Lehrkraft eine
-Aufgabe verteilt. Technisch ist das der vorhandene Deep-Link-Mechanismus
-(`?szenario=`, `#projekt=`), nur serverseitig gesteuert.
+**3. Phase 3 ist nicht automatisch die Entwicklungsumgebung.** Was
+gearbeitet wird, hängt von der Diagnose ab — eine Programmieraufgabe,
+eine Mikroübung an der Werkbank, eine Zustandsverfolgung, eine
+Erläuterungsaufgabe. Das ist der Kern von Abschnitt 5.
 
-**4. Sicherung heißt: die Lernenden formulieren.** In Phase 5 fasst
-nicht der Tutor zusammen. Der Tutor fragt, die Lernenden schreiben
-1–3 Sätze, und *erst danach* ergänzt oder schärft der Tutor. Das ist die
-in `KONZEPT_AUFGABEN.md` vorgesehene Reflexion, an die richtige Stelle
-im Ablauf gesetzt.
+**4. Sicherung heißt: die Lernenden formulieren.** Der Tutor fragt, die
+Lernenden schreiben 1–3 Sätze, *erst danach* schärft der Tutor.
 
 **5. Sitzungen dürfen unfertig enden.** Nach einer eingestellten
-Zeitspanne (Vorschlag: konfigurierbar, Standard 45 min) leitet der Tutor
-zur Sicherung über, auch wenn der Baustein nicht fertig ist. Der Stand
-wird gespeichert und beim nächsten Mal in Phase 1 aufgegriffen. Ohne
-diese Regel entstehen ausufernde Sitzungen ohne Sicherung — der
-häufigste Fehler bei Selbstlernprogrammen.
+Zeitspanne (Standard 45 min) leitet der Tutor zur Sicherung über, auch
+wenn nichts fertig ist. Der Stand wird gespeichert und in der nächsten
+Phase 1 aufgegriffen.
 
 ---
 
-## 3 Die zentrale Architekturentscheidung
+## 4 Die zentrale Architekturentscheidung
 
 > **Adaptivität deterministisch, Formulierung generativ.**
 
 Die Auswahl der nächsten Aufgabe, die Bewertung „bestanden / offen" und
 die Fortschreibung des Lernstands entstehen aus **Regeln über
 überprüfbaren Fakten** — Parser-Ergebnisse, Weltzustand nach dem Lauf,
-Prüffälle, SQL-Ergebnisvergleiche. Das Sprachmodell formuliert, fragt,
-erklärt und diagnostiziert *Vorschläge*. Es entscheidet nichts, was den
-Lernstand verändert.
-
-Warum diese Trennung nicht verhandelbar ist:
-
-- **Nachvollziehbarkeit.** Wenn der Tutor sagt „das hast du drauf", muss
-  ein Beleg dahinterstehen, den die Lehrkraft nachlesen kann.
-- **Kein Durchreden.** Ein Modell, das aus dem Gespräch auf Kompetenz
-  schließt, lässt sich durch selbstsicheres Auftreten überzeugen. Ein
-  Check nicht.
-- **Reproduzierbarkeit.** Dieselbe Ausgangslage soll morgen zur selben
-  Empfehlung führen.
-- **Ausfallsicherheit.** Fällt das Gateway aus, funktioniert der Ablauf
-  weiter — mit statischen Hilfen und Textbausteinen statt Gespräch
-  (siehe 11).
-- **Kosten und Datenschutz.** Jede Entscheidung, die eine Regel treffen
-  kann, ist ein Aufruf weniger und eine Datenübermittlung weniger.
-
-Konkret heißt das:
+Prüffälle, Tabellenvergleiche, SQL-Ergebnisvergleiche. Das Sprachmodell
+formuliert, fragt, erklärt und diagnostiziert *Vorschläge*. Es
+entscheidet nichts, was den Lernstand verändert.
 
 | Aufgabe | Wer erledigt sie |
 |---|---|
-| Nächsten Baustein bestimmen | Regelwerk über dem Kompetenzgraph |
-| Baustein als bestanden markieren | ausschließlich Checks |
+| Nächsten Baustein und Format bestimmen | Regelwerk über dem Kompetenzgraph |
+| Baustein als belegt markieren | ausschließlich Checks |
 | Wiederholungsfragen auswählen | Regelwerk (Fehlermuster + Abstand) |
-| Wiederholungsfragen *formulieren* | Modell (oder statischer Fragenpool) |
+| Wiederholungsfragen *formulieren* | Modell (oder statischer Pool) |
 | Fehlermeldung eindeutschen und verorten | Umgebung (Stufe 0, deterministisch) |
 | Hilfestufen 1–3 zum konkreten Code | Modell, im Rahmen der Guardrails |
 | Hilfestufe 4 (Letzthilfe) | statisch im Baustein hinterlegt |
-| Reflexionstext einordnen | Modell schlägt vor, Lehrkraft sieht Original |
-| Note | niemand im System (siehe 9) |
+| Freitextantworten (erläutern, begründen) einordnen | Modell schlägt vor, **Lehrkraft entscheidet** (siehe 5.7) |
+| Note | niemand im System (siehe 11) |
+
+Warum das nicht verhandelbar ist: Nachvollziehbarkeit gegenüber der
+Lehrkraft; kein Bestehen durch selbstsicheres Auftreten;
+Reproduzierbarkeit; Weiterbetrieb bei Ausfall des Gateways; und jede
+Entscheidung, die eine Regel trifft, ist ein Modellaufruf und eine
+Datenübermittlung weniger.
 
 ---
 
-## 4 Lernstandsmodell
+## 5 Aufgabenformate
 
-### Kompetenzgraph statt Kursliste
+Der Teil, der über ein „KI-Chat neben der IDE" hinausgeht — und der über
+den Wert des Programms entscheidet.
 
-Die Inhalte werden als **Bausteine mit Voraussetzungen** modelliert, nicht
-als lineare Kapitelfolge. Ein Baustein ist die kleinste Einheit, die man
-sinnvoll in einer Sitzung schaffen kann (Richtwert 20–40 min Arbeit) und
-die sich durch Checks belegen lässt.
+### 5.1 Warum Vielfalt keine Kür ist
 
-Beispiel aus dem Q1-Kontext (Wiederholung Vererbung → Datenstrukturen):
+Das Zentralabitur Informatik NRW prüft nicht „Programmieren". Es prüft
+eine Reihe von Tätigkeiten, die durch **Operatoren** benannt und drei
+**Anforderungsbereichen** zugeordnet sind (I Reproduktion,
+II Reorganisation und Transfer, III Reflexion und Problemlösung). Wer
+nur Methoden schreibt, übt einen Teilbereich — typischerweise den, der
+in der Klausur die wenigsten Punkte trägt.
+
+Operatoren, die ich in der Suchtreffer-Anzeige der offiziellen
+Operatorenübersicht (`if-operatoren.pdf`) im Wortlaut gesehen habe:
+
+| Operator | Definition (Trefferanzeige) | AFB |
+|---|---|---|
+| implementieren | Umsetzen eines informatischen Modells oder Algorithmus in eine Programmiersprache | II–III |
+| interpretieren | Sinnzusammenhänge aus Materialien erschließen | II–III |
+| modellieren | Zu einem Ausschnitt der Realität ein informatisches Modell anfertigen | II–III |
+| modifizieren | Eine gegebene Struktur gemäß konkreter Vorgaben verändern | II |
+| überführen | Eine Darstellung in eine andere Darstellungsform bringen | I–II |
+| vergleichen | Nach vorgegebenen oder selbst gewählten Kriterien Gemeinsamkeiten, Ähnlichkeiten und Unterschiede ermitteln und darstellen | II |
+| vervollständigen | Eine gegebene Struktur gemäß konkreter Vorgaben erweitern oder verändern | (im Treffer nicht sichtbar) |
+| Stellung nehmen | Unter Heranziehung relevanter Sachverhalte die eigene Meinung zu einem Problem argumentativ entwickeln und darlegen | III |
+
+> **Diese Tabelle ist unvollständig und ungeprüft.** Die
+> Netzwerkpolitik dieser Umgebung blockiert
+> `standardsicherung.schulministerium.nrw.de` (das Gateway beantwortet
+> CONNECT mit 403) — dasselbe Problem, das für den Lehrplannavigator in
+> `apps/geheimschreiber/DIDAKTIK.md` dokumentiert ist. Fehlende
+> Operatoren wie *analysieren, erläutern, begründen, beurteilen,
+> entwickeln, dokumentieren, testen, darstellen, angeben* sind aus dem
+> Original zu ergänzen, und die vorhandenen Zeilen sind daran zu
+> prüfen. **Das ist der erste Arbeitsschritt am Inhalt** — die
+> Formatliste unten hängt daran.
+
+Konsequenz für das Programm: **Jedes Format wird an einen Operator
+gebunden.** Damit ist am Baustein ablesbar, welche Tätigkeit geübt wird,
+und im Lernstand, welche noch fehlt.
+
+### 5.2 Drei Arbeitsorte
+
+| Ort | Was dort läuft | Warum getrennt |
+|---|---|---|
+| **Entwicklungsumgebung** (JavaWelt) | Klassen entwerfen, Verhalten programmieren, Datenstrukturen benutzen, SQL ausführen | braucht Projekt, Welt, Objektbank — voller Aufwand |
+| **Werkbank** (neu, ohne IDE) | einzelne Methoden lesen, verfolgen, ergänzen, schreiben; Zustandstabellen; Modellierungsskizzen; Zuordnungen | eine Aufgabe, ein Bildschirm, kein Projektaufbau |
+| **Analog / Plenum** | Papierskizzen, Struktogramme, Partnerarbeit, Präsentation, Klassengespräch | gehört nicht auf den Bildschirm (siehe 8) |
+
+**Die Werkbank ist der wichtigste Zusatz.** Wer beim Schreiben einer
+Methode scheitert, braucht keine neue Spielwelt, sondern zehn Minuten
+an genau dieser Schwierigkeit. Ein Szenario zu laden, Klassen anzulegen
+und Objekte zu platzieren ist dafür Ballast — und lenkt von der Sache
+ab. Umgekehrt gilt: Wer eine Methode isoliert schreiben kann, hat
+deshalb noch kein Programm gebaut. Die Werkbank ersetzt die Umgebung
+nicht, sie entlastet sie.
+
+**Technisch** nutzt die Werkbank dieselbe CheerpJ-Laufzeit, aber ohne
+Welt, Objektbank und Projektverwaltung: Ein verstecktes Testgerüst
+kompiliert die eingegebene Methode und ruft sie mit den Prüffällen des
+Bausteins auf. Damit gibt es echte Compilermeldungen (Stufe 0 greift
+wie gewohnt) bei einem Bruchteil der Oberfläche. Fällt CheerpJ aus,
+bleiben die nicht-kompilierenden Formate der Werkbank vollständig
+nutzbar — Verfolgen, Vorhersagen, Zuordnen, Lückentext.
+
+### 5.3 Formatkatalog
+
+Zwölf Formate, jeweils mit Operator, Prüfung und Ort. Die Prüfspalte ist
+die entscheidende: Wo „exakt" steht, entscheidet eine Regel; wo
+„Freitext" steht, sammelt das System und die Lehrkraft sichtet
+(siehe 5.7).
+
+| # | Format | Operator (Vorschlag) | Prüfung | Ort |
+|---|---|---|---|---|
+| F1 | **Methode lesen** — was tut sie, wie heißt sie sinnvoll? | analysieren, interpretieren | Auswahl / Zuordnung, exakt | Werkbank |
+| F2 | **Ausgabe vorhersagen** — was gibt der Aufruf zurück? | analysieren | exakter Wertvergleich | Werkbank |
+| F3 | **Zustand verfolgen** — Belegung von Array/Liste/Stack nach einer Ereignisfolge | analysieren, darstellen | Tabellenvergleich, exakt | Werkbank |
+| F4 | **Fehler finden** — gegebene Methode ist falsch, wo und warum? | analysieren, begründen | Zeilenangabe exakt + Freitext | Werkbank |
+| F5 | **Methode ergänzen** — Rumpf mit Lücken | vervollständigen | Prüffälle, exakt | Werkbank |
+| F6 | **Methode schreiben** — Signatur und Beschreibung gegeben | implementieren | Prüffälle + Compiler, exakt | Werkbank |
+| F7 | **Methode ändern** — Verhalten nach Vorgabe anpassen | modifizieren | Prüffälle, exakt | Werkbank |
+| F8 | **Darstellung überführen** — Quelltext ↔ Struktogramm ↔ Beschreibung | überführen | Zuordnung / Sequenzvergleich | Werkbank |
+| F9 | **Verhalten programmieren** — im Szenario, sichtbare Konsequenz | implementieren | Weltzustand nach Lauf | Umgebung |
+| F10 | **Modellieren** — Klassen, Vererbung, ER-Modell, Automat | modellieren | Parser-Fakten bzw. Strukturvergleich; ER/Automat teils Freitext | Umgebung / Werkbank |
+| F11 | **Datenbank** — Abfrage formulieren, Normalform prüfen | implementieren, begründen | Ergebnistabelle exakt; Begründung Freitext | Umgebung |
+| F12 | **Beurteilen** — Verfahren vergleichen, Alternative abwägen, Stellung nehmen | vergleichen, beurteilen, Stellung nehmen | Freitext | Werkbank / Plenum |
+
+Die Formate F9 bis F11 sind die, die `KONZEPT_AUFGABEN.md` schon
+beschreibt („Verhalten programmieren", „Klasse/Vererbung modellieren",
+„Datenstruktur nutzen", „SQL/Datenbank", „Modellierung/ER") — inklusive
+der dort festgelegten Prüfformen und Letzthilfen. F1 bis F8 und F12 sind
+neu und ergänzen genau die Tätigkeiten, die in der Umgebung nicht
+vorkommen.
+
+### 5.4 Mikroübungen: Methoden lesen und schreiben
+
+Die Formate F1, F2, F5, F6 sind kurz (3–10 min), einzeln prüfbar und
+werden **nicht als Baustein geplant, sondern eingestreut**, wenn die
+Diagnose sie nahelegt. Sie haben eine eigene Eigenschaft, die man
+ausnutzen sollte: Sie sind **besser automatisch prüfbar als
+Programmieraufgaben**. Eine Methode gegen fünf Prüffälle laufen zu
+lassen ist eindeutig; „das Szenario sieht richtig aus" ist es nie ganz.
+
+Ein Übungssatz gehört zu einem Baustein, nicht auf einen globalen
+Haufen: Zu `q1.arrays.durchlaufen` gehören Lese-, Vorhersage- und
+Schreibübungen an Array-Methoden, nicht an Stacks. Damit bleibt die
+Diagnose scharf — „Arrays durchlaufen sitzt, aber das Schreiben fällt
+schwer" ist eine Aussage, mit der man arbeiten kann.
+
+**Auslöser für eine Mikroübung** (Regeln, nicht Modellurteil):
+
+| Beobachtung | eingestreute Übung |
+|---|---|
+| zweimal dieselbe Signatur falsch geschrieben | F1 + F6 zum Methodenkopf |
+| Aufgabe gelöst, aber erst nach Hilfestufe 3 | F5, F6 zum selben Inhalt in der Folgesitzung |
+| Off-by-one oder falsche Schleifengrenze | F2, F3 an derselben Struktur |
+| Code läuft, Erklärung in Phase 5 bleibt vage | F1 + F4 zum eigenen Code |
+| Baustein liegt länger zurück | F2, F3 als Wiederholung in Phase 1 |
+
+### 5.5 Kontext- und Zustandsaufgaben
+
+Das gewünschte Format F3 verdient eine eigene Beschreibung, weil es die
+Klausurnähe herstellt: **Ein Szenario wird erzählt, ein Ausschnitt
+Quelltext gegeben, und gefragt ist, welchen Zustand eine Datenstruktur
+nach einer Folge von Ereignissen hat — und warum.**
+
+Aufbau, dem Klausurmuster nachempfunden:
+
+1. **Kontext** (3–5 Sätze): Warteschlange an der Ausleihtheke,
+   Rückgabestapel, Warenkorb, Vertretungsplan. Fachlich derselbe Stack,
+   didaktisch ein Gegenstand, über den man reden kann.
+2. **Material**: Klassendiagramm-Ausschnitt oder Methodenrumpf, so knapp
+   wie möglich.
+3. **Ereignisfolge**: „Zuerst gibt Frau A zwei Bücher zurück, dann holt
+   Herr B eines ab, dann ..."
+4. **Aufgabe a) — verfolgen** (F3, AFB I–II): Tabelle ausfüllen, Zeile
+   pro Ereignis, Spalten je Position der Struktur. Exakt prüfbar.
+5. **Aufgabe b) — erläutern** (Freitext, AFB II): „Erläutere, warum das
+   letzte zurückgegebene Buch zuerst wieder im Regal steht." Hier fällt
+   die Entscheidung Stack gegen Queue — genau die Stelle, an der in
+   Klausuren Punkte verloren gehen.
+6. **Aufgabe c) — beurteilen** (F12, AFB III, optional): „Die
+   Bibliothek überlegt, auf eine Warteschlange umzustellen. Nimm
+   Stellung."
+
+Der didaktische Punkt: Teilaufgabe a) ist der **Beleg** (exakt prüfbar,
+schreibt den Lernstand fort), b) und c) sind der **Ertrag** — sie
+erzeugen genau die Formulierungen, die in Phase 5 gesichert und im
+Plenum aufgegriffen werden. Beides in einer Aufgabe, wie in der Klausur.
+
+Zwei Vorteile für die Umsetzung: Zustandstabellen brauchen **keinen
+Compiler** (auch im CheerpJ-Ausfall verfügbar), und sie sind
+**KI-generierbar mit anschließender Redaktion** — die Ereignisfolge und
+die erwartete Tabelle lassen sich maschinell erzeugen und, was
+entscheidend ist, maschinell gegenprüfen, indem der Referenzcode
+ausgeführt wird.
+
+### 5.6 Formatwahl aus der Diagnose
+
+Das Regelwerk wählt in Phase 2 nicht nur *welchen Baustein*, sondern
+auch *welches Format*. Die Rangfolge:
+
+1. Ein Baustein mit offenem **Beleg im Format F9/F10** (Umgebung) ist
+   der Normalfall — dort entsteht das eigentliche Können.
+2. Sind zu einem Baustein **Fehlermuster** offen, die eine Mikroübung
+   adressiert, kommt diese **davor** (5.4).
+3. Sitzt ein Baustein programmatisch, fehlt aber der **Erläuterungs-
+   oder Beurteilungsanteil**, wird F3/F12 nachgeschoben — mit
+   Klausurbezug ausdrücklich benannt („so kommt das im Abitur").
+4. Liegt ein Baustein lange zurück, wird er als kurze Wiederholung im
+   Format F2/F3 aufgegriffen, nicht neu bearbeitet.
+5. Vor Klausuren: Formate nach AFB mischen, mit Schwerpunkt auf den im
+   Lernstand schwächsten Operatoren.
+
+### 5.7 Freitext ohne automatische Prüfung
+
+Formate mit Freitextanteil (F4b, F11-Begründung, F12, Erläuterungen)
+lassen sich nicht maschinell entscheiden. Regel:
+
+- **Der Status eines Bausteins hängt nur am prüfbaren Anteil.** Ein
+  Baustein ohne prüfbaren Anteil erreicht den Status „belegt" nicht
+  automatisch — er wird als **„zur Sichtung"** markiert.
+- Das Modell darf eine **Einordnung vorschlagen** („trifft den Punkt" /
+  „greift zu kurz" / „geht am Kern vorbei" mit einem Satz Begründung).
+  Der Vorschlag ist für die Lehrkraft sichtbar und ändert nichts.
+- Der Tutor gibt den Lernenden dazu **Rückmeldung**, keine Bewertung:
+  eine Rückfrage, ein Gegenbeispiel, ein fehlender Begriff.
+- Die Lehrkraft sichtet gesammelt (Liste der offenen Freitexte) und
+  setzt den Status. Das ist der eine Punkt, an dem das Programm
+  Lehrkraftzeit *braucht* statt spart — und der Punkt, an dem es die
+  Klausurvorbereitung wirklich trägt.
+
+---
+
+## 6 Lernstandsmodell
+
+### Zwei Achsen statt einer Liste
+
+Der Lernstand ist eine Matrix aus **Inhalt** (Baustein) und
+**Tätigkeit** (Operator/Format). „Vererbung kann ich" ist keine
+brauchbare Aussage; „Vererbung implementieren sitzt, Vererbung erläutern
+noch nicht" ist eine.
+
+```
+                    │ analysieren │ implementieren │ modellieren │ erläutern/
+                    │  (F1-F3)    │   (F5-F7,F9)   │   (F10)     │ beurteilen
+────────────────────┼─────────────┼────────────────┼─────────────┼────────────
+Vererbung           │   belegt    │     belegt     │   belegt    │  Sichtung
+Polymorphie         │   belegt    │   in Arbeit    │      -      │    offen
+Arrays 1D           │  Fehlermus. │     belegt     │      -      │    offen
+Stack               │    offen    │      offen     │      -      │    offen
+```
+
+Die Zeilen sind die Bausteine des Kompetenzgraphen, die Spalten die
+Operatorgruppen. Die Wegwahl liest beides: horizontal, was noch fehlt;
+vertikal, welche Tätigkeit systematisch schwach ist.
+
+### Der Kompetenzgraph
+
+Bausteine mit Voraussetzungen, nicht als lineare Kapitelfolge:
 
 ```
   [Klasse & Objekt] ──► [Attribute] ──► [Methoden mit Parametern]
@@ -186,49 +395,49 @@ Beispiel aus dem Q1-Kontext (Wiederholung Vererbung → Datenstrukturen):
         [Referenzen & ContentType] ──► [Stack] ──► [Queue] ──► [List]
 ```
 
-Der Graph erlaubt, was eine Liste nicht kann: mehrere gleichzeitig
-offene Wege, gezieltes Nachholen einer Lücke mitten im Kurs, und einen
-Einstieg an beliebiger Stelle für Wiederholung vor der Klausur.
+Damit sind mehrere Wege gleichzeitig offen, Lücken lassen sich mitten im
+Kurs nachholen, und der Einstieg an beliebiger Stelle ist möglich —
+etwa zur Klausurvorbereitung.
 
-### Was gespeichert wird — und was nicht
+### Was gespeichert wird
 
-Pro Lernende:r und Baustein:
+Pro Lernende:r, Baustein **und Operatorgruppe**:
 
 | Feld | Beispiel | Zweck |
 |---|---|---|
-| Status | `offen` / `in Arbeit` / `belegt` | Wegwahl |
-| Belege | „Check *Kuh erbt von Tier* bestanden, 04.08." | Nachvollziehbarkeit |
-| Fehlermuster | `konstruktor_statt_nenne`, `off_by_one` | Wiederholungsfragen, Diagnose |
+| Status | `offen` / `in Arbeit` / `belegt` / `zur Sichtung` | Wegwahl |
+| Belege | „F3-Tabelle exakt, 04.08."; „Weltzustand-Check bestanden" | Nachvollziehbarkeit |
+| Fehlermuster | `konstruktor_statt_nenne`, `off_by_one` | Übungsauswahl, Diagnose |
 | höchste genutzte Hilfestufe | 2 | Einschätzung der Selbstständigkeit |
-| Reflexionstext | Freitext, 1–3 Sätze | Sicherung, Lehrkraft-Sicht |
+| Freitexte | Reflexion, Erläuterungen | Sicherung, Sichtung |
 | letzte Bearbeitung | Zeitstempel | verteiltes Üben |
 
-**Fehlermuster sind ein eigener, gepflegter Katalog** — keine
-Freitext-Diagnosen des Modells. Startbestand aus der Erfahrung, die in
-`ENTWICKLUNG.md` schon dokumentiert ist: `super`-Aufruf erwartet,
-`new Hund("Rex")` ohne deklarierten Konstruktor, Groß-/Kleinschreibung,
-fehlendes Semikolon, Endlosschleife ohne `warte()`, Vergleich mit `==`
-bei Objekten. Neue Muster ergänzt die Lehrkraft; das Modell darf
-*vorschlagen*, dass ein Muster vorliegt, aber keines erfinden.
+**Fehlermuster sind ein gepflegter Katalog**, keine Freitext-Diagnosen
+des Modells. Startbestand aus der Erfahrung in `ENTWICKLUNG.md`:
+`super`-Aufruf erwartet, `new Hund("Rex")` ohne deklarierten
+Konstruktor, Groß-/Kleinschreibung, fehlendes Semikolon, Endlosschleife
+ohne `warte()`, Objektvergleich mit `==`, Signatur abweichend. Neue
+Muster ergänzt die Lehrkraft; das Modell darf vorschlagen, nichts
+erfinden.
 
-**Nicht erhoben** wird alles, was nach Leistungsmessung aussieht, ohne
+**Nicht erhoben** wird, was nach Leistungsmessung aussieht, ohne
 diagnostisch nötig zu sein: keine Bearbeitungsdauer pro Aufgabe, keine
 Tastenprotokolle, keine Zahl der Compilerläufe, kein Vergleich zwischen
-Lernenden. Die Argumentation ist dieselbe wie in
-`apps/geheimschreiber/DIDAKTIK.md`, Abschnitt 9: Was nicht erhoben wird,
-kann nicht missverstanden werden — und ist zugleich die datensparsamste
-Lösung. **Anzahl der Fehlversuche** ist der Grenzfall: für die
-Diagnose („wo bleiben viele hängen?") nützlich, als Zahl neben einem
-Namen problematisch. Vorschlag: nur aggregiert über die Lerngruppe
-auswerten, nicht pro Person anzeigen (offene Entscheidung, 13).
+Lernenden. Dieselbe Argumentation wie in
+`apps/geheimschreiber/DIDAKTIK.md`, Abschnitt 9. **Fehlversuche** sind
+der Grenzfall: diagnostisch nützlich, als Zahl neben einem Namen
+problematisch — Vorschlag: nur über die Lerngruppe aggregiert (offene
+Entscheidung, 16).
 
 ---
 
-## 5 Baustein-Format
+## 7 Baustein-Format
 
-Ein Baustein ist eine Datendatei, kein Code — damit Fachkolleginnen und
--kollegen ihn ohne Programmierkenntnisse anpassen können und damit alle
-Inhalte versionierbar bleiben. Skizze:
+Bausteine und Übungen sind Datendateien, kein Code — damit
+Fachkolleginnen sie ohne Programmierkenntnisse anpassen können und alles
+versionierbar bleibt.
+
+### Baustein (Umgebung, F9)
 
 ```jsonc
 {
@@ -236,332 +445,302 @@ Inhalte versionierbar bleiben. Skizze:
   "titel": "Dieselbe Methode, verschiedenes Verhalten",
   "stufe": "Q1",
   "inhaltsfeld": "Daten und ihre Strukturierung",
-  "kompetenzen": ["MI", "DI"],          // Bereiche des KLP, siehe 8
   "voraussetzungen": ["q1.vererbung.grundidee"],
   "dauer_min": 30,
 
-  "anknuepfen": [                        // Phase 1, Pool
-    { "frage": "Was erbt eine Unterklasse von ihrer Oberklasse - und was nicht?",
+  "anknuepfen": [
+    { "frage": "Was erbt eine Unterklasse - und was nicht?",
       "erwartet": ["Attribute", "Methoden", "nicht: Konstruktoren"] }
   ],
 
-  "teilszenario": "vererbung_tiere_stimmen",   // Klassensatz in JavaWelt
-
-  "auftrag": "Gib Hund und Katze je eine eigene Fassung von gibLaut().",
-
-  "checks": [
-    { "art": "parser", "regel": "klasse Hund ueberschreibt gibLaut" },
-    { "art": "parser", "regel": "klasse Katze ueberschreibt gibLaut" },
-    { "art": "weltzustand", "regel": "konsole enthaelt 'Wau' und 'Miau'",
-      "sichtbar": "Beide Tiere zeigen ihre Sprechblase" }
+  "teile": [
+    { "format": "F9", "operator": "implementieren",
+      "ort": "umgebung",
+      "teilszenario": "vererbung_tiere_stimmen",
+      "auftrag": "Gib Hund und Katze je eine eigene Fassung von gibLaut().",
+      "checks": [
+        { "art": "parser", "regel": "klasse Hund ueberschreibt gibLaut" },
+        { "art": "parser", "regel": "klasse Katze ueberschreibt gibLaut" },
+        { "art": "weltzustand", "regel": "konsole enthaelt 'Wau' und 'Miau'",
+          "sichtbar": "Beide Tiere zeigen ihre Sprechblase" }
+      ],
+      "hilfen": {
+        "1": "Schau dir an, welche Methode du in Tier vorfindest.",
+        "2": "Was muesste in Hund stehen, damit Hund etwas anderes tut?",
+        "3": "Eine Unterklasse kann eine geerbte Methode neu schreiben - mit genau derselben Signatur.",
+        "4": "geruest:public void gibLaut() {\n  // hier die Ausgabe fuer den Hund\n}"
+      }
+    },
+    { "format": "F12", "operator": "beurteilen",
+      "ort": "werkbank", "pruefung": "freitext",
+      "auftrag": "In der Tierpension sollen spaeter Voegel dazukommen. Begruende, warum gibLaut() in Tier ueberhaupt existiert, obwohl jede Art es neu schreibt."
+    }
   ],
 
-  "hilfen": {
-    "1": "Schau dir an, welche Methode du in Tier vorfindest.",
-    "2": "Was muesste in Hund stehen, damit Hund etwas anderes tut als Tier?",
-    "3": "Eine Unterklasse kann eine geerbte Methode neu schreiben - mit genau derselben Signatur.",
-    "4": "gerüst:public void gibLaut() {\n  // hier die Ausgabe fuer den Hund\n}"
-  },
-
   "reflexion": "Woher weiss Java bei tier.gibLaut(), welche Fassung gilt?",
-
   "fehlermuster_erwartet": ["signatur_abweichend", "super_aufruf_erwartet"]
 }
 ```
 
-Die Felder `checks`, `hilfen` und `reflexion` entsprechen eins zu eins
-den Festlegungen in `KONZEPT_AUFGABEN.md` (Prüfformen je Aufgabenformat,
-Hilfestufen 0–4, Reflexion als Übergang zur Sicherung). Neu sind nur
-`voraussetzungen`, `anknuepfen` und `fehlermuster_erwartet` — die drei
-Felder, die den geführten Sitzungsablauf tragen.
+Ein Baustein hat also **mehrere Teile mit unterschiedlichen Formaten** —
+das ist der Unterschied zum ersten Entwurf und die Voraussetzung dafür,
+dass Klausurnähe entsteht: implementieren *und* erläutern *und*
+beurteilen am selben Gegenstand.
 
-**Erstellt werden Bausteine KI-gestützt, aber nicht KI-verantwortet:**
-Das Modell generiert Entwürfe für Fragen, Hilfen, Prüffälle und
-Varianten, die Lehrkraft redigiert und gibt frei. Das ist genau die
-Rolle, die `KONZEPT_AUFGABEN.md` der KI zuweist („statisch hinterlegte
-Hilfen sind der Normalfall; KI ist Zusatzstufe") — hier nur systematisch
-zur Autorenwerkstatt ausgebaut.
+### Übung (Werkbank, F3)
+
+```jsonc
+{
+  "id": "ue.stack.rueckgabestapel",
+  "gehoert_zu": "q1.stack.grundidee",
+  "format": "F3",
+  "operator": "analysieren",
+  "dauer_min": 8,
+
+  "kontext": "An der Ausleihtheke der Stadtbibliothek liegen zurueckgegebene Buecher auf einem Stapel. Frau Ahmed stellt sie spaeter zurueck ins Regal - immer das oberste zuerst.",
+  "material": "stack.push(b); stack.pop();",
+
+  "ereignisse": [
+    "Rueckgabe: Momo",
+    "Rueckgabe: Krabat",
+    "Frau Ahmed raeumt ein Buch ein",
+    "Rueckgabe: Emil"
+  ],
+
+  "erwartet": {
+    "spalten": ["unten", "mitte", "oben"],
+    "zeilen": [
+      ["Momo", "", ""],
+      ["Momo", "Krabat", ""],
+      ["Momo", "", ""],
+      ["Momo", "Emil", ""]
+    ]
+  },
+
+  "anschlussfrage": "Erlaeutere, welches Buch am laengsten auf dem Stapel liegt - und ob das ein Problem ist.",
+  "fehlermuster_bei_fehler": ["stack_queue_verwechselt"]
+}
+```
+
+**Erstellt werden Bausteine und Übungen KI-gestützt, aber nicht
+KI-verantwortet:** Das Modell generiert Entwürfe für Kontexte,
+Ereignisfolgen, Prüffälle, Hilfen und Varianten; die erwarteten
+Ergebnisse werden **durch Ausführung des Referenzcodes** gegengeprüft,
+nicht durch das Modell bestätigt; die Lehrkraft redigiert und gibt frei.
+Das ist die Rolle, die `KONZEPT_AUFGABEN.md` der KI zuweist —
+systematisch zur Autorenwerkstatt ausgebaut.
 
 ---
 
-## 6 Rolle und Grenzen des Sprachmodells
+## 8 Sozialformen: Partnerarbeit, Präsentation, Plenum
 
-### Was der Tutor bekommt (Kontextvertrag)
+Hier ist Ehrlichkeit wichtiger als Funktionsumfang. Ein
+Selbstlernprogramm kann Kooperation **vorbereiten, verteilen und
+dokumentieren** — es kann sie nicht ersetzen. Was am Bildschirm bleibt,
+verliert genau das, was Partnerarbeit und Präsentation didaktisch
+wertvoll macht.
+
+### 8.1 Partnerarbeit über definierte Schnittstellen
+
+`KONZEPT_AUFGABEN.md` hat das schon angelegt: unterschiedliche Rollen,
+Informationen oder Teilaufträge, die zusammengeführt werden — Leitidee
+Modularität und Schnittstellen. Mit Server wird daraus:
+
+- Die Lehrkraft (oder das Regelwerk) bildet **Paare** und weist einen
+  **Paarauftrag** zu: ein Gesamtszenario, zwei Teilaufträge mit einer
+  **vereinbarten Schnittstelle** (Klassenname, Methodensignaturen).
+- Jede Seite arbeitet an ihrem Teil, mit eigenem Lernstand. Der
+  Tutor kennt die Schnittstelle und darf **nicht** den Teil des Partners
+  verraten — das ist der didaktische Kern: Man muss sich abstimmen.
+- **Zusammenführung** als eigener Schritt: Beide Teile werden
+  zusammengelegt, kompiliert, und die Checks laufen gegen das
+  Gesamtszenario. Kompiliert es nicht, ist die Schnittstelle die
+  Fehlerquelle — genau die Erfahrung, die gemeint ist.
+- **Abstimmung passiert im Raum**, nicht im Programm. Die Paare sitzen
+  nebeneinander. Es gibt bewusst **keinen Chat zwischen Lernenden**.
+
+**Strukturiertes Peer-Feedback** statt freier Kommunikation: Nach der
+Zusammenführung beantwortet jede Seite zwei feste Fragen zum Teil des
+Partners („Was war an der Schnittstelle klar, was nicht?", „Was hättest
+du anders gelöst?"). Formularfelder, keine Chatverläufe, für die
+Lehrkraft einsehbar — und das wird den Lernenden gesagt.
+
+### 8.2 Präsentationen: das Programm liefert Material, nicht die Note
+
+Die Präsentation findet im Unterricht statt. Das Programm kann drei
+Dinge dafür tun, und alle drei sind echter Gewinn:
+
+1. **Materialpaket erzeugen:** eigener Quelltext, Screenshot des
+   Szenarios, die eigene Reflexion, die Zustandstabelle aus F3 — als
+   druckbares oder in OneNote einfügbares Paket. Der vorhandene
+   Abgabe-Export (📤) ist die Grundlage.
+2. **Probelauf mit Rückfragen:** Der Tutor stellt drei Rückfragen zur
+   eigenen Lösung, so wie eine Mitschülerin sie stellen würde („Warum
+   ein Stack und keine Liste?", „Was passiert bei leerem Stapel?").
+   Das ist eine der stärksten Nutzungen eines Sprachmodells überhaupt —
+   und harmlos, weil es keine Lösung verrät, sondern nach ihr fragt.
+3. **Roter Faden statt Folien:** Der Tutor hilft, drei Kernaussagen zu
+   ordnen, und weist auf Lücken hin. Ausdrücklich **keine
+   Foliengenerierung** — sonst präsentieren die Lernenden fremde
+   Gedanken.
+
+Was das Programm nicht tut: bewerten, Vortragszeit messen, Folien
+erzeugen, Präsentationen speichern.
+
+### 8.3 Anschluss ans Plenum
+
+Das Programm ist für Erarbeitungs- und Übungsphasen gedacht, nicht als
+Ersatz des Unterrichts — dieselbe Festlegung wie in
+`apps/geheimschreiber/DIDAKTIK.md`, Abschnitt 8. Zwei konkrete Brücken:
+
+- **Die Freitexte sind Unterrichtsmaterial.** Die Lehrkraft sieht bei
+  der Sichtung (5.7), welche Formulierungen typisch sind — und kann mit
+  drei anonymisierten Schülersätzen ins Klassengespräch einsteigen. Das
+  ist besser als jede vorbereitete Folie.
+- **Fehlermuster über die Gruppe aggregiert** zeigen, was im Plenum
+  wiederholt werden muss. Wenn 14 von 26 `stack_queue_verwechselt`
+  auslösen, ist das keine Einzelförderung mehr.
+
+---
+
+## 9 Rolle und Grenzen des Sprachmodells
+
+### Kontextvertrag
 
 Bei jedem Aufruf **genau das** und nichts weiter:
 
 - Rolle und Regeln (Systemprompt, versioniert)
-- der aktuelle Baustein: Ziel, Auftrag, erwartete Fehlermuster, die
-  hinterlegten Hilfen (damit er sie *benutzt* statt eigene zu erfinden)
+- der aktuelle Baustein bzw. die Übung: Ziel, Auftrag, Operator,
+  erwartete Fehlermuster, die hinterlegten Hilfen (damit er sie
+  *benutzt* statt eigene zu erfinden)
 - Auszug aus dem Lernstand: Status der Nachbarbausteine, offene
-  Fehlermuster — **pseudonymisiert**, ohne Klarnamen
-- der aktuelle Schülercode der betroffenen Klasse(n)
+  Fehlermuster — **pseudonymisiert**
+- der aktuelle Schülercode bzw. die Tabelleneingabe
 - die letzte Compiler- oder Laufzeitmeldung im Original
 - die Check-Ergebnisse des letzten Laufs
-- die aktuell angeforderte Hilfestufe
+- die angeforderte Hilfestufe
 - der Gesprächsverlauf der laufenden Sitzung
 
-**Nie:** Klarnamen, Noten, Daten anderer Lernender, frühere
-Reflexionstexte im Wortlaut (nur als Fehlermuster verdichtet).
+**Nie:** Klarnamen, Noten, Daten anderer Lernender (Ausnahme:
+Schnittstellenvereinbarung bei Paararbeit, siehe 8.1), frühere
+Freitexte im Wortlaut.
 
 ### Guardrails
 
-Angelehnt an den Stand der Forschung zu CodeHelp, CodeAid und Iris —
-alle drei setzen darauf, dass kein vollständiger Lösungscode
-herausgegeben wird, sondern Hinweise und Gegenfragen:
+Angelehnt an CodeHelp, CodeAid und Iris — alle drei geben keinen
+vollständigen Lösungscode heraus, sondern Hinweise und Gegenfragen:
 
-1. **Kein lauffähiger Lösungscode.** Auch nicht auf Nachfrage, auch
-   nicht „nur als Beispiel". Zulässig sind Gerüste mit Lücken und
-   analoge Beispiele an *anderem* Gegenstand — genau die Formen, die
-   `KONZEPT_AUFGABEN.md` als Stufe 4 vorsieht.
-2. **Reflexionsschranke vor Stufe 2.** Vor einer inhaltlichen Hilfe
-   beantwortet die Lernende eine kurze Frage: „Was hast du erwartet,
-   was passiert stattdessen?" Kein Punktabzug, keine Wartezeit — nur
-   diese eine Frage. Begründung: Studien zu KI-Hinweisen finden einen
-   *Reflection-Satisfaction-Tradeoff*: Reflexion vor dem Hinweis wirkt
-   lernförderlich, senkt aber die Zufriedenheit. Der Kompromiss ist
-   eine einzige Frage statt eines Formulars.
-   *Unsicherheit:* Diese Befunde stammen aus dem Hochschulkontext; ob
-   Oberstufenschüler die Frage als Hürde oder als Hilfe erleben, ist
-   im Feld zu prüfen (siehe 11).
-3. **Hilfen kosten nie etwas.** Unverändert aus
-   `KONZEPT_AUFGABEN.md`: keine Coin-Verluste, keine schlechteren
-   Abzeichen, kein Vermerk „hat Hilfe gebraucht" in irgendeiner
-   Bewertung. Die höchste genutzte Hilfestufe ist ein
-   *Diagnose*-Merkmal, kein Leistungsmerkmal.
-4. **Auf dem Boden bleiben.** Der Tutor bezieht sich auf den
-   tatsächlichen Code, die tatsächliche Meldung, das tatsächliche
-   Szenario. Keine erfundenen Klassennamen, keine Java-Konstrukte, die
-   die Umgebung nicht kann (Threads, Sockets, Dateizugriff, Pakete —
-   siehe die Grenzen in `ENTWICKLUNG.md`).
-5. **Fachlich auf NRW-Kurs.** Datenstrukturen nur mit den
+1. **Kein lauffähiger Lösungscode.** Auch nicht auf Nachfrage. Zulässig
+   sind Gerüste mit Lücken und analoge Beispiele an *anderem*
+   Gegenstand — die Stufe-4-Formen aus `KONZEPT_AUFGABEN.md`.
+2. **Reflexionsschranke vor Stufe 2:** eine einzige Frage („Was hast du
+   erwartet, was passiert stattdessen?"). Kein Punktabzug, keine
+   Wartezeit. Begründung: Studien zu KI-Hinweisen finden einen
+   *Reflection-Satisfaction-Tradeoff* — Reflexion vor dem Hinweis wirkt
+   lernförderlich, senkt aber die Zufriedenheit; deshalb eine Frage
+   statt eines Formulars. *Unsicherheit:* Befunde aus dem
+   Hochschulkontext; im Feld zu prüfen.
+3. **Hilfen kosten nie etwas.** Unverändert aus `KONZEPT_AUFGABEN.md`.
+   Die höchste genutzte Hilfestufe ist Diagnose, kein Leistungsmerkmal.
+4. **Bei Freitext keine Bewertung**, sondern Rückmeldung (5.7).
+5. **Bei Paararbeit keine Auskunft über den Teil des Partners** (8.1).
+6. **Auf dem Boden bleiben:** tatsächlicher Code, tatsächliche Meldung,
+   tatsächliches Szenario. Keine Java-Konstrukte, die die Umgebung nicht
+   kann (Threads, Sockets, Dateizugriff, Pakete).
+7. **Fachlich auf NRW-Kurs:** Datenstrukturen nur mit den
    NRW-Klassen-Signaturen; kein `java.util.Stack`, keine
-   `ArrayList`-Vorschläge. Der Bestand an API-Beschreibungen im
-   `java_analyse_tool.html` wird dafür übernommen.
-6. **Kein Rollenspiel, keine Umwidmung.** Der Tutor bleibt beim Thema.
-   Auf Off-Topic reagiert er kurz und führt zurück; auf Versuche, die
-   Regeln zu überschreiben, gar nicht.
-7. **Sprache.** Deutsch, Oberstufenniveau, kurze Sätze, Fachbegriffe
-   werden benutzt und beim ersten Mal erklärt. Duzen.
-8. **Zuständigkeitsgrenze.** Bei allem, was über Fachliches
-   hinausgeht — Frust, Überforderung, persönliche Belastung —
-   antwortet der Tutor freundlich, aber nicht beratend, und verweist
-   auf die Lehrkraft. Er protokolliert das nicht.
+   `ArrayList`-Vorschläge. Die API-Beschreibungen aus
+   `java_analyse_tool.html` werden übernommen.
+8. **Operatoren richtig benutzen.** Wenn die Aufgabe „erläutern" sagt,
+   fragt der Tutor nach Zusammenhängen, nicht nach Code — er ist auch
+   ein Vorbild für Aufgabensprache.
+9. **Kein Rollenspiel, keine Umwidmung.** Off-Topic kurz zurückführen;
+   Versuche, die Regeln zu überschreiben, ignorieren.
+10. **Sprache:** Deutsch, Oberstufenniveau, kurze Sätze, Fachbegriffe
+    benutzen und beim ersten Mal erklären. Duzen.
+11. **Zuständigkeitsgrenze:** Bei Frust, Überforderung oder
+    Persönlichem freundlich, aber nicht beratend antworten und auf die
+    Lehrkraft verweisen. Nicht protokollieren.
 
 ### Was gegen Missbrauch schützt
 
-Die belegbasierte Architektur nimmt dem naheliegenden Umweg den Reiz:
-Man kann den Tutor nicht überreden, einen Baustein als bestanden zu
-markieren, und man kann die Aufgabe nicht durch Reden ersetzen. Wer die
-Lösung anderswo besorgt, bekommt den Haken — das ist auch bei
-Papieraufgaben so und wird durch die Reflexionsfrage in Phase 5 zumindest
-sichtbar: Wer nicht erklären kann, was er abgibt, fällt auf.
+Man kann den Tutor nicht überreden, einen Baustein als belegt zu
+markieren, und die Aufgabe nicht durch Reden ersetzen. Wer die Lösung
+anderswo besorgt, bekommt den Haken — wie bei Papieraufgaben — fällt aber
+in Phase 5 auf: Wer nicht erklären kann, was er abgibt, und wessen
+Erläuterungstexte nicht zur Lösung passen, wird sichtbar. Das ist
+Diagnose, keine Überwachung, und wird auch so behandelt.
 
 ---
 
-## 7 Serverseite
+## 10 Datenschutz
 
-### Anforderungen
-
-| Anforderung | Konsequenz |
-|---|---|
-| Bis zu 30 iPads gleichzeitig, Schul-WLAN | kleine Nutzlasten, lokaler Puffer, Wiederaufnahme nach Netzhänger |
-| KI-Schlüssel niemals im Frontend | jeder Modellaufruf über das Gateway |
-| Lernstand geräteunabhängig | serverseitige Speicherung, Konten |
-| Ausfall der KI darf nicht blockieren | Chat ist Schicht, nicht Fundament |
-| Lehrkraft sieht Bearbeitungsstände | Rollen, Klassenzuordnung |
-| Kosten begrenzbar | Budget je Konto und Sitzung, serverseitig durchgesetzt |
-
-### Stack
-
-**Vorschlag: derselbe wie im Geheimschreiber-Konzept** — Node 22 +
-Fastify + SQLite (`better-sqlite3`), Argon2id für Passwörter, ein
-Prozess in einem Container. Begründung: Die Werkzeugkette liegt im
-Repository schon vor, es gibt keinen zweiten Dienst zu betreiben, und
-die Schule betreibt dann **einen** Servertyp für beide Anwendungen statt
-zwei. Falls der Schulserver nur PHP anbietet, gilt dieselbe Überlegung
-wie dort: Die Schnittstelle ist klein genug, um sie in PHP 8 + SQLite
-nachzubauen.
-
-Bei mehr als einer Lerngruppe gleichzeitig und wachsendem Chatverlauf
-ist PostgreSQL statt SQLite die naheliegende Ausbaustufe; die
-Schnittstelle bleibt gleich. *Schätzung, nicht gemessen:* Für 30
-gleichzeitige Sitzungen reicht SQLite deutlich — die Last liegt beim
-Modellanbieter, nicht in der Datenbank.
-
-### Schnittstelle (Entwurf)
-
-| Methode | Pfad | Zweck |
-|---|---|---|
-| `POST` | `/api/anmelden` | Pseudonym + Passwort → Sitzungs-Cookie |
-| `POST` | `/api/abmelden` | Sitzung beenden |
-| `POST` | `/api/passwort` | eigenes Passwort ändern |
-| `GET` | `/api/lernstand` | eigener Lernstand |
-| `POST` | `/api/sitzung/start` | Sitzung eröffnen → Phase-1-Fragen + Vorschlag |
-| `POST` | `/api/sitzung/nachricht` | Chatbeitrag → Antwort des Tutors (Gateway) |
-| `POST` | `/api/baustein/pruefen` | Check-Ergebnisse melden → Lernstand fortschreiben |
-| `POST` | `/api/hilfe` | Hilfestufe anfordern (statisch oder Gateway) |
-| `POST` | `/api/sitzung/abschluss` | Reflexion + Abgabe speichern |
-| `GET` | `/api/bausteine` | Kurs-/Bausteindefinitionen (öffentlich lesbar) |
-| `GET` | `/api/lehrkraft/klasse/:id` | Übersicht der Lerngruppe (nur Lehrkraft) |
-| `GET` | `/api/lehrkraft/abgabe/:id` | einzelne Abgabe samt Reflexion (nur Lehrkraft) |
-| `POST` | `/api/lehrkraft/konten` | Konten anlegen, Passwort zurücksetzen |
-| `POST` | `/api/lehrkraft/entwurf` | KI-Entwurf für Hilfen/Fragen/Prüffälle (nur Lehrkraft) |
-
-**Die Checks laufen im Client** (Parser + Weltzustand liegen dort), das
-Ergebnis wird gemeldet. Das ist manipulierbar — und akzeptabel, weil das
-System nicht bewertet. Wo Manipulationssicherheit nötig wäre, gäbe es
-Noten, und die gibt es hier nicht (siehe 9). Der eingereichte Code liegt
-der Abgabe bei; die Lehrkraft kann jederzeit nachsehen.
-
-### Datenmodell (Skizze)
-
-```sql
-CREATE TABLE konto (            -- wie Geheimschreiber, gleiche Regeln
-  id INTEGER PRIMARY KEY,
-  anmeldename TEXT NOT NULL UNIQUE,      -- Pseudonym, kein Klarname
-  passwort_hash TEXT NOT NULL,           -- Argon2id
-  rolle TEXT NOT NULL CHECK (rolle IN ('schueler','lehrkraft')),
-  kurs TEXT,
-  muss_passwort_aendern INTEGER NOT NULL DEFAULT 1,
-  erstellt_am TEXT NOT NULL
-);
-
-CREATE TABLE lernstand (
-  konto_id INTEGER NOT NULL REFERENCES konto(id) ON DELETE CASCADE,
-  baustein TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('offen','in_arbeit','belegt')),
-  belege TEXT,                  -- JSON: welche Checks wann bestanden
-  fehlermuster TEXT,            -- JSON: Katalog-IDs
-  hilfestufe_max INTEGER,
-  geaendert_am TEXT NOT NULL,
-  PRIMARY KEY (konto_id, baustein)
-);
-
-CREATE TABLE sitzung (
-  id INTEGER PRIMARY KEY,
-  konto_id INTEGER NOT NULL REFERENCES konto(id) ON DELETE CASCADE,
-  begonnen_am TEXT NOT NULL,
-  beendet_am TEXT,
-  baustein TEXT,
-  reflexion TEXT,               -- Freitext der Lernenden
-  verlauf TEXT                  -- JSON, Aufbewahrungsfrist siehe 8
-);
-
-CREATE TABLE abgabe (
-  id INTEGER PRIMARY KEY,
-  sitzung_id INTEGER NOT NULL REFERENCES sitzung(id) ON DELETE CASCADE,
-  projekt TEXT NOT NULL,        -- Quelltexte als JSON
-  erstellt_am TEXT NOT NULL
-);
-```
-
-### KI-Gateway
-
-Ein eigener Serverbaustein, damit der Modellanbieter austauschbar bleibt:
-
-- **Schlüssel nur serverseitig.** `java_analyse_tool.html` wird auf das
-  Gateway umgestellt und der `sed`-Schritt aus dem Workflow entfernt.
-  Der bisherige Schlüssel gilt danach als offengelegt und ist zu
-  ersetzen.
-- **Pseudonymisierung im Gateway**, nicht im Frontend: Klarnamen kommen
-  dort ohnehin nicht vor, aber der Prüfpunkt gehört an eine Stelle.
-- **Budget und Ratelimit je Konto und Sitzung**, serverseitig
-  durchgesetzt. Die tatsächlichen Kosten sind vorab nicht seriös
-  schätzbar (Modellwahl, Kontextlänge, Nutzungsintensität) — sie sind in
-  einer Pilotgruppe zu **messen**, bevor eine Jahrgangsstufe startet.
-- **Promptversionen im Repository**, nicht in der Datenbank. Änderungen
-  am Tutorverhalten sind Codeänderungen mit Review — nicht
-  Konfiguration, die jemand nachmittags anpasst.
-- **Modellwahl offen.** Zwei Wege: gehostete API mit EU-Verarbeitung und
-  Auftragsverarbeitungsvertrag, oder ein lokales Modell auf dem
-  Schulserver. Letzteres braucht GPU und liefert bei kleinen Modellen
-  *vermutlich* nicht die Qualität, die deutschsprachige, fachlich
-  präzise Rückfragen brauchen — das ist eine ausdrückliche Unsicherheit
-  und praktisch zu testen, nicht zu behaupten.
-- **Protokollierung sparsam:** Aufruf, Baustein, Modell, Tokenzahl,
-  Dauer, Ergebnisstatus. Inhalte nur, soweit für die Reflexion nötig
-  (siehe 8).
-
----
-
-## 8 Datenschutz
-
-Die Anwendung verarbeitet Daten Minderjähriger über Schülerkonten und
-schickt Schülertexte an einen KI-Dienst. Das ist vor dem ersten Einsatz
-zu klären, nicht danach. Die Grundlinien folgen
-`apps/geheimschreiber/DIDAKTIK.md`, Abschnitt 10:
+Das Programm verarbeitet Daten Minderjähriger über Schülerkonten und
+schickt Schülertexte an einen KI-Dienst. Zu klären **vor** dem ersten
+Einsatz. Grundlinien wie in `apps/geheimschreiber/DIDAKTIK.md`,
+Abschnitt 10:
 
 - **Pseudonyme statt Klarnamen**, keine Selbstregistrierung, Konten
-  ausschließlich durch die Lehrkraft; Passwörter nur als Argon2id-Hash;
-  Auslieferung nur über HTTPS.
-- **Datensparsamkeit als Voreinstellung.** Erhoben wird, was Abschnitt 4
-  auflistet — nicht mehr.
-- **Was an das Modell geht**, ist in Abschnitt 6 abschließend
-  aufgezählt: Code, Fehlermeldung, Baustein, Fehlermuster,
-  Gesprächsverlauf der Sitzung. Kein Name, keine Klasse, keine Noten.
-- **Aufbewahrung.** Vorschlag: Chatverläufe 14 Tage (für Rückfragen und
-  Fehleranalyse), Lernstand und Reflexion bis Schuljahresende, Konten
-  danach gelöscht. Frist ist festzulegen, nicht offenzulassen.
-- **Transparenz.** Zu Beginn der Einheit wird gesagt: Was gespeichert
-  wird, was die Lehrkraft sieht, dass der Chat an einen Dienstleister
-  geht, und dass nichts davon in die Note eingeht.
-- **Auftragsverarbeitung.** Für den Modellanbieter ist ein AV-Vertrag
-  nötig; die Verarbeitung sollte in der EU stattfinden. Die im Repo
-  bislang genutzte OpenRouter-Kette ist dafür **nicht ohne Prüfung
-  geeignet** — dort steht ein Vermittler zwischen Schule und
-  Modellanbieter. Alternative Wege: direkter Vertrag mit einem Anbieter
-  mit EU-Verarbeitung, ein Schul-Layer wie fobizz/schulKI (falls eine
-  NRW-Landeslizenz besteht — *nicht verifiziert*), oder lokales Modell.
+  ausschließlich durch die Lehrkraft, Passwörter nur als Hash, HTTPS.
+- **Datensparsamkeit als Voreinstellung** — erhoben wird, was
+  Abschnitt 6 auflistet.
+- **Was an das Modell geht**, ist in Abschnitt 9 abschließend
+  aufgezählt. Kein Name, keine Klasse, keine Noten.
+- **Aufbewahrung** (Vorschlag): Chatverläufe 14 Tage, Lernstand und
+  Freitexte bis Schuljahresende, Konten danach gelöscht. Frist
+  festlegen, nicht offenlassen.
+- **Transparenz** zu Beginn der Einheit: was gespeichert wird, was die
+  Lehrkraft sieht, dass der Chat an einen Dienstleister geht, dass
+  Peer-Feedback für die Lehrkraft sichtbar ist, und dass nichts davon in
+  die Note eingeht.
+- **Auftragsverarbeitung:** AV-Vertrag mit dem Modellanbieter, EU-
+  Verarbeitung. Die bislang genutzte OpenRouter-Kette ist dafür **nicht
+  ohne Prüfung geeignet** (Vermittler zwischen Schule und Anbieter).
+- **Der Schüler, der die Infrastruktur baut**, arbeitet nur mit
+  Testdaten, hat keinen Produktivzugriff, und der Betrieb liegt bei der
+  Schule (Technikpapier, Abschnitt 9).
 
-**KI-Verordnung (EU AI Act).** Anhang III der Verordnung listet
-Bildungssysteme als Hochrisiko-Bereich, unter anderem für Systeme, die
-Lernergebnisse bewerten oder über Zugang entscheiden. Nach meiner
-Lesart ist das ein weiteres starkes Argument für die Trennung aus
-Abschnitt 3: Das System **bewertet nicht**, es diagnostiziert formativ;
-die Bewertung bleibt vollständig bei der Lehrkraft, und der Lernstand
-fließt nicht in Noten ein. Ob das die Einordnung sicher vermeidet, kann
-ich nicht beurteilen — das ist eine juristische Frage für die
-Schulleitung und die Datenschutzbeauftragte, und sie sollte **vor** dem
-Klasseneinsatz gestellt werden. Ich kann das Konzept datensparsam und
-bewertungsfrei auslegen; die rechtliche Bewertung kann ich nicht
-ersetzen.
+**KI-Verordnung (EU AI Act).** Anhang III listet Bildungssysteme als
+Hochrisiko-Bereich, unter anderem für Systeme, die Lernergebnisse
+bewerten oder über Zugang entscheiden. Nach meiner Lesart ist das ein
+weiteres starkes Argument für die Trennung aus Abschnitt 4: Das System
+**bewertet nicht**, es diagnostiziert formativ; die Bewertung bleibt
+vollständig bei der Lehrkraft. Ob das die Einordnung sicher vermeidet,
+kann ich nicht beurteilen — juristische Frage für Schulleitung und
+Datenschutzbeauftragte, zu stellen **vor** dem Klasseneinsatz. Ich kann
+das Konzept datensparsam und bewertungsfrei auslegen; die rechtliche
+Bewertung kann ich nicht ersetzen.
 
 ---
 
-## 9 Leistungsbewertung
+## 11 Leistungsbewertung
 
 **Das Selbstlernprogramm bewertet nicht.** Keine Noten, keine
 Punktzahlen, keine Rangfolge, kein Vergleich zwischen Lernenden. Der
 Lernstand ist Diagnose — und das wird den Lernenden zu Beginn gesagt.
 
-Das ist keine Zurückhaltung aus Vorsicht, sondern Voraussetzung dafür,
-dass das System funktioniert: Sobald der Fortschritt zählt, wird
-Hilfeverzicht rational und Täuschung attraktiv. Beides zerstört genau
-die Daten, aus denen die Adaptivität lebt.
+Das ist Voraussetzung dafür, dass das System funktioniert: Sobald der
+Fortschritt zählt, wird Hilfeverzicht rational und Täuschung attraktiv.
+Beides zerstört die Daten, aus denen die Adaptivität lebt.
 
-Was in die „Sonstigen Leistungen" eingeht, entsteht **außerhalb** des
-Programms: im Unterrichtsgespräch, in der Präsentation einer Lösung, in
-der Klausur. Die Abgabe (Projektdatei + Reflexion) ist dafür Material,
-das die Lehrkraft heranziehen kann — sie ist Dokumentation der Arbeit,
-nicht ihre Messung.
+Was in die „Sonstigen Leistungen" eingeht, entsteht **außerhalb**: im
+Unterrichtsgespräch, in der Präsentation, in der Klausur. Die Abgaben
+(Projektdatei, Freitexte, Materialpaket) sind Material, das die
+Lehrkraft heranziehen kann — Dokumentation der Arbeit, nicht ihre
+Messung.
 
-**Rahmen in NRW:** Es gibt seit 2023 einen Handlungsleitfaden des
-Ministeriums zu textgenerierenden KI-Systemen sowie eine unter
-NRW-Federführung erarbeitete KMK-Handlungsempfehlung. Praktisch heißt
-das: Selbstlernphasen mit KI-Unterstützung ja, Bewertungssituationen
-davon getrennt. Genau so ist das Konzept angelegt. Die konkreten
-Vorgaben sind am Original zu prüfen — ich habe sie nur über
-Sekundärquellen und Pressemitteilungen gesehen.
+**Rahmen in NRW:** Handlungsleitfaden des Ministeriums zu
+textgenerierenden KI-Systemen (seit 2023) und die unter NRW-Federführung
+erarbeitete KMK-Handlungsempfehlung. Praktisch: Selbstlernphasen mit KI
+ja, Bewertungssituationen davon getrennt. Die konkreten Vorgaben sind am
+Original zu prüfen — ich habe sie nur über Sekundärquellen gesehen.
 
 ---
 
-## 10 Curriculare Verankerung
+## 12 Curriculare Verankerung
 
-Die Bausteine werden den Inhaltsfeldern und Kompetenzbereichen des
-Kernlehrplans Informatik SII zugeordnet; jeder Baustein trägt die
-Zuordnung im Feld `inhaltsfeld` und `kompetenzen` (Abschnitt 5). Grober
-Rahmen, wie er zum Unterrichtskontext in `ENTWICKLUNG.md` passt:
+Jeder Baustein trägt Inhaltsfeld und Operator (Abschnitt 7). Grober
+Rahmen, passend zum Unterrichtskontext aus `ENTWICKLUNG.md`:
 
 | Abschnitt | Schwerpunkt | vorhandene JavaWelt-Szenarien |
 |---|---|---|
@@ -569,31 +748,28 @@ Rahmen, wie er zum Unterrichtskontext in `ENTWICKLUNG.md` passt:
 | Q1 | Vererbung und Polymorphie, Arrays, lineare Strukturen (Stack, Queue, List), Datenbanken (ER, Normalformen, SQL) | „Vererbung & Polymorphie", „Arrays", „Stack/Queue/List", „Datenbank Zoo" |
 | Q2 | Bäume, Graphen, Suchen und Sortieren, formale Sprachen und Automaten | geplant (Roadmap-Punkt 5) |
 
-**Zwei Vorbehalte, ausdrücklich:**
+**Drei Vorbehalte, ausdrücklich:**
 
-1. Die **exakten Formulierungen der Kompetenzerwartungen** müssen aus
-   dem KLP-Original übernommen werden, wie es im
-   Geheimschreiber-Konzept für die Sek I gemacht wurde. Ich habe sie
-   hier nicht zitiert, weil ich sie nicht am Original prüfen konnte —
-   `lehrplannavigator.nrw.de` liefert dem Proxy dieser Umgebung 403
-   (dasselbe Problem ist in `DIDAKTIK.md` dokumentiert).
-2. **Novellierung.** Nach den Suchergebnissen werden die
-   Oberstufen-Kernlehrpläne bis zum Schuljahr 2025/26 novelliert. Ob
-   für Informatik SII inzwischen ein neuer KLP gilt, konnte ich nicht
-   verifizieren. Das ist zu klären, bevor die Bausteinstruktur
-   festgeschrieben wird — sie hängt daran.
+1. **Operatorenliste unvollständig** (5.1) — Original nicht erreichbar.
+   Erster Arbeitsschritt am Inhalt.
+2. **Kompetenzerwartungen im Wortlaut** müssen aus dem KLP übernommen
+   werden, wie es in `DIDAKTIK.md` für die Sek I gemacht wurde.
+   `lehrplannavigator.nrw.de` liefert dem Proxy dieser Umgebung 403.
+3. **Novellierung:** Nach den Suchergebnissen werden die
+   Oberstufen-Kernlehrpläne bis 2025/26 novelliert. Ob für Informatik
+   SII inzwischen ein neuer KLP gilt, konnte ich nicht verifizieren —
+   zu klären, bevor der Bausteinschnitt festgeschrieben wird.
 
-Der schulinterne Lehrplan der LFSM für die SII ist die verbindliche
-Grundlage und liegt mir nicht vor. Wenn er verfügbar ist, sollte die
-Zuordnungstabelle nach dem Muster von `DIDAKTIK.md`, Abschnitt 2,
-vollständig ausgeführt werden.
+Der schulinterne Lehrplan der LFSM für die SII liegt mir nicht vor; mit
+ihm sollte die Zuordnungstabelle nach dem Muster von `DIDAKTIK.md`,
+Abschnitt 2, vollständig ausgeführt werden.
 
 ---
 
-## 11 Beispielsitzung
+## 13 Beispielsitzung
 
-So soll sich das anfühlen — Q1, Wiederholung Vererbung, zweite Sitzung.
-„T" ist der Tutor, „S" die Schülerin.
+Q1, Wiederholung Vererbung, zweite Sitzung. „T" ist der Tutor, „S" die
+Schülerin.
 
 > **T** Moin! Letztes Mal hast du Tier, Hund und Katze gebaut und Hund
 > hat schon „Wau" gesagt. Eine Sache hing noch: Du hattest
@@ -606,21 +782,28 @@ So soll sich das anfühlen — Q1, Wiederholung Vererbung, zweite Sitzung.
 >
 > **S** ach ja, konstruktoren werden nicht vererbt. man nimmt nenne().
 >
-> **T** Richtig. Damit ist die Baustelle zu. Heute würde ich an genau
-> der Stelle weitermachen: Katze soll etwas anderes sagen als Hund, und
+> **T** Richtig. Bevor wir weitermachen, eine kurze Sache: Beim
+> Methodenkopf hattest du zweimal `gibLaut(String)` geschrieben, wo
+> `gibLaut()` hingehört. Ich hab dir drei kleine Aufgaben dazu — zwei
+> Minuten, ohne Projekt.
+
+*Die Werkbank öffnet sich: drei Methodenköpfe, dazu Beschreibungen, die
+zugeordnet werden sollen (F1); dann eine Signatur, die zu einer
+Beschreibung geschrieben werden soll (F6). Beides exakt geprüft.*
+
+> **T** Sitzt. Dann heute: Katze soll etwas anderes sagen als Hund, und
 > danach schauen wir, was passiert, wenn beide als `Tier` in einem
-> Array liegen. Das ist der Kern von Polymorphie — Klausurthema.
-> Passt das, oder willst du erst noch Arrays üben?
+> Array liegen. Das ist Polymorphie — Klausurthema. Passt das, oder
+> willst du erst Arrays üben?
 >
 > **S** passt.
 >
-> **T** Gut. Ich lade dein Projekt von letztem Mal, Katze ist schon
-> angelegt. Auftrag steht rechts. Ich bin in der Seitenleiste, wenn du
-> mich brauchst.
+> **T** Gut. Ich lade dein Projekt von letztem Mal, Katze ist angelegt.
+> Auftrag steht rechts. Ich bin in der Seitenleiste.
 
-*Die Umgebung öffnet das Teilszenario. Nach acht Minuten kommt eine
-Compilermeldung, die Umgebung übersetzt sie selbst (Stufe 0). Nach
-zwei weiteren Versuchen tippt S auf „Ich brauche einen Hinweis".*
+*Nach acht Minuten kommt eine Compilermeldung, die Umgebung übersetzt
+sie selbst (Stufe 0). Nach zwei weiteren Versuchen tippt S auf „Ich
+brauche einen Hinweis".*
 
 > **T** Kurz vorher: Was hast du erwartet, und was passiert
 > stattdessen?
@@ -635,126 +818,136 @@ zwei weiteren Versuchen tippt S auf „Ich brauche einen Hinweis".*
 > **T** Und was heißt das für Java?
 
 *Nach der Korrektur laufen beide Checks durch, in der Welt erscheinen
-zwei Sprechblasen. Nach 40 Minuten leitet der Tutor zur Sicherung
-über.*
+zwei Sprechblasen. Danach schaltet der Tutor den Erläuterungsteil frei.*
 
-> **T** Das läuft. Bevor wir Schluss machen: Warum ruft
-> `tier.gibLaut()` bei einem Hund die Hund-Fassung auf, obwohl die
-> Variable vom Typ `Tier` ist? Zwei, drei Sätze in deinen Worten.
+> **T** Läuft. Jetzt der Teil, der in der Klausur die Punkte bringt:
+> In der Tierpension sollen später Vögel dazukommen. Begründe, warum
+> `gibLaut()` überhaupt in `Tier` steht, obwohl jede Art es neu
+> schreibt. Zwei, drei Sätze.
 >
-> **S** weil java erst beim laufen guckt was das objekt wirklich ist,
-> nicht was in der variable steht.
+> **S** damit man alle tiere gleich behandeln kann, auch wenn man nicht
+> weiß welche art es ist
 >
-> **T** Das ist genau der Punkt — der Fachbegriff dafür ist
-> *dynamische Bindung*, den brauchst du in der Klausur. Ich habe deinen
-> Satz gespeichert, du kannst ihn ins Heft übernehmen. Nächstes Mal:
-> dieselben Tiere in einem Array, und eine Schleife, die alle
-> durchgeht. Bis dann!
+> **T** Das ist der Kern. Ein Begriff fehlt noch, den du in der Klausur
+> brauchst: *dynamische Bindung* — Java entscheidet erst beim Laufen,
+> welche Fassung gilt. Deine Formulierung habe ich gespeichert, Herr
+> Böhm sieht sie sich an. Nächstes Mal: dieselben Tiere in einem Array
+> und eine Schleife darüber. Bis dann!
 
-Was daran technisch bemerkenswert ist: Jeder Schritt, der etwas am
-Lernstand ändert, hängt an einem Check — die Konstruktor-Frage in Phase
-1 an einem Fehlermuster aus der letzten Sitzung, der Haken am
-bestandenen Weltzustand, die Reflexion als Freitext ohne Bewertung. Das
-Gespräch ist die Oberfläche, nicht die Buchführung.
+Was daran technisch bemerkenswert ist: Jeder Schritt, der den Lernstand
+ändert, hängt an einem Check — die Konstruktor-Frage an einem
+Fehlermuster der letzten Sitzung, die Mikroübung an exaktem Vergleich,
+der Haken am Weltzustand. Der Erläuterungstext ändert **nichts** am
+Status, sondern landet zur Sichtung. Das Gespräch ist die Oberfläche,
+nicht die Buchführung.
 
 **Wenn das Gateway ausfällt**, läuft dieselbe Sitzung ohne Gespräch:
-Phase 1 zeigt die Wiederholungsfragen aus dem Pool als Karten mit
-Auflösung, Phase 2 den Vorschlag als Text mit Auswahl, Phase 4 die
-statischen Hilfen 1–4, Phase 5 das Reflexionsfeld. Spürbar nüchterner —
-aber vollständig. Diese Betriebsart ist zugleich die erste Ausbaustufe
-(siehe 12) und damit von Anfang an getestet, nicht nur theoretisch
-vorhanden.
+Phase 1 zeigt Wiederholungsfragen als Karten mit Auflösung, Phase 2 den
+Vorschlag als Text mit Auswahl, Phase 4 die statischen Hilfen 1–4,
+Phase 5 das Reflexionsfeld. Die Formate F1–F8 funktionieren
+vollständig, weil ihre Prüfung deterministisch ist. Spürbar nüchterner
+— aber tragfähig. Diese Betriebsart ist zugleich Etappe 1 (siehe 14)
+und damit von Anfang an getestet.
 
 ---
 
-## 12 Umsetzung in Etappen
+## 14 Umsetzung in Etappen
 
-Jede Etappe endet mit etwas Benutzbarem und mit einer Frage, die vorher
-beantwortet sein muss.
+Beide Stränge laufen parallel; die Didaktik ist nicht auf den Server
+angewiesen, bis Etappe D3.
+
+**Inhalte und Didaktik:**
 
 | # | Etappe | Inhalt | Abbruchfrage davor |
 |---|---|---|---|
-| 0 | **Vorbedingungen** | CheerpJ auf dem Schul-iPad prüfen; Serverumgebung festlegen; OpenRouter-Schlüssel aus dem Frontend entfernen und ersetzen | Läuft echtes Java im Schulnetz oder nur Notbetrieb? |
-| 1 | **Bausteine ohne KI** | Baustein-Format, Kompetenzgraph, Aufgabenpanel, Checks, statische Hilfen 0–4, Reflexion, Sitzungsablauf deterministisch; Lernstand noch lokal | Trägt Selbstlernen fachlich, bevor KI dazukommt? |
-| 2 | **Server** | Konten, Lernstand, Abgaben, Lehrkraft-Übersicht; Offline-zuerst mit Nachtragen | Ist der Datenschutzrahmen geklärt? |
-| 3 | **Autorenwerkstatt** | KI-Entwürfe für Hilfen, Fragen, Prüffälle, Varianten — nur für die Lehrkraft, Freigabe von Hand | Spart das echte Vorbereitungszeit? |
-| 4 | **Tutor im Gespräch** | Gateway, Phasen 1, 2, 5, 6 als Chat; Hilfestufen 1–3 dynamisch mit Reflexionsschranke | Kosten gemessen? Guardrails im Pilot gehalten? |
-| 5 | **Adaptiv** | verteiltes Üben über Fehlermuster, Wiederholungsvorschläge vor Klausuren, Differenzierung nach oben | Nutzen die Lernenden das Angebot freiwillig? |
-| 6 | **Perspektivisch** | kooperative Szenarien, serverseitige Prüfläufe (javac/JUnit), Ausweitung auf weitere Kurse | Reicht der clientseitige Weg nachweislich nicht? |
+| D0 | **Grundlagen klären** | Operatorenliste aus dem Original, KLP-Stand prüfen, schulinternen LP einarbeiten | Gilt ein novellierter KLP? |
+| D1 | **Formate definieren** | F1–F12 als Datenschema, Prüflogik je Format, Fehlermusterkatalog; Pilotbaustein Vererbung mit drei Teilen | Deckt der Formatkatalog die Klausurpraxis? |
+| D2 | **Werkbank** | Oberfläche für F1–F8 mit CheerpJ-Testgerüst; Übungssätze zu 3 Bausteinen | Sind Mikroübungen im Unterricht wirklich der schnellere Weg? |
+| D3 | **Sitzungsablauf** | Phasen 1–6 deterministisch, Regelwerk für Baustein- und Formatwahl, Freitextsichtung für die Lehrkraft | Trägt Selbstlernen, bevor KI dazukommt? |
+| D4 | **Autorenwerkstatt** | KI-Entwürfe für Kontexte, Ereignisfolgen, Prüffälle, Hilfen — Gegenprüfung durch Referenzausführung, Freigabe von Hand | Spart das echte Vorbereitungszeit? |
+| D5 | **Tutor im Gespräch** | Phasen 1, 2, 5, 6 als Chat; Hilfestufen 1–3 dynamisch mit Reflexionsschranke; Rückfragen-Probelauf für Präsentationen | Kosten gemessen? Guardrails im Pilot gehalten? |
+| D6 | **Sozialformen** | Paaraufträge mit Schnittstelle und Zusammenführung, strukturiertes Peer-Feedback, Materialpaket für Präsentationen | Funktioniert Partnerarbeit im Raum besser als allein? |
+| D7 | **Adaptiv** | verteiltes Üben über Fehlermuster, Klausurvorbereitung nach AFB-Mischung, Differenzierung nach oben | Nutzen die Lernenden es freiwillig? |
 
-Die Reihenfolge ist bewusst so: **Etappe 1 ist der ehrliche Test.**
-Wenn Selbstlernen mit guten Aufgaben, echten Checks und statischen
-Hilfen nicht trägt, wird ein Chat es nicht retten — er würde das
-Problem nur verdecken. Und Etappe 1 ist zugleich die
-Ausfallbetriebsart aus Abschnitt 11, die man sowieso braucht.
+**Infrastruktur:** siehe Technikpapier, Abschnitt 10. Die dortigen
+Etappen S1–S4 (Server-Grundlage, Lernstand, Gateway, Lehrkraft-Sicht)
+sind so geschnitten, dass jede einzeln abnehmbar ist.
+
+**Die Reihenfolge ist Absicht.** D1 bis D3 sind der ehrliche Test: Wenn
+Selbstlernen mit guten Aufgabenformaten, echten Checks und statischen
+Hilfen nicht trägt, wird ein Chat es nicht retten — er würde das Problem
+verdecken. Und D1–D3 sind gleichzeitig die Ausfallbetriebsart, die man
+ohnehin braucht.
+
+**Vor allem steht der CheerpJ-Test auf dem Schul-iPad** (Abschnitt 1).
 
 ---
 
-## 13 Evaluation
+## 15 Evaluation
 
-Woran erkennen wir, dass es wirkt — und woran, dass es schadet?
+**Fachlich.** Anteil der Belege ohne Hilfestufe 3/4; Verhältnis der
+Operatorgruppen im Lernstand (fällt „erläutern" systematisch ab?);
+Bestehen von Bausteinen, deren Voraussetzungen länger zurückliegen;
+Qualität der Freitexte im Verlauf, von der Lehrkraft eingeschätzt. Ein
+Vergleich zweier Kurse oder Halbjahre ist möglich, aber keine Studie —
+Kohorteneffekte sind nicht kontrolliert.
 
-**Fachlich.** Anteil der Bausteine, die ohne Hilfestufe 3/4 bestanden
-werden; Bestehen von Bausteinen, deren Voraussetzungen länger
-zurückliegen (Behaltensleistung); Vergleich zweier Kurse oder
-Halbjahre, wenn es sich anbietet — mit der ausdrücklichen Einschränkung,
-dass das keine Studie ist und Kohorteneffekte nicht kontrolliert.
-
-**Der Gegenbefund, auf den wir achten müssen.** Die Forschung zu
-KI-Unterstützung beschreibt *metacognitive laziness*: Lernende lagern
-Zielsetzung, Fehlerüberwachung und Reflexion an die KI aus, statt sich
-anzustrengen. Beobachtbare Warnzeichen in unseren Daten:
+**Der Gegenbefund, auf den zu achten ist.** Die Forschung beschreibt
+*metacognitive laziness*: Lernende lagern Zielsetzung,
+Fehlerüberwachung und Reflexion an die KI aus. Beobachtbare
+Warnzeichen:
 
 - Sprünge direkt auf die höchste Hilfestufe ohne eigenen Versuch
-  zwischendurch
-- Reflexionstexte, die wie die Tutor-Formulierung klingen statt wie
-  eigene Worte
-- Bausteine bestanden, deren Voraussetzung kurz darauf nicht mehr sitzt
-- viele Chatbeiträge bei wenigen Compilerläufen
+- Freitexte, die wie die Tutor-Formulierung klingen statt wie eigene
+  Worte (die Sichtung nach 5.7 macht das sichtbar)
+- Bausteine belegt, deren Voraussetzung kurz darauf nicht mehr sitzt
+- viele Chatbeiträge bei wenigen Compilerläufen oder Werkbank-Versuchen
 
-Reagiert wird darauf mit dem Ablauf, nicht mit Strafen: mehr
-Reflexionsschranken, kürzere Hilfen, mehr Bausteine mit produktivem
-Anteil. Was ausdrücklich **nicht** passiert: Hilfen verteuern oder
-Hilfenutzung sichtbar sanktionieren.
+Reagiert wird über den Ablauf, nicht über Strafen: mehr
+Reflexionsschranken, kürzere Hilfen, mehr Mikroübungen mit
+produktivem Anteil. Was **nicht** passiert: Hilfen verteuern oder
+Hilfenutzung sanktionieren.
 
-**Praktisch.** Verfügbarkeit im Schulnetz, Kosten je Sitzung, Anteil der
-Sitzungen, die im Ausfallbetrieb liefen, und die einfachste Frage
-überhaupt: Nutzen die Lernenden es, wenn sie nicht müssen?
+**Praktisch.** Verfügbarkeit im Schulnetz, Kosten je Sitzung, Anteil
+der Sitzungen im Ausfallbetrieb, Vorbereitungszeit der Lehrkraft (D4
+muss sie senken, nicht erhöhen) — und die einfachste Frage: Nutzen die
+Lernenden es, wenn sie nicht müssen?
 
 ---
 
-## 14 Offene Entscheidungen
+## 16 Offene Entscheidungen
 
 | Frage | Wer entscheidet | Warum sie blockiert |
 |---|---|---|
-| **Serverumgebung**: Schulserver, VPS, Schulträger; Stack frei wählbar? | Schule / du | bestimmt Abschnitt 7 |
-| **Modellanbieter und Rechtsweg**: eigener AVV, Schul-Layer (fobizz/schulKI, NRW-Lizenz?), oder lokales Modell | Schulleitung + DSB | Abschnitt 8; ohne das keine Etappe 4 |
-| **Aufbewahrungsfristen** für Chatverläufe und Lernstand | Schule / DSB | Abschnitt 8 |
-| **Fehlversuche pro Person**: erheben oder nur aggregiert? | Fachschaft | Abschnitt 4 |
-| **KLP-Stand**: gilt für Informatik SII ein novellierter Kernlehrplan? Schulinterner LP verfügbar? | du | Abschnitt 10; bestimmt den Bausteinschnitt |
-| **Kurs für den Piloten**: EF-Einstieg oder Q1-Wiederholung Vererbung? | du | bestimmt den ersten Bausteinsatz |
-| **Einsatzform**: Hausaufgabe, STUDIO-/Selbstlernzeit, Vertretung, Klausurvorbereitung, Binnendifferenzierung? | du | bestimmt Sitzungslänge und Umfang |
-| **Verhältnis zu OneNote**: bleibt OneNote die Sicherung, oder wandert sie ins Programm? | du | bestimmt den Export in Phase 5 |
+| **Operatorenliste und KLP-Stand** (novelliert?), schulinterner LP SII | du | Etappe D0; bestimmt Formate und Bausteinschnitt |
+| **Modellanbieter und Rechtsweg**: eigener AVV, Schul-Layer (fobizz/schulKI, NRW-Lizenz?), lokales Modell | Schulleitung + DSB | Abschnitt 10; ohne das keine Etappe D5 |
+| **Aufbewahrungsfristen** für Chatverläufe, Freitexte, Lernstand | Schule / DSB | Abschnitt 10 |
+| **Fehlversuche pro Person**: erheben oder nur aggregiert? | Fachschaft | Abschnitt 6 |
+| **Pilotkurs**: EF-Einstieg oder Q1-Wiederholung Vererbung? | du | bestimmt den ersten Bausteinsatz |
+| **Einsatzform**: Hausaufgabe, Selbstlernzeit, Vertretung, Klausurvorbereitung, Binnendifferenzierung? | du | bestimmt Sitzungslänge und Umfang |
+| **Verhältnis zu OneNote**: bleibt OneNote die Sicherung? | du | bestimmt den Export in Phase 5 |
+| **Umfang der Werkbank-Formate**: alle F1–F8 oder Auswahl für den Piloten? | gemeinsam | bestimmt Etappe D2 |
+| **Peer-Feedback**: Freitextfelder zwischen Lernenden zulässig? | Fachschaft + DSB | Abschnitt 8.1 |
 
 ---
 
-## 15 Recherchestand
+## 17 Recherchestand
 
-Die Einordnung beruht auf einer Marktsichtung vom 04.08.2026. Kurzfassung
-dessen, was es gibt, und woran wir uns anlehnen:
+Marktsichtung vom 04.08.2026. Was es gibt und woran wir uns anlehnen:
 
 | System | Was wir übernehmen |
 |---|---|
 | **Artemis** (TUM, Open Source) mit KI-Tutor **Iris** | Trennung Autograding / Tutor; Hinweise und Gegenfragen statt Lösungen |
 | **CodeHelp**, **CodeAid** (CHI/SIGCSE, im Semesterbetrieb evaluiert) | Guardrail-Katalog; Befund, dass KI-Hilfe vor allem bei Fehlersuche genutzt wird |
 | **CodeOcean / CodeHarbor** (HPI, openHPI) | Aufgaben als austauschbare Datenobjekte, Autograding per Prüffällen |
-| **inf-schule.de** | Referenz für deutschsprachiges, lehrplankonformes Selbstlernen — statisch, ohne Prüfung und ohne KI |
-| **ChatGPT Study Mode / Gemini Guided Learning / Khanmigo** | Sokratischer Gesprächsstil; für Java ohne Fachkontext und ohne Lernstand aber nicht ausreichend |
+| **inf-schule.de** | Referenz für deutschsprachiges, lehrplankonformes Selbstlernen — statisch, ohne Prüfung, ohne KI |
+| **ChatGPT Study Mode / Gemini Guided Learning / Khanmigo** | Sokratischer Gesprächsstil; ohne Fachkontext und Lernstand für Java nicht ausreichend |
 
 **Die Lücke, die dieses Konzept füllt:** Keines der recherchierten
 Systeme verbindet deutschsprachige Oberstufendidaktik nach NRW-Lehrplan,
-die NRW-Klassenbibliothek, iPad-Betrieb ohne Installation und —
-entscheidend — **Feedback aus dem Weltzustand statt aus einem Chat**.
-Der letzte Punkt ist der eigentliche Unterschied: Bei Artemis und
-CodeOcean sagt ein Testlauf, ob es stimmt; hier sieht man es an der
-Figur. Das kann keines der genannten Systeme, und es ist bereits gebaut.
+die NRW-Klassenbibliothek, iPad-Betrieb ohne Installation, **Feedback
+aus dem Weltzustand statt aus einem Chat** — und, seit dieser Fassung,
+**die Abitur-Aufgabenformate jenseits des Programmierens**. Autograder
+prüfen Code. Eine Zustandstabelle zu einem erzählten Kontext, gefolgt
+von „erläutere, warum", prüft niemand von ihnen. Genau das ist aber der
+Teil der Klausur, an dem es hängt.

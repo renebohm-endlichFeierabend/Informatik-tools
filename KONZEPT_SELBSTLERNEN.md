@@ -172,30 +172,87 @@ II Reorganisation und Transfer, III Reflexion und Problemlösung). Wer
 nur Methoden schreibt, übt einen Teilbereich — typischerweise den, der
 in der Klausur die wenigsten Punkte trägt.
 
-Operatoren, die ich in der Suchtreffer-Anzeige der offiziellen
-Operatorenübersicht (`if-operatoren.pdf`) im Wortlaut gesehen habe:
+Die vollständige Operatorenübersicht (`abitur.nrw`, Stand der
+vorliegenden Fassung) nennt 26 Operatoren. Die für dieses Programm
+tragenden, im Wortlaut:
 
-| Operator | Definition (Trefferanzeige) | AFB |
+| Operator | Definition | AFB |
 |---|---|---|
-| implementieren | Umsetzen eines informatischen Modells oder Algorithmus in eine Programmiersprache | II–III |
+| angeben | ohne nähere Erläuterungen und Begründungen aufzählen, nennen | I |
+| beschreiben | Sachverhalte oder Zusammenhänge unter Verwendung der Fachsprache in eigenen Worten verständlich wiedergeben | I |
+| dokumentieren | Arbeitsergebnisse oder Arbeitsverfahren in strukturierter Form wiedergeben | I–II |
+| erläutern | einen Sachverhalt auf der Grundlage von Vorkenntnissen so darlegen, dass er verständlich wird | I–II |
+| darstellen | Zusammenhänge oder Sachverhalte in strukturierter Form graphisch oder sprachlich wiedergeben | II–I |
+| überführen | eine Darstellung in eine andere Darstellungsform bringen | I–II |
+| analysieren | eine konkrete Materialgrundlage untersuchen, einzelne Elemente identifizieren und Beziehungen zwischen den Elementen erfassen | II–III |
+| anwenden | ein bekanntes Verfahren in einer neuen Situation verwenden | II |
+| ermitteln / bestimmen | mittels charakteristischer Merkmale einen Sachverhalt genau feststellen und beschreiben | II |
+| erweitern | eine gegebene Struktur gemäß konkreter Vorgaben ergänzen | II |
+| vervollständigen | eine gegebene Struktur gemäß konkreter Vorgaben erweitern oder verändern | II |
+| modifizieren | eine gegebene Struktur gemäß konkreter Vorgaben verändern | II |
+| vergleichen | nach vorgegebenen oder selbst gewählten Kriterien Gemeinsamkeiten, Ähnlichkeiten und Unterschiede ermitteln und darstellen | II |
+| entscheiden | sich begründet bei vorgegebenen Alternativen auf eine Möglichkeit festlegen | II |
+| zeigen | eine Aussage, einen Sachverhalt nach Berechnungen, Herleitungen oder logischen Begründungen bestätigen | II |
+| entwerfen / entwickeln | herstellen und gestalten eines Systems von Elementen unter vorgegebener Zielsetzung | II–III |
+| implementieren | umsetzen eines informatischen Modells oder Algorithmus' in eine Programmiersprache | II–III |
 | interpretieren | Sinnzusammenhänge aus Materialien erschließen | II–III |
-| modellieren | Zu einem Ausschnitt der Realität ein informatisches Modell anfertigen | II–III |
-| modifizieren | Eine gegebene Struktur gemäß konkreter Vorgaben verändern | II |
-| überführen | Eine Darstellung in eine andere Darstellungsform bringen | I–II |
-| vergleichen | Nach vorgegebenen oder selbst gewählten Kriterien Gemeinsamkeiten, Ähnlichkeiten und Unterschiede ermitteln und darstellen | II |
-| vervollständigen | Eine gegebene Struktur gemäß konkreter Vorgaben erweitern oder verändern | (im Treffer nicht sichtbar) |
-| Stellung nehmen | Unter Heranziehung relevanter Sachverhalte die eigene Meinung zu einem Problem argumentativ entwickeln und darlegen | III |
+| modellieren | zu einem Ausschnitt der Realität ein informatisches Modell anfertigen | II–III |
+| begründen | einen Sachverhalt oder eine Entwurfsentscheidung durch Angabe von Gründen erklären | III–II |
+| beurteilen | zu einem Sachverhalt ein selbstständiges Urteil unter Verwendung von Fachwissen und Fachmethoden formulieren und begründen | III |
+| Stellung nehmen | unter Heranziehung relevanter Sachverhalte die eigene Meinung zu einem Problem argumentativ entwickeln und darlegen | III |
 
-> **Diese Tabelle ist unvollständig und ungeprüft.** Die
-> Netzwerkpolitik dieser Umgebung blockiert
-> `standardsicherung.schulministerium.nrw.de` (das Gateway beantwortet
-> CONNECT mit 403) — dasselbe Problem, das für den Lehrplannavigator in
-> `apps/geheimschreiber/DIDAKTIK.md` dokumentiert ist. Fehlende
-> Operatoren wie *analysieren, erläutern, begründen, beurteilen,
-> entwickeln, dokumentieren, testen, darstellen, angeben* sind aus dem
-> Original zu ergänzen, und die vorhandenen Zeilen sind daran zu
-> prüfen. **Das ist der erste Arbeitsschritt am Inhalt** — die
-> Formatliste unten hängt daran.
+Drei Beobachtungen daraus, die die Aufgabenformulierung prägen:
+
+- **„analysieren" steht nie allein.** Die Übersicht sagt es
+  ausdrücklich: Der Operator wird immer mit einem zweiten kombiniert,
+  der angibt, wie das Analyseergebnis darzustellen ist. Aufgabentexte
+  im Programm müssen das nachbilden — „analysieren Sie … indem Sie …"
+  bzw. „analysieren und erläutern Sie".
+- **„erläutern" ist AFB I–II, nicht III.** Erklären ist die
+  Grundtätigkeit, nicht die Kür. Wer nur programmiert, verpasst also
+  nicht nur den Anspruchsbereich III, sondern den Normalfall.
+- **Zwischen „erweitern", „vervollständigen" und „modifizieren"** liegen
+  Nuancen, die in Klausuren tragen. Das Programm sollte diese Wörter
+  benutzen, nicht paraphrasieren.
+
+### Was die Klausur wirklich verlangt
+
+Auswertung der Abiturklausur **Informatik LK 2023, HT 1 (GG)** — ein
+Turnierverwaltungs-Kontext mit Implementationsdiagramm,
+Klassendokumentation im Anhang und Beispieldaten in der Anlage. Die
+Punkteverteilung ist das stärkste Argument dieses ganzen Konzepts:
+
+| Teil | Tätigkeit | Punkte |
+|---|---|---|
+| a) | Implementationsdiagramm **analysieren**, Assoziationen im Sachkontext **erläutern**; anhand von Diagramm und Dokumentation erläutern, wie ein Spiel hinzugefügt und der Sieger eingetragen wird | 4 + 4 |
+| b) | Algorithmus zum Filtern **entwickeln** (umgangssprachlich) · Methode **implementieren** | 4 + **6** |
+| c) | undokumentierte Methode `wasErmittleIch` auf Beispieldaten **anwenden** und Rückgabe **angeben** · Strategie **erläutern** · Bedeutung im Sachkontext **erläutern** · Stelle einer möglichen NullPointerException **analysieren und erläutern** | 4 + 3 + 2 + 4 |
+| d) | Modell um zwei Anforderungen **erweitern** · **erläutern**, wie das Modell sie umsetzt | 6 + 5 |
+| e) | zwei Verfahren auf Beispieldaten **ermitteln** (durchspielen) · **beurteilen**, welcher Ansatz besser ist | 4 + 4 |
+| | **Summe** | **50** |
+
+**Code schreiben sind 6 von 50 Punkten — 12 Prozent.** Code *lesen*
+(Teil c) sind 13. Diagramme und Modellierung (a und d) sind 19. Auf
+Beispieldaten durchspielen und beurteilen (c, e) sind 12.
+
+Damit ist die Frage, ob Aufgabenvielfalt „auch noch" nötig ist,
+beantwortet: Eine Selbstlernstrecke, die nur Methoden schreiben lässt,
+übt gezielt das Achtel der Klausur, das am wenigsten Punkte bringt. Die
+Werkbank ist deshalb kein Zusatz, sondern der Hauptteil.
+
+Zwei weitere Muster, die das Baustein-Format übernehmen muss:
+
+- **Die Klausur gibt Material, nicht Aufgabenstellungen allein:**
+  Sachkontext (hier: Turnier mit Punktevergabe und Paarungsregeln),
+  Implementationsdiagramm, **Dokumentation der verwendeten Klassen**
+  (Signatur plus Wirkungsbeschreibung, inklusive Sonderfällen wie
+  „wird `null` übergeben, so wird -1 zurückgegeben") und
+  **Beispieldaten** zum Durchspielen.
+- **Array und Liste im Wechsel:** `Team[] teams` und `List<Team>` in
+  derselben Aufgabe, mit `toFirst()`, `next()`, `hasAccess()`,
+  `getContent()`, `append()` — genau die NRW-Klassen, die JavaWelt in
+  der 📚-Bibliothek mitbringt. Das ist die inhaltliche Brücke zwischen
+  „Arrays wiederholen" und „Listen benutzen".
 
 Konsequenz für das Programm: **Jedes Format wird an einen Operator
 gebunden.** Damit ist am Baustein ablesbar, welche Tätigkeit geübt wird,
@@ -243,16 +300,38 @@ die entscheidende: Wo „exakt" steht, entscheidet eine Regel; wo
 | F7 | **Methode ändern** — Verhalten nach Vorgabe anpassen | modifizieren | Prüffälle, exakt | Werkbank |
 | F8 | **Darstellung überführen** — Quelltext ↔ Struktogramm ↔ Beschreibung | überführen | Zuordnung / Sequenzvergleich | Werkbank |
 | F9 | **Verhalten programmieren** — im Szenario, sichtbare Konsequenz | implementieren | Weltzustand nach Lauf | Umgebung |
-| F10 | **Modellieren** — Klassen, Vererbung, ER-Modell, Automat | modellieren | Parser-Fakten bzw. Strukturvergleich; ER/Automat teils Freitext | Umgebung / Werkbank |
+| F10 | **Modellieren** — Klassen, Vererbung, ER-Modell, Automat; auch **Modell erweitern** nach Vorgabe | modellieren, erweitern | Parser-Fakten bzw. Strukturvergleich; ER/Automat teils Freitext | Umgebung / Werkbank |
 | F11 | **Datenbank** — Abfrage formulieren, Normalform prüfen | implementieren, begründen | Ergebnistabelle exakt; Begründung Freitext | Umgebung |
 | F12 | **Beurteilen** — Verfahren vergleichen, Alternative abwägen, Stellung nehmen | vergleichen, beurteilen, Stellung nehmen | Freitext | Werkbank / Plenum |
+| F13 | **Diagramm lesen** — Implementationsdiagramm analysieren, Assoziationen und Multiplizitäten im Sachkontext erläutern, Ablauf aus Diagramm + Dokumentation nachvollziehen | analysieren, erläutern | Zuordnung exakt (welche Assoziation trägt was) + Freitext | Werkbank |
+| F14 | **Algorithmus entwerfen** — Lösungsweg umgangssprachlich oder grafisch, **ohne Code** | entwickeln, darstellen | Schrittfolge-Vergleich (Reihenfolge, Sonderfälle) + Freitext | Werkbank |
 
 Die Formate F9 bis F11 sind die, die `KONZEPT_AUFGABEN.md` schon
 beschreibt („Verhalten programmieren", „Klasse/Vererbung modellieren",
 „Datenstruktur nutzen", „SQL/Datenbank", „Modellierung/ER") — inklusive
-der dort festgelegten Prüfformen und Letzthilfen. F1 bis F8 und F12 sind
-neu und ergänzen genau die Tätigkeiten, die in der Umgebung nicht
-vorkommen.
+der dort festgelegten Prüfformen und Letzthilfen. Alles andere ergänzt
+Tätigkeiten, die in der Umgebung nicht vorkommen.
+
+**F13 und F14 sind aus der Klausuranalyse nachgetragen** und waren im
+ersten Entwurf die zwei echten Lücken:
+
+- **F13 (Diagramm lesen)** trägt in der ausgewerteten Klausur 8 von 50
+  Punkten. Modellieren war bisher nur als *Erstellen* vorgesehen (F10);
+  geprüft wird aber vor allem das *Lesen* eines gegebenen Diagramms —
+  inklusive der Frage, welche Assoziation welchen Sachverhalt
+  modelliert und wie ein Ablauf über mehrere Klassen zustande kommt.
+- **F14 (Algorithmus entwerfen)** ist in der Klausur ein **eigener
+  Arbeitsschritt vor dem Implementieren**, mit eigener Punktzahl
+  (4 Punkte, gegenüber 6 für die Umsetzung). Der Kernlehrplan verlangt
+  das ausdrücklich: *„entwerfen einfache Algorithmen und stellen sie
+  umgangssprachlich und grafisch dar"* (EF) bzw. *„entwickeln iterative
+  und rekursive Algorithmen …"* und *„stellen iterative und rekursive
+  Algorithmen umgangssprachlich und grafisch dar"* (Q1). Wer sofort
+  Code schreibt, überspringt einen prüfungsrelevanten Schritt.
+
+Bei F13 und F14 ist der prüfbare Anteil bewusst schmal (Zuordnungen,
+Schrittfolgen, Sonderfälle) und der Freitextanteil groß — es gilt
+Abschnitt 5.7.
 
 ### 5.4 Mikroübungen: Methoden lesen und schreiben
 
@@ -522,6 +601,26 @@ beurteilen am selben Gegenstand.
 }
 ```
 
+### Pflichtbestandteile aus dem Klausurmuster
+
+Aus der Anatomie der ausgewerteten Abiturklausur (5.1) folgt, dass ein
+klausurnaher Baustein mehr braucht als Auftrag und Checks. Diese Felder
+sind für die Formate F3, F13, F14 und für Gesamtaufgaben **verbindlich**:
+
+| Feld | Inhalt | Vorbild in der Klausur |
+|---|---|---|
+| `kontext` | Sachkontext in 3–6 Sätzen, mit den Regeln der Domäne | Turnier: Punktevergabe, Paarungsprinzip, Maximalzahl gleicher Begegnungen |
+| `diagramm` | Implementationsdiagramm als Bild plus maschinenlesbare Struktur (Klassen, Assoziationen, Multiplizitäten) für die Checks | Abbildung 1 „Teilmodellierung" |
+| `klassendoku` | pro Klasse: Signatur **und** Wirkungsbeschreibung, **inklusive Sonderfällen** | „Wird `null` für den Parameter übergeben, so wird -1 zurückgegeben" |
+| `beispieldaten` | konkreter Datensatz zum Durchspielen, plus Zwischenergebnisse | Teams, Spiele, Punktestand, Ergebnis von `filtere(...)` |
+
+Die Sonderfälle in der Klassendokumentation sind kein Beiwerk: In der
+ausgewerteten Klausur hängen an ihnen sowohl die Implementierung
+(Teil b: leere Liste bei ungültigen Parametern) als auch die
+Fehleranalyse (Teil c: NullPointerException, wenn die gefilterte Liste
+leer ist). Wer Bausteine ohne dokumentierte Sonderfälle schreibt, kann
+diese Aufgabentypen nicht stellen.
+
 **Erstellt werden Bausteine und Übungen KI-gestützt, aber nicht
 KI-verantwortet:** Das Modell generiert Entwürfe für Kontexte,
 Ereignisfolgen, Prüffälle, Hilfen und Varianten; die erwarteten
@@ -748,21 +847,72 @@ Rahmen, passend zum Unterrichtskontext aus `ENTWICKLUNG.md`:
 | Q1 | Vererbung und Polymorphie, Arrays, lineare Strukturen (Stack, Queue, List), Datenbanken (ER, Normalformen, SQL) | „Vererbung & Polymorphie", „Arrays", „Stack/Queue/List", „Datenbank Zoo" |
 | Q2 | Bäume, Graphen, Suchen und Sortieren, formale Sprachen und Automaten | geplant (Roadmap-Punkt 5) |
 
-**Drei Vorbehalte, ausdrücklich:**
+### Kompetenzerwartungen für die Q1-Wiederholung im Wortlaut
 
-1. **Operatorenliste unvollständig** (5.1) — Original nicht erreichbar.
-   Erster Arbeitsschritt am Inhalt.
-2. **Kompetenzerwartungen im Wortlaut** müssen aus dem KLP übernommen
-   werden, wie es in `DIDAKTIK.md` für die Sek I gemacht wurde.
-   `lehrplannavigator.nrw.de` liefert dem Proxy dieser Umgebung 403.
-3. **Novellierung:** Nach den Suchergebnissen werden die
-   Oberstufen-Kernlehrpläne bis 2025/26 novelliert. Ob für Informatik
-   SII inzwischen ein neuer KLP gilt, konnte ich nicht verifizieren —
-   zu klären, bevor der Bausteinschnitt festgeschrieben wird.
+Grundlage ist der **Kernlehrplan Informatik SII (in Kraft ab
+1.8.2014, aufsteigend)**, den die Lehrkraft bereitgestellt hat. Die
+Kompetenzbereiche sind **Argumentieren (A)**, **Modellieren (M)**,
+**Implementieren (I)**, **Darstellen und Interpretieren (D)** sowie
+**Kommunizieren und Kooperieren (K)**; das Kürzel in Klammern hinter
+jeder konkretisierten Erwartung nennt den stärksten Bezug.
 
-Der schulinterne Lehrplan der LFSM für die SII liegt mir nicht vor; mit
-ihm sollte die Zuordnungstabelle nach dem Muster von `DIDAKTIK.md`,
-Abschnitt 2, vollständig ausgeführt werden.
+Für den Pilotbereich (OOP, Implementationsdiagramme, Vererbung, Arrays)
+tragend, Inhaltsfeld **Daten und ihre Strukturierung**, inhaltlicher
+Schwerpunkt *Objekte und Klassen* — Grundkurs Q1:
+
+| Kompetenzerwartung (Wortlaut KLP) | Bereich | Format |
+|---|---|---|
+| ermitteln bei der Analyse von Problemstellungen Objekte, ihre Eigenschaften, ihre Operationen und ihre Beziehungen | M | F10, F13 |
+| modellieren Klassen mit ihren Attributen, Methoden und ihren Assoziationsbeziehungen unter Angabe von Multiplizitäten | M | F10 |
+| modellieren abstrakte und nicht abstrakte Klassen unter Verwendung von Vererbung durch Spezialisieren und Generalisieren | M | F10 |
+| ordnen Attributen, Parametern und Rückgaben von Methoden einfache Datentypen, Objekttypen sowie lineare und nichtlineare Datensammlungen zu | M | F1, F6 |
+| verwenden bei der Modellierung geeigneter Problemstellungen Möglichkeiten der Polymorphie | M | F9, F10 |
+| ordnen Klassen, Attributen und Methoden ihre Sichtbarkeitsbereiche zu | M | F1, F13 |
+| stellen die Kommunikation zwischen Objekten grafisch dar | D | F8, F13 |
+| stellen Klassen und ihre Beziehungen in Diagrammen grafisch dar | D | F8, F10 |
+| dokumentieren Klassen | D | F1 (umgekehrt: Doku zu Signatur) |
+| analysieren und erläutern objektorientierte Modellierungen | A | **F13** |
+| implementieren Klassen in einer Programmiersprache auch unter Nutzung dokumentierter Klassenbibliotheken | I | F6, F9 |
+
+Inhaltsfeld **Algorithmen**, Schwerpunkt *Analyse, Entwurf und
+Implementierung von Algorithmen* — Grundkurs Q1:
+
+| Kompetenzerwartung (Wortlaut KLP) | Bereich | Format |
+|---|---|---|
+| analysieren und erläutern Algorithmen und Programme | A | **F1, F2, F4** |
+| modifizieren Algorithmen und Programme | I | F7 |
+| stellen iterative und rekursive Algorithmen umgangssprachlich und grafisch dar | D | **F14** |
+| entwickeln iterative und rekursive Algorithmen unter Nutzung der Strategien „Modularisierung" und „Teilen und Herrschen" | M | **F14** |
+| implementieren iterative und rekursive Algorithmen auch unter Verwendung von dynamischen Datenstrukturen | I | F6, F9 |
+| testen Programme systematisch anhand von Beispielen | I | F2, F3 |
+
+Aus Inhaltsfeld **Formale Sprachen und Automaten**, Schwerpunkt *Syntax
+und Semantik einer Programmiersprache*, gehört zusätzlich hierher:
+*„interpretieren Fehlermeldungen und korrigieren den Quellcode" (I)* —
+das ist genau die Hilfestufe 0 der Umgebung, und es ist eine
+**Kompetenzerwartung des Kernlehrplans**, nicht bloß eine
+Bedienerfreundlichkeit. Der Ausbau der eingedeutschten ECJ-Meldungen ist
+damit curricular begründet.
+
+Ebenfalls ausdrücklich im KLP, und in Abschnitt 8 dieses Papiers
+aufgegriffen: *„kommunizieren und kooperieren in Gruppen und in
+Partnerarbeit"* und *„präsentieren Arbeitsabläufe und -ergebnisse"* (K).
+Kooperation und Präsentation sind keine Zugabe, sondern
+Kompetenzerwartung — was die Entscheidung stützt, sie analog zu halten
+und vom Programm nur vorbereiten zu lassen.
+
+**Zwei Hinweise:**
+
+1. **„Implementationsdiagramm"** ist ein Begriff aus den
+   Abiturvorgaben und der Prüfungspraxis, nicht aus dem
+   Kernlehrplantext — dort steht „Klassen und ihre Beziehungen in
+   Diagrammen". Für die Aufgabensprache im Programm gilt der
+   Klausurbegriff, damit die Lernenden ihn kennen.
+2. Der **schulinterne Lehrplan der LFSM für die SII** liegt mir nicht
+   vor. Mit ihm sollte die Tabelle nach dem Muster von
+   `apps/geheimschreiber/DIDAKTIK.md`, Abschnitt 2, um die schulischen
+   Festlegungen (Reihenfolge, Zeitbudget, Klausurformate) ergänzt
+   werden.
 
 ---
 
@@ -860,7 +1010,7 @@ angewiesen, bis Etappe D3.
 
 | # | Etappe | Inhalt | Abbruchfrage davor |
 |---|---|---|---|
-| D0 | **Grundlagen klären** | Operatorenliste aus dem Original, KLP-Stand prüfen, schulinternen LP einarbeiten | Gilt ein novellierter KLP? |
+| D0 | ~~**Grundlagen klären**~~ | ✓ **erledigt**: Operatorenliste vollständig (5.1), KLP 2014 als geltende Fassung bestätigt, Klausuranalyse eingearbeitet (5.1), Kompetenzerwartungen im Wortlaut (12) | — |
 | D1 | **Formate definieren** | F1–F12 als Datenschema, Prüflogik je Format, Fehlermusterkatalog; Pilotbaustein Vererbung mit drei Teilen | Deckt der Formatkatalog die Klausurpraxis? |
 | D2 | **Werkbank** | Oberfläche für F1–F8 mit CheerpJ-Testgerüst; Übungssätze zu 3 Bausteinen | Sind Mikroübungen im Unterricht wirklich der schnellere Weg? |
 | D3 | **Sitzungsablauf** | Phasen 1–6 deterministisch, Regelwerk für Baustein- und Formatwahl, Freitextsichtung für die Lehrkraft | Trägt Selbstlernen, bevor KI dazukommt? |
@@ -915,19 +1065,62 @@ Lernenden es, wenn sie nicht müssen?
 
 ---
 
-## 16 Offene Entscheidungen
+## 16 Getroffene Entscheidungen
 
-| Frage | Wer entscheidet | Warum sie blockiert |
+Stand 04.08.2026, abgestimmt mit der Fachlehrkraft:
+
+| Frage | Entscheidung |
+|---|---|
+| **Pilot** | Q1-Wiederholung: OOP allgemein, **Implementationsdiagramme**, Vererbung, Arrays — **9 Unterrichtsstunden zu Schuljahresbeginn**. Eigener Plan: [`PILOT_Q1_WIEDERHOLUNG.md`](PILOT_Q1_WIEDERHOLUNG.md) |
+| **Einsatzform** | Selbstlernzeit **in der Schule**. Das Werkzeug ist von zuhause voraussichtlich nicht erreichbar — keine Hausaufgabennutzung einplanen |
+| **Sitzungslänge** | 45 min, danach Überleitung zur Sicherung |
+| **Werkbank-Formate im Piloten** | F1 (Methode lesen), F3 (Zustand verfolgen), F6 (Methode schreiben) — dazu **F13 (Diagramm lesen)** und **F14 (Algorithmus entwerfen)** aus der Klausuranalyse |
+| **Gamification** | **Nein.** Keine Coins, Abzeichen oder Pins; Fortschrittsanzeige und Klausurbezug tragen die Motivation. Die entsprechenden Absätze in `KONZEPT_AUFGABEN.md` gelten für die Oberstufe nicht |
+| **Sicherung** | bleibt in OneNote; das Programm liefert den Export |
+| **Anrede** | Duzen, Oberstufenniveau |
+| **Fehlversuche** | **pro Person erheben** (nicht nur aggregiert). Konsequenz: gehört in die Transparenzansage an die Lernenden und in das Löschkonzept |
+| **Peer-Feedback** | zulässig als Freitext in festen Formularfeldern, für die Lehrkraft einsehbar; kein Chat |
+| **Präsentationen** | bleiben analog. Das Programm liefert nur Materialpaket und Rückfragen-Probelauf |
+| **Aufbewahrung** | Lernstand und Freitexte bis Schuljahresende |
+| **KLP-Stand** | Es gilt der KLP von 2014 (siehe 12); die befürchtete Novellierung betrifft Informatik SII nach vorliegender Fassung nicht |
+| **Kursgröße** | zunächst höchstens 12 Lernende |
+| **KI-Anbindung** | vorläufig über OpenRouter mit einem kostengünstigen Modell, **serverseitig** über das Gateway. Einordnung und Vorbehalt siehe unten |
+| **Arbeitsteilung** | Didaktik gemeinsam, Infrastruktur baut ein Schüler eigenständig nach dem Technikpapier |
+
+### Vorbehalt zur KI-Anbindung
+
+Die Entscheidung für OpenRouter ist getroffen und wird umgesetzt. Zwei
+Punkte gehören trotzdem festgehalten, weil sie später auf den Tisch
+kommen:
+
+1. **Pseudonymisierte Daten bleiben personenbezogen.** Solange die
+   Schule die Zuordnung Pseudonym → Person kennt, sind Schülercode und
+   Freitexte nach DSGVO personenbezogene Daten — auch ohne Namen im
+   Prompt. Die Aussage „es werden keine personenbezogenen Daten
+   verschickt" trägt nur für Inhalte, bei denen ein Rückschluss
+   praktisch ausgeschlossen ist; ein Reflexionstext in eigenen Worten
+   gehört nicht dazu.
+2. **Drittlandübermittlung.** Für ein Modell mit Verarbeitung außerhalb
+   der EU ohne Angemessenheitsbeschluss ist die Rechtsgrundlage eigens
+   zu prüfen. Ich kann das nicht beurteilen — Frage für die
+   Datenschutzbeauftragte, ebenso wie die Einordnung nach
+   KI-Verordnung (Abschnitt 10).
+
+**Praktisch entschärft das der Pilotzuschnitt:** In den 9
+Wiederholungsstunden läuft **kein Sprachmodell zur Laufzeit**. KI wird
+dort nur in der Autorenwerkstatt eingesetzt — also mit Aufgabentexten
+der Lehrkraft, nicht mit Schülerdaten. Die Klärung nach 1. und 2. muss
+damit erst vor Etappe D5 vorliegen, nicht in drei Wochen.
+
+## 16a Noch offen
+
+| Frage | Wer entscheidet | Wofür nötig |
 |---|---|---|
-| **Operatorenliste und KLP-Stand** (novelliert?), schulinterner LP SII | du | Etappe D0; bestimmt Formate und Bausteinschnitt |
-| **Modellanbieter und Rechtsweg**: eigener AVV, Schul-Layer (fobizz/schulKI, NRW-Lizenz?), lokales Modell | Schulleitung + DSB | Abschnitt 10; ohne das keine Etappe D5 |
-| **Aufbewahrungsfristen** für Chatverläufe, Freitexte, Lernstand | Schule / DSB | Abschnitt 10 |
-| **Fehlversuche pro Person**: erheben oder nur aggregiert? | Fachschaft | Abschnitt 6 |
-| **Pilotkurs**: EF-Einstieg oder Q1-Wiederholung Vererbung? | du | bestimmt den ersten Bausteinsatz |
-| **Einsatzform**: Hausaufgabe, Selbstlernzeit, Vertretung, Klausurvorbereitung, Binnendifferenzierung? | du | bestimmt Sitzungslänge und Umfang |
-| **Verhältnis zu OneNote**: bleibt OneNote die Sicherung? | du | bestimmt den Export in Phase 5 |
-| **Umfang der Werkbank-Formate**: alle F1–F8 oder Auswahl für den Piloten? | gemeinsam | bestimmt Etappe D2 |
-| **Peer-Feedback**: Freitextfelder zwischen Lernenden zulässig? | Fachschaft + DSB | Abschnitt 8.1 |
+| **Rechtsgrundlage für die KI-Nutzung** mit Schülerdaten (Punkte 1 und 2 oben) sowie Einordnung nach KI-Verordnung | Schulleitung + DSB | vor Etappe D5 |
+| **Aufbewahrungsfrist für Chatverläufe** (Lernstand und Freitexte sind entschieden) | Schule / DSB | vor Etappe D5 |
+| **Serverumgebung** — bewusst offengehalten, wahrscheinlich später Träger | Schule | vor Etappe S2 |
+| **Unterrichtsstundenlänge** und Verteilung der 9 Stunden über die Wochen | du | Feinschnitt des Pilotplans |
+| **Schulinterner Lehrplan SII** | du | Ergänzung der Tabelle in 12 |
 
 ---
 

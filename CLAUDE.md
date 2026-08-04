@@ -17,6 +17,7 @@ Code-Bezeichnern, Commits und PRs: **Deutsch**.
 | `apps/geheimschreiber/` | Lernspiel Kryptologie Klasse 6 (Konzept: `DIDAKTIK.md`, `TECHNIK.md`; noch nicht umgesetzt) |
 | `KONZEPT_SELBSTLERNEN.md` | KI-gestütztes Java-Selbstlernprogramm, **Didaktik**: geführte Lernsitzung, Aufgabenformate (Abiturbezug), Werkbank, Lernstand, Sozialformen — **vor Arbeiten daran lesen** |
 | `KONZEPT_SELBSTLERNEN_TECHNIK.md` | dasselbe Projekt, **Infrastruktur** als Auftrag: Server, Schnittstelle, Datenmodell, KI-Gateway, Abnahmekriterien (wird von einem Schüler umgesetzt) |
+| `PILOT_Q1_WIEDERHOLUNG.md` | **erster Unterrichtseinsatz**: 9 Stunden Q1-Wiederholung, ohne Server und ohne KI zur Laufzeit — Bausteinfolge, Baureihenfolge, Zeitplan, Risiken |
 
 ## Vor der Arbeit an JavaWelt
 

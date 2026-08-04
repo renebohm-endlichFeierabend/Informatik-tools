@@ -518,16 +518,35 @@ und nicht am Code — bitte vorher besprechen.
 
 ---
 
-## 13 Offene technische Entscheidungen
+## 13 Getroffene und offene Entscheidungen
+
+**Entschieden** (04.08.2026, mit der Fachlehrkraft):
+
+| Frage | Entscheidung | Folge für die Umsetzung |
+|---|---|---|
+| **Stack** | frei wählbar | Empfehlung aus Abschnitt 4 gilt: Node 22 + Fastify + SQLite, Argon2id |
+| **Datenbank** | SQLite | Kursgröße höchstens 12 Lernende — SQLite ist dafür reichlich dimensioniert, PostgreSQL wäre unnötiger Betriebsaufwand |
+| **Zielumgebung** | **noch offen, bewusst** — wahrscheinlich später ein Server des Schulträgers | Deshalb: keine Abhängigkeit von einer bestimmten Umgebung. Alles läuft als ein Prozess plus eine Datei, konfiguriert über Umgebungsvariablen, ohne Annahmen über Pfade, Ports oder Hostnamen. Ein Dockerfile ist sinnvoll, darf aber nicht Voraussetzung sein |
+| **Betrieb** | die Lehrkraft später | Der Entwickler baut, betreibt aber nicht (Abschnitt 9). Zur Übergabe gehört eine kurze Betriebsanleitung: Start, Backup, Wiederherstellung, Löschroutine |
+| **Modellanbieter** | vorläufig OpenRouter mit kostengünstigem Modell | Gateway wie in Abschnitt 7. Anbieterwechsel muss über Konfiguration gehen, nicht über Codeänderung — die Rechtsfrage ist noch offen (siehe unten) |
+| **Fehlversuche pro Person** | werden erhoben | Die Tabelle `versuch` hält das bereits vor. `/api/lehrkraft/kurs/:id` darf sie **pro Person** ausgeben; die aggregierte Sicht bleibt zusätzlich bestehen |
+| **Aufbewahrung** | Lernstand und Freitexte bis Schuljahresende | Löschroutine gehört zu S5 und muss auf Knopfdruck laufen, nicht per SQL von Hand |
+| **Wer baut** | ein Schüler, eigenständig | Dieses Papier ist die Spezifikation; ein Startgerüst wird nicht vorgegeben |
+
+**Wichtig für die Zeitplanung:** Der erste Unterrichtseinsatz ist die
+9-stündige Q1-Wiederholung zu Schuljahresbeginn
+([`PILOT_Q1_WIEDERHOLUNG.md`](PILOT_Q1_WIEDERHOLUNG.md)) — und der läuft
+**ohne Server**, mit `localStorage` und Dateiabgabe. Die Infrastruktur
+steht damit nicht unter Zeitdruck und kann sauber statt schnell
+entstehen. Sie wird ab dem zweiten Einsatzblock gebraucht.
+
+**Noch offen:**
 
 | Frage | Wer | Bis wann nötig |
 |---|---|---|
-| **Zielumgebung:** Schulserver, VPS, Schulträger; Docker möglich? | Schule | vor S2 |
-| **Stack frei wählbar** oder PHP vorgegeben? | Schule | vor S2 |
-| **Modellanbieter** und Rechtsweg (eigener AVV, Schul-Layer, lokales Modell) | Schulleitung + DSB | vor S3 |
-| **Wer betreibt** Server, Backup, Zertifikate? | Schule | vor S5 |
-| **Löschfristen** für Chatverläufe, Freitexte, Lernstand | Schule / DSB | vor S2 (Löschroutine) |
-| **SQLite oder PostgreSQL** — abhängig davon, wie viele Kurse gleichzeitig arbeiten | gemeinsam, nach Messung | vor S2 |
+| **Rechtsgrundlage für KI-Nutzung mit Schülerdaten** (pseudonymisierte Daten bleiben personenbezogen; Drittlandübermittlung) und Einordnung nach KI-Verordnung | Schulleitung + DSB | vor S3 in Produktion |
+| **Aufbewahrungsfrist für Chatverläufe** | Schule / DSB | vor S3 |
+| **Konkrete Zielumgebung** samt HTTPS-Zertifikat | Schule | vor S5 |
 
 ---
 

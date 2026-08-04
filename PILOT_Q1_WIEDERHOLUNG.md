@@ -223,17 +223,16 @@ Java-Quelltexte durch die javac-Prüfung (`CLAUDE.md`).
 
 ## 7 Risiken und was dann passiert
 
-> **Offene Frage, die diese Tabelle betrifft:** „Es wird ein
-> Docker-Container verwendet, Java läuft" lässt zwei Lesarten zu — (a)
-> der CheerpJ-Test auf dem iPad war erfolgreich, echtes Java läuft also
-> im Browser, oder (b) auf dem Schulserver steht ein Container mit
-> JDK bereit, Java läuft also **serverseitig**. Für den Piloten zählt
-> nur (a), weil hier kein Server im Spiel ist. Lesart (b) wäre
-> mittelfristig aber die interessantere Nachricht: Dann könnten
-> Kompilieren und Prüffälle später serverseitig laufen, und das im
-> Technikpapier ausgeschlossene serverseitige Ausführen von Java
-> (Abschnitt 12 dort) wäre neu zu bewerten — mit Sandboxing und
-> Ressourcenlimits als dann zu lösenden Fragen.
+> **Geklärt, aber nicht entschärft:** Das laufende Java steckt im
+> **Container auf dem Schulserver** — der Schüler hat das eingerichtet
+> und will es nutzen (Bedingungen dafür:
+> [`KONZEPT_SELBSTLERNEN_TECHNIK.md`](KONZEPT_SELBSTLERNEN_TECHNIK.md),
+> Abschnitt 12a). Für diesen Piloten hilft das **nicht**, weil hier
+> kein Server im Spiel ist. Damit bleibt der browserseitige Weg
+> (CheerpJ auf dem iPad) für die Stunden 3–5, 8 und 9 die
+> Voraussetzung — und der ist weiterhin **ungeprüft**. Der Test kostet
+> zwei Minuten: Seite auf einem Schul-iPad öffnen und nachsehen, ob in
+> der Konsole „CheerpJ bereit" oder „⚠ Notbetrieb" steht.
 
 | Risiko | Wahrscheinlichkeit | Reaktion |
 |---|---|---|

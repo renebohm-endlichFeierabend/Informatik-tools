@@ -504,7 +504,7 @@ Damit der Umfang nicht wächst:
 
 | Nicht dabei | Warum |
 |---|---|
-| **Serverseitiger Java-Compiler/Runner** | Sandboxing, Ressourcenlimits, Warteschlange — großer Aufwand, und CheerpJ im Browser leistet es schon |
+| **Serverseitiger Java-Compiler/Runner** | **Neu zu bewerten**, weil Java im Container läuft — Bedingungen in Abschnitt 12a. Nicht Teil der Etappen S1–S5 |
 | **Live-Dashboard** über die Lerngruppe | braucht Dauerverbindungen und erzeugt Überwachungsdruck; die Kursübersicht wird beim Aufruf geladen |
 | **Chat zwischen Lernenden** | didaktisch nicht gewollt (Abstimmung im Raum), Moderationspflichten, Jugendschutz |
 | **Selbstregistrierung, E-Mail-Versand** | dann bräuchte man Kontaktdaten; Konten legt die Lehrkraft an |
@@ -515,6 +515,81 @@ Damit der Umfang nicht wächst:
 
 Wenn eines davon doch gebraucht wird, ist das eine Änderung am Konzept
 und nicht am Code — bitte vorher besprechen.
+
+---
+
+## 12a Serverseitiges Java — falls es kommt
+
+**Stand:** Auf dem Schulserver läuft Java in einem Container; der
+Schüler, der die Infrastruktur baut, hat das eingerichtet und will es
+nutzen. Ob der browserseitige Weg (CheerpJ) auf dem Schul-iPad
+funktioniert, ist weiterhin **ungeprüft**.
+
+### Was das bringt — und was nicht
+
+**Es hilft** bei den isolierten Formaten: „Methode schreiben" (F6) und
+„Prüffälle entwickeln" (F15) lassen sich mit `javac` und einem
+Testgerüst robust und **manipulationssicher** prüfen, unabhängig davon,
+ob CheerpJ im Schulnetz erreichbar ist.
+
+**Es ersetzt CheerpJ nicht.** Die Spielwelt — Objektbank, sichtbare
+Konsequenz in der Welt, Objekte zur Laufzeit inspizieren — ist eine
+interaktive Oberfläche im Browser. Ein Server kann das Ergebnis
+berechnen, aber nicht die Erfahrung erzeugen, die
+`KONZEPT_AUFGABEN.md` als primäres Feedback fordert. Serverseitiges
+Java ist also ein **zweiter Prüfweg für Werkbank-Formate**, kein Ersatz
+für die Lernumgebung.
+
+### Die eine Sache, die dabei wirklich zählt
+
+Ein Dienst, der eingesandten Java-Code kompiliert und ausführt, ist
+**Codeausführung durch Fremde auf dem Schulserver**. Ohne Isolation ist
+das kein Feature, sondern eine offene Tür — und zwar die gefährlichste
+Komponente des ganzen Systems. Wenn dieser Weg gebaut wird, gelten die
+folgenden Punkte als Mindestanforderung, nicht als Empfehlung:
+
+1. **Ein eigener Container pro Lauf**, danach verworfen. Kein
+   Wiederverwenden, kein gemeinsamer Zustand zwischen Läufen.
+2. **Kein Netzwerk** im Ausführungscontainer (`--network none`). Sonst
+   ist der Schulserver ein offener Ausgangspunkt für beliebige
+   Verbindungen.
+3. **Nicht als `root`**, Dateisystem `read-only` außer einem
+   `/tmp` mit Größenbegrenzung.
+4. **Harte Grenzen:** Speicher, CPU, Prozess- bzw. Threadzahl
+   (`--pids-limit`, gegen Endlosschleifen mit Thread-Erzeugung) und eine
+   **Zeitgrenze** von wenigen Sekunden, nach der der Container von außen
+   beendet wird.
+5. **Niemals den Docker-Socket in den Container geben.** Wer ihn
+   erreicht, kontrolliert den Host.
+6. **Kein Vertrauen auf Java-Bordmittel.** Der `SecurityManager` ist in
+   aktuellen JDK-Versionen abgekündigt bzw. entfernt — die Isolation
+   muss vollständig vom Container kommen, nicht von der JVM.
+7. **Ausgabe begrenzen und filtern:** Zeichenzahl deckeln, keine
+   Server-Pfade, Hostnamen oder Umgebungsvariablen in Fehlermeldungen an
+   den Browser durchlassen.
+8. **Warteschlange und Ratelimit pro Konto.** Zwölf Lernende, die
+   gleichzeitig auf „Prüfen" tippen, dürfen den Server nicht in die
+   Knie bringen; Läufe werden serialisiert, nicht parallel gestartet.
+9. **Nur Prüffälle der Lehrkraft ausführen** — der Schülercode ist das
+   Prüfobjekt, nicht das Testprogramm. (Bei F15 kehrt sich das um: Dort
+   ist der Prüffall die Schülereingabe. Dann gilt derselbe
+   Isolationsrahmen, und die zu testende Fassung stammt aus dem
+   Baustein.)
+
+### Wann
+
+**Nicht im Piloten und nicht vor Etappe S2.** Der Pilot läuft ohne
+Server; solange Konten, Lernstand und Rollentrennung nicht stehen, ist
+ein Ausführungsdienst verfrüht. Sinnvolle Reihenfolge: S1, S2, dann
+entweder S3 (Gateway) oder dieser Runner — je nachdem, was der
+Unterricht zuerst braucht.
+
+Als eigene Etappe formuliert, mit Abnahme: Ein Testfall, der eine
+Endlosschleife einsendet, muss nach der Zeitgrenze abgebrochen werden,
+ohne den Server zu beeinträchtigen; ein Testfall, der eine
+Netzwerkverbindung öffnet, muss scheitern; ein Testfall, der eine große
+Datei schreibt, muss am Größenlimit scheitern. Alle drei gehören als
+automatisierte Tests dazu, bevor der Dienst Schülern zugänglich ist.
 
 ---
 

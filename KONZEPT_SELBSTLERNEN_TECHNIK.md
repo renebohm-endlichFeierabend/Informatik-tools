@@ -231,7 +231,9 @@ werden (ETag), sie ändern sich selten.
 | Methode | Pfad | Zweck |
 |---|---|---|
 | `GET` | `/api/lernstand` | eigener Lernstand (Baustein × Operatorgruppe) |
-| `POST` | `/api/sitzung/start` | Sitzung eröffnen → Wiederholungsfragen + Vorschlag für Baustein/Format |
+| `POST` | `/api/sitzung/start` | Sitzung eröffnen oder offene wiederaufnehmen |
+| `GET` | `/api/sitzung/schritt` | **„Was jetzt?"** — aktueller Schritt: Phase, Ort, Inhalt |
+| `POST` | `/api/sitzung/antwort` | Antwort auf den aktuellen Schritt → Übergang in den nächsten |
 | `POST` | `/api/sitzung/nachricht` | Chatbeitrag → Antwort des Tutors (über Gateway) |
 | `POST` | `/api/versuch` | Ergebnis eines Checks oder Übungsversuchs melden → Lernstand fortschreiben |
 | `POST` | `/api/hilfe` | Hilfestufe anfordern (statisch aus dem Baustein oder über Gateway) |
@@ -274,6 +276,46 @@ Endpunkt für Nachrichten zwischen Lernenden** — bewusst nicht.
 
 `/api/lehrkraft/muster` liefert **nur Summen**, keine Namen — die
 Endpunktform erzwingt, was in der Didaktik festgelegt ist.
+
+### Der Lernablauf als Zustandsmaschine
+
+Das Herzstück. Didaktische Begründung:
+`KONZEPT_SELBSTLERNEN.md`, Abschnitt 3a — hier die
+Umsetzungsvorschrift.
+
+Eine Sitzung hat **genau einen** dieser Zustände:
+
+| Phase | Ort | Was der Server liefert | Übergang in die nächste Phase durch |
+|---|---|---|---|
+| `anknuepfen` | `chat` | 2–3 Wiederholungsfragen, Rückblick auf die letzte Sitzung | Antworten eingereicht **oder** übersprungen |
+| `zielklaerung` | `chat` | Vorschlag für Baustein und Format + 1–2 Alternativen | Auswahl eingereicht |
+| `arbeiten` | `werkbank` / `umgebung` | Auftrag, Material, was zu laden ist, Liste des Pflichtkerns | Pflichtkern vollständig belegt **oder** Zeitgrenze erreicht **oder** „fertig" gemeldet |
+| `sicherung` | `chat` | Reflexionsfrage aus dem Baustein | Freitext eingereicht |
+| `abschluss` | `chat` | Zusammenfassung, Ausblick, Abgabe bereit | Sitzung wird geschlossen |
+
+**Regeln, die serverseitig gelten:**
+
+1. **Der Server bestimmt den Schritt.** Der Client fragt
+   `GET /api/sitzung/schritt` und stellt dar, was zurückkommt. Er
+   entscheidet nie selbst, was als Nächstes kommt.
+2. **Hilfe und Versuch ändern die Phase nicht.** `/api/hilfe` und
+   `/api/versuch` sind während `arbeiten` erlaubt und lassen den Zustand
+   unverändert — bis der Pflichtkern vollständig belegt ist, dann
+   liefert der nächste `schritt`-Aufruf `sicherung`.
+3. **Zeitwächter.** Läuft eine Sitzung länger als die konfigurierte
+   Arbeitszeit (Standard 45 min ab Eintritt in `arbeiten`), liefert
+   `schritt` `sicherung`, auch wenn nichts fertig ist. Vorwarnung
+   5 Minuten davor über das Feld `zeitWarnung`.
+4. **Wiederaufnahme statt Neustart.** `POST /api/sitzung/start` prüft, ob
+   für das Konto eine Sitzung ohne `beendet_am` existiert. Wenn ja, wird
+   **diese** zurückgegeben, mit der Phase, in der sie stehen geblieben
+   ist. Nur eine offene Sitzung pro Konto.
+5. **Unerlaubte Übergänge sind Fehler, keine Sonderfälle.** Eine Antwort
+   zu einer Phase, in der die Sitzung nicht steht, wird mit `409`
+   abgewiesen — das passiert im Betrieb (zwei Tabs, Reload, altes
+   iPad-Fenster) und darf keine Daten verfälschen.
+6. **Freitexte setzen nie einen Status.** `sicherung` schreibt in
+   `freitext`, nicht in `lernstand` (siehe Konzept, Abschnitt 5.7).
 
 ### Nutzlasten der Kern-Endpunkte
 
@@ -329,6 +371,67 @@ Mehrere nachgetragene Versuche gehen als Liste im Feld `versuche` an
 denselben Endpunkt — nötig für den Offline-Nachtrag, und das Ergebnis
 muss **reihenfolgeunabhängig** sein (Abschnitt 11).
 
+**Der Schritt — die Form ist für alle Phasen gleich**
+
+```jsonc
+// GET /api/sitzung/schritt   -> 200
+{ "sitzungId": 42,
+  "phase": "arbeiten",              // s. Zustandstabelle
+  "ort": "werkbank",                // "chat" | "werkbank" | "umgebung"
+  "text": "Dann schauen wir uns an, wie sich das Inventar fuellt.",
+  "quelle": "statisch",             // oder "ki"
+  "aktionen": ["hilfe", "versuch", "fertig"],
+  "zeitWarnung": false,
+  "inhalt": { }                     // phasenabhaengig, s. unten
+}
+```
+
+Das Feld `inhalt` je Phase:
+
+```jsonc
+// anknuepfen
+{ "letzteSitzung": { "baustein": "q1w.vererbung.modell", "am": "2026-09-08" },
+  "fragen": [ { "id": "f1",
+                "frage": "Was erbt eine Unterklasse - und was nicht?" } ] }
+
+// zielklaerung
+{ "vorschlag":    { "baustein": "q1w.arrays.inventar", "format": "F3",
+                    "begruendung": "Arrays lagen zuletzt lange zurueck." },
+  "alternativen": [ { "baustein": "q1w.vererbung.polymorphie",
+                      "format": "F9" } ] }
+
+// arbeiten
+{ "baustein": "q1w.arrays.inventar", "teil": 1, "format": "F3",
+  "auftrag": "Fuelle die Tabelle Zeile fuer Zeile aus.",
+  "laden": { "art": "uebung", "id": "ue.inventar.ereignisfolge" },
+  //          art: "uebung" (Werkbank) | "teilszenario" (Umgebung)
+  "pflichtkern": ["ue.inventar.ereignisfolge"],
+  "zusatz":      ["ue.inventar.umkehraufgabe"] }
+
+// sicherung
+{ "reflexionsfrage": "Warum liegt Platz 3 am Ende leer?",
+  "musterformulierung": null }      // erst nach dem Absenden gefuellt
+
+// abschluss
+{ "zusammenfassung": ["Inventar-Array durchlaufen: belegt"],
+  "naechstesMal": "q1w.arrays.objektfeld",
+  "abgabeBereit": true }
+```
+
+**Antwort auf einen Schritt**
+
+```jsonc
+// POST /api/sitzung/antwort
+{ "sitzungId": 42, "phase": "zielklaerung",   // Phase mitsenden!
+  "auswahl": { "baustein": "q1w.arrays.inventar", "format": "F3" } }
+// 200: der neue Schritt, gleiche Form wie oben
+// 409: { "fehler": "Diese Sitzung ist inzwischen weiter. Lade neu." }
+```
+
+Das Mitsenden der Phase ist der Grund, warum Regel 5 oben umsetzbar
+ist: Der Server vergleicht sie mit dem gespeicherten Zustand und weist
+veraltete Antworten ab, statt sie zu verarbeiten.
+
 **Hilfe anfordern**
 
 ```jsonc
@@ -381,10 +484,19 @@ CREATE TABLE sitzung (
   id INTEGER PRIMARY KEY,
   konto_id INTEGER NOT NULL REFERENCES konto(id) ON DELETE CASCADE,
   begonnen_am TEXT NOT NULL,
-  beendet_am TEXT,
+  beendet_am TEXT,                       -- NULL = offen, wiederaufnehmbar
+  phase TEXT NOT NULL                    -- Zustandsmaschine, Abschnitt 5
+    CHECK (phase IN ('anknuepfen','zielklaerung','arbeiten',
+                     'sicherung','abschluss')),
+  arbeiten_ab TEXT,                      -- Zeitstempel fuer den Zeitwaechter
   baustein TEXT,
+  format TEXT,
   verlauf TEXT                           -- JSON, Löschfrist siehe 9
 );
+
+-- Nur eine offene Sitzung pro Konto (Regel 4 in Abschnitt 5)
+CREATE UNIQUE INDEX sitzung_offen_je_konto
+  ON sitzung (konto_id) WHERE beendet_am IS NULL;
 
 CREATE TABLE versuch (
   id INTEGER PRIMARY KEY,
@@ -581,12 +693,16 @@ Jede Etappe ist einzeln abnehmbar und liefert etwas Benutzbares.
 ### S1 — Attrappe und Gerüst
 
 - Alle Endpunkte aus Abschnitt 5 antworten mit festen Beispieldaten.
+- **Die Zustandsmaschine läuft schon**, im Speicher: Eine Sitzung lässt
+  sich von `anknuepfen` bis `abschluss` durchklicken, mit denselben
+  Übergangsregeln wie später. Das ist der wertvollste Teil von S1 — der
+  Ablauf ist die eine Sache, die beide Seiten gemeinsam brauchen.
 - Projekt startet mit einem Befehl, README erklärt Start und Testlauf.
 - Keine Datenbank, keine echte Anmeldung.
 
 *Abnahme:* Die Inhalte-Seite kann gegen die Attrappe entwickeln. Jeder
 Endpunkt liefert ein Beispiel, das dem Schema aus diesem Papier
-entspricht.
+entspricht, und ein Durchlauf durch alle fünf Phasen funktioniert.
 
 ### S2 — Konten und Lernstand
 
@@ -642,6 +758,12 @@ Was grün sein muss, bevor eine Etappe als fertig gilt:
 - **Lernstandsregeln:** Ein Versuch führt zum erwarteten Status —
   inklusive der Fälle „Freitext ohne prüfbaren Anteil bleibt zur
   Sichtung" und „bereits belegt bleibt belegt".
+- **Zustandsmaschine:** eine Sitzung von `anknuepfen` bis `abschluss`
+  durchlaufen, ohne Oberfläche, nur über die Endpunkte. Dazu die drei
+  unangenehmen Fälle: Antwort mit veralteter Phase ergibt `409` ·
+  Zeitgrenze überschritten führt nach `sicherung` · zweiter
+  `sitzung/start` bei offener Sitzung gibt **dieselbe** Sitzung zurück,
+  keine neue.
 - **Offline-Nachtrag:** mehrere Versuche in beliebiger Reihenfolge
   ergeben denselben Endstand (Reihenfolgeunabhängigkeit).
 - **Gateway aus:** Alle Lernpfade funktionieren ohne Modell.

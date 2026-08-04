@@ -125,6 +125,90 @@ Zeitspanne (Standard 45 min) leitet der Tutor zur Sicherung über, auch
 wenn nichts fertig ist. Der Stand wird gespeichert und in der nächsten
 Phase 1 aufgegriffen.
 
+### 3a Der Ablauf als Zustandsfolge
+
+Die sechs Phasen sind keine Erzählung, sondern ein Ablauf mit
+definierten Zuständen und Übergängen. Das ist die Voraussetzung dafür,
+dass er sich testen lässt — und dafür, dass er **mit und ohne
+Sprachmodell identisch** funktioniert.
+
+```
+         (Anmeldung)
+              │
+              ▼
+   ┌───────────────────────┐   offene Sitzung vorhanden?
+   │  1 ANKNUEPFEN         │   → Wiederaufnahme statt Neustart
+   │  Rueckblick, 2-3      │
+   │  Wiederholungsfragen  │
+   └──────────┬────────────┘
+              │ Fragen beantwortet oder uebersprungen
+              ▼
+   ┌───────────────────────┐
+   │  2 ZIELKLAERUNG       │   Vorschlag + Alternativen,
+   │                       │   Lernende:r waehlt
+   └──────────┬────────────┘
+              │ Baustein und Format gewaehlt
+              ▼
+   ┌───────────────────────┐◄── Hilfe anfordern (Stufe 0-4)
+   │  3 ARBEITEN           │◄── Versuch melden (Check-Ergebnis)
+   │  ort: werkbank        │    beides bleibt im Zustand
+   │       oder umgebung   │
+   └──────────┬────────────┘
+              │ Pflichtkern belegt  ODER  Zeit um  ODER  "fertig"
+              ▼
+   ┌───────────────────────┐
+   │  4 SICHERUNG          │   Reflexionsfrage → Freitext →
+   │                       │   Rueckmeldung, keine Bewertung
+   └──────────┬────────────┘
+              │ Freitext abgeschickt
+              ▼
+   ┌───────────────────────┐
+   │  5 ABSCHLUSS          │   was sitzt, was kommt, Abgabe
+   └───────────────────────┘
+```
+
+Phase 4 des Leitbilds („Begleitung") ist bewusst **kein eigener
+Zustand**: Hilfe anzufordern und Versuche zu melden passiert *während*
+des Arbeitens und ändert den Zustand nicht.
+
+**Der Chat ist eine Darstellung des Ablaufs, nicht seine Steuerung.**
+Jeder Schritt ist ein Datenobjekt mit einem Feld für den Text, den der
+Tutor sagt. Ist das Gateway verfügbar, formuliert das Modell diesen Text
+aus Baustein, Lernstand und Fehlermustern; ist es nicht verfügbar, steht
+dort der statisch hinterlegte Text, und dieselbe Oberfläche zeigt
+Karten und Auswahlfelder statt Gesprächsblasen. Der Weg durch die
+Zustände ist in beiden Fällen derselbe.
+
+Daraus folgen drei Dinge, die für die Umsetzung zählen:
+
+1. **Den nächsten Schritt bestimmt der Server**, nicht die Oberfläche.
+   Der Client fragt „was jetzt?" und bekommt Phase, Ort und Inhalt
+   zurück. Damit liegen die Regeln an einer Stelle und sind testbar,
+   ohne eine Oberfläche zu bedienen (Technikpapier, Abschnitt 5).
+2. **Der Ort ist Teil des Schritts.** Ein Schritt sagt `chat`,
+   `werkbank` oder `umgebung` und liefert mit, was dort zu laden ist —
+   Teilszenario oder Übung. Die Oberfläche wechselt die Ansicht, der
+   Server weiß nichts über Ansichten.
+3. **Unterbrechung ist der Normalfall.** iPad zugeklappt, Netz weg,
+   Stunde vorbei: Die Sitzung bleibt offen, und der nächste Start bietet
+   die Wiederaufnahme an, statt bei Null zu beginnen. Ohne diese Regel
+   verliert man in einer 67,5-Minuten-Stunde regelmäßig Arbeit.
+
+### Was in der Nachbesprechung passiert
+
+Phase 4 ist mehr als ein Textfeld. Der Ablauf in drei Schritten:
+
+1. **Frage aus dem Baustein**, nicht vom Modell erfunden (Feld
+   `reflexion`, Abschnitt 7).
+2. **Die Lernenden schreiben zuerst.** Erst nach dem Absenden wird
+   überhaupt etwas anderes sichtbar — sonst schreibt man ab.
+3. **Danach Rückmeldung, kein Urteil.** Mit Gateway: eine Rückfrage, ein
+   Gegenbeispiel oder der fehlende Fachbegriff. Ohne Gateway: eine im
+   Baustein hinterlegte **Musterformulierung zum Selbstvergleich** —
+   didaktisch schwächer als ein Gespräch, aber besser als nichts, und
+   sie funktioniert offline. Der Freitext geht in beiden Fällen zur
+   Sichtung an die Lehrkraft (Abschnitt 5.7).
+
 ---
 
 ## 4 Die zentrale Architekturentscheidung

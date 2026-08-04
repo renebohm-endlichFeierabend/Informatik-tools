@@ -305,6 +305,7 @@ die entscheidende: Wo „exakt" steht, entscheidet eine Regel; wo
 | F12 | **Beurteilen** — Verfahren vergleichen, Alternative abwägen, Stellung nehmen | vergleichen, beurteilen, Stellung nehmen | Freitext | Werkbank / Plenum |
 | F13 | **Diagramm lesen** — Implementationsdiagramm analysieren, Assoziationen und Multiplizitäten im Sachkontext erläutern, Ablauf aus Diagramm + Dokumentation nachvollziehen | analysieren, erläutern | Zuordnung exakt (welche Assoziation trägt was) + Freitext | Werkbank |
 | F14 | **Algorithmus entwerfen** — Lösungsweg umgangssprachlich oder grafisch, **ohne Code** | entwickeln, darstellen | Schrittfolge-Vergleich (Reihenfolge, Sonderfälle) + Freitext | Werkbank |
+| F15 | **Prüffälle entwickeln** — zu einer Methode Testfälle angeben, die einen Fehler aufdecken (LK-Schwerpunkt, siehe 12) | entwickeln, zeigen | **automatisch**: der eingegebene Prüffall wird gegen eine absichtlich fehlerhafte Fassung ausgeführt — deckt er den Fehler auf? | Werkbank |
 
 Die Formate F9 bis F11 sind die, die `KONZEPT_AUFGABEN.md` schon
 beschreibt („Verhalten programmieren", „Klasse/Vererbung modellieren",
@@ -332,6 +333,17 @@ ersten Entwurf die zwei echten Lücken:
 Bei F13 und F14 ist der prüfbare Anteil bewusst schmal (Zuordnungen,
 Schrittfolgen, Sonderfälle) und der Freitextanteil groß — es gilt
 Abschnitt 5.7.
+
+**F15 ist der Sonderfall mit der elegantesten Prüfung.** Die Aufgabe
+lautet nicht „schreibe eine Methode", sondern „gib Prüffälle an, mit
+denen du merkst, ob diese Methode falsch ist". Geprüft wird, indem der
+eingegebene Prüffall gegen eine **absichtlich fehlerhafte** Fassung
+läuft: Deckt er den Fehler auf, ist die Aufgabe gelöst — deckt er ihn
+nicht auf, war der Testfall zu schwach. Das ist vollständig
+deterministisch, braucht keine Musterlösung und übt genau die
+Kompetenzerwartung, die den Leistungskurs vom Grundkurs unterscheidet
+(siehe 12): *„testen Programme systematisch anhand von Beispielen und
+mithilfe von Testanwendungen"*.
 
 ### 5.4 Mikroübungen: Methoden lesen und schreiben
 
@@ -523,6 +535,7 @@ versionierbar bleibt.
   "id": "q1.vererbung.polymorphie",
   "titel": "Dieselbe Methode, verschiedenes Verhalten",
   "stufe": "Q1",
+  "niveau": ["LK"],                      // spaeter auch "GK"
   "inhaltsfeld": "Daten und ihre Strukturierung",
   "voraussetzungen": ["q1.vererbung.grundidee"],
   "dauer_min": 30,
@@ -557,7 +570,13 @@ versionierbar bleibt.
   ],
 
   "reflexion": "Woher weiss Java bei tier.gibLaut(), welche Fassung gilt?",
-  "fehlermuster_erwartet": ["signatur_abweichend", "super_aufruf_erwartet"]
+  "fehlermuster_erwartet": ["signatur_abweichend", "super_aufruf_erwartet"],
+
+  "gk_variante": {                       // spaeter, ohne zweiten Bausteinsatz
+    "teile_weglassen": ["F12"],          // Beurteilungsteil entfaellt
+    "material_kuerzen": true,            // ein Diagramm statt zwei
+    "hilfen_frueher": true               // Stufe 3 ohne Reflexionsschranke
+  }
 }
 ```
 
@@ -856,9 +875,13 @@ Kompetenzbereiche sind **Argumentieren (A)**, **Modellieren (M)**,
 **Kommunizieren und Kooperieren (K)**; das Kürzel in Klammern hinter
 jeder konkretisierten Erwartung nennt den stärksten Bezug.
 
+**Gebaut wird für den Leistungskurs**, eine vereinfachte Fassung für den
+Grundkurs folgt später (siehe unten).
+
 Für den Pilotbereich (OOP, Implementationsdiagramme, Vererbung, Arrays)
 tragend, Inhaltsfeld **Daten und ihre Strukturierung**, inhaltlicher
-Schwerpunkt *Objekte und Klassen* — Grundkurs Q1:
+Schwerpunkt *Objekte und Klassen* — Q1, im Wortlaut **wie im
+Leistungskurs**:
 
 | Kompetenzerwartung (Wortlaut KLP) | Bereich | Format |
 |---|---|---|
@@ -875,16 +898,51 @@ Schwerpunkt *Objekte und Klassen* — Grundkurs Q1:
 | implementieren Klassen in einer Programmiersprache auch unter Nutzung dokumentierter Klassenbibliotheken | I | F6, F9 |
 
 Inhaltsfeld **Algorithmen**, Schwerpunkt *Analyse, Entwurf und
-Implementierung von Algorithmen* — Grundkurs Q1:
+Implementierung von Algorithmen* — **Leistungskurs** Q1:
 
-| Kompetenzerwartung (Wortlaut KLP) | Bereich | Format |
+| Kompetenzerwartung (Wortlaut KLP, LK) | Bereich | Format |
 |---|---|---|
 | analysieren und erläutern Algorithmen und Programme | A | **F1, F2, F4** |
 | modifizieren Algorithmen und Programme | I | F7 |
 | stellen iterative und rekursive Algorithmen umgangssprachlich und grafisch dar | D | **F14** |
-| entwickeln iterative und rekursive Algorithmen unter Nutzung der Strategien „Modularisierung" und „Teilen und Herrschen" | M | **F14** |
+| entwickeln iterative und rekursive Algorithmen unter Nutzung der Strategien „Modularisierung", „Teilen und Herrschen" **und „Backtracking"** | M | F14 (Backtracking erst in Q2) |
 | implementieren iterative und rekursive Algorithmen auch unter Verwendung von dynamischen Datenstrukturen | I | F6, F9 |
-| testen Programme systematisch anhand von Beispielen | I | F2, F3 |
+| testen Programme systematisch anhand von Beispielen **und mithilfe von Testanwendungen** | I | F2, F3, **F15** |
+
+### Was den Leistungskurs vom Grundkurs unterscheidet
+
+Bei *Objekte und Klassen* sind die konkretisierten Kompetenzerwartungen
+für GK und LK **praktisch wortgleich** — die Pilotinhalte (OOP,
+Diagramme, Vererbung, Polymorphie, Arrays) gelten also für beide Kurse
+gleichermaßen. Die Unterschiede liegen bei den Algorithmen und ergeben
+sich sonst aus dem Anspruch, den der Kernlehrplan so beschreibt:
+
+> „Unterschiede bestehen hinsichtlich der Komplexität der
+> Problemstellungen und -lösungen sowie des Grades der Vernetzung der
+> Kompetenzen und damit in den Anforderungen an das Abstraktionsvermögen
+> und das analytische Denken der Schülerinnen und Schüler."
+
+Für das Programm heißt das: **Die GK-Fassung ist keine Kürzung der
+Themen, sondern eine Reduktion von Komplexität und Vernetzung** —
+weniger Klassen im Material, kürzere Ereignisfolgen, ein Diagramm statt
+zwei, mehr Gerüst, Teilaufgaben getrennt statt verschachtelt.
+
+Konkret LK-spezifisch in den Algorithmen (jeweils gegenüber dem GK):
+
+| LK zusätzlich | Folge |
+|---|---|
+| „mithilfe von **Testanwendungen**" testen | rechtfertigt **F15** (Prüffälle entwickeln) als LK-Format |
+| Strategie **Backtracking** | erst in Q2 relevant, hier nur vormerken |
+| Operationen dynamischer Datenstrukturen **implementieren** (GK: nur erläutern) | ab dem Stack-/Queue-Block relevant, nicht im Piloten |
+| Such- und Sortierverfahren **unterschiedlicher Komplexitätsklassen** | späterer Block |
+| Nebenläufigkeit, Client-Server-Kommunikation | außerhalb dieses Programms (keine Sockets im Browser) |
+
+**Umsetzung ohne Fork:** Jeder Baustein trägt ein Feld `niveau` und
+optional eine `gk_variante`, die Material und Teilaufgaben reduziert
+(Abschnitt 7). Damit ist die GK-Fassung später eine Variante derselben
+Datei — kein zweiter Bausteinsatz, der auseinanderläuft. Das jetzt
+mitzudenken kostet fast nichts; nachträglich wäre es eine
+Doppelpflege aller Inhalte.
 
 Aus Inhaltsfeld **Formale Sprachen und Automaten**, Schwerpunkt *Syntax
 und Semantik einer Programmiersprache*, gehört zusätzlich hierher:
@@ -1084,6 +1142,9 @@ Stand 04.08.2026, abgestimmt mit der Fachlehrkraft:
 | **Aufbewahrung** | Lernstand und Freitexte bis Schuljahresende |
 | **KLP-Stand** | Es gilt der KLP von 2014 (siehe 12); die befürchtete Novellierung betrifft Informatik SII nach vorliegender Fassung nicht |
 | **Kursgröße** | zunächst höchstens 12 Lernende |
+| **Kurs** | gebaut wird für den **Leistungskurs**; die GK-Fassung folgt später als Variante derselben Bausteine (`niveau`, `gk_variante`), nicht als zweiter Inhaltssatz |
+| **Stundenlänge** | 67,5 min: rund 45 min Arbeitsphase plus Plenumsrahmen |
+| **Sachkontext des Piloten** | Heldengruppe/Questsuche, anknüpfend an das EF-Spielszenario — das konkrete EF-Szenario ist noch zu benennen |
 | **KI-Anbindung** | vorläufig über OpenRouter mit einem kostengünstigen Modell, **serverseitig** über das Gateway. Einordnung und Vorbehalt siehe unten |
 | **Arbeitsteilung** | Didaktik gemeinsam, Infrastruktur baut ein Schüler eigenständig nach dem Technikpapier |
 
@@ -1119,8 +1180,10 @@ damit erst vor Etappe D5 vorliegen, nicht in drei Wochen.
 | **Rechtsgrundlage für die KI-Nutzung** mit Schülerdaten (Punkte 1 und 2 oben) sowie Einordnung nach KI-Verordnung | Schulleitung + DSB | vor Etappe D5 |
 | **Aufbewahrungsfrist für Chatverläufe** (Lernstand und Freitexte sind entschieden) | Schule / DSB | vor Etappe D5 |
 | **Serverumgebung** — bewusst offengehalten, wahrscheinlich später Träger | Schule | vor Etappe S2 |
-| **Unterrichtsstundenlänge** und Verteilung der 9 Stunden über die Wochen | du | Feinschnitt des Pilotplans |
-| **Schulinterner Lehrplan SII** | du | Ergänzung der Tabelle in 12 |
+| **Verteilung der 9 Stunden** über die Wochen | du | Feinschnitt des Pilotplans |
+| **Schulinterner Lehrplan SII (LK)** — muss ohnehin noch geschrieben werden | du | Ergänzung der Tabelle in 12. Umgekehrt kann die Bausteinfolge samt Kompetenzzuordnung als Entwurfsgrundlage dafür dienen |
+| **EF-Heldenszenario**: welches kennt die Lerngruppe? | du | Figuren und Bezeichner des Pilotkontexts |
+| **Serverseitiges Java** (Docker mit JDK): steht das zur Verfügung? | du | Wenn ja, ist das Nicht-Ziel „kein serverseitiger Runner" im Technikpapier neu zu bewerten |
 
 ---
 

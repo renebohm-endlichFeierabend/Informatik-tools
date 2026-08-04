@@ -11,8 +11,10 @@ Schuljahresbeginn in der Q1. Konzeptioneller Rahmen:
 
 | Bedingung | Wert | Konsequenz |
 |---|---|---|
-| Umfang | 9 Unterrichtsstunden | 9 Bausteine, einer pro Stunde |
-| Inhalt | OOP allgemein, Implementationsdiagramme, Vererbung, Arrays | Bausteinfolge in Abschnitt 3 |
+| Umfang | 9 Unterrichtsstunden **à 67,5 min** | 9 Bausteine, einer pro Stunde, mit Plenumsrahmen |
+| Kurs | **Leistungskurs** (GK-Fassung später als Variante) | LK-Kompetenzerwartungen, Format F15 dabei |
+| Inhalt | OOP allgemein, Implementationsdiagramme, Vererbung, Arrays | Bausteinfolge in Abschnitt 3a |
+| Vorhandene Materialien | keine für diese Reihe | Aufgabentexte und Begriffe entstehen hier zuerst — dafür ohne Anpassungszwang |
 | Sozialform | Selbstlernzeit **in der Schule** | keine Hausaufgaben; jede Stunde muss in sich abgeschlossen sein |
 | Erreichbarkeit | von zuhause voraussichtlich nicht | kein Nacharbeiten außerhalb; Puffer in der Stunde einplanen |
 | Kursgröße | höchstens 12 | Sichtung der Freitexte ist von Hand leistbar |
@@ -49,30 +51,74 @@ Chat dazukommt?
    iPad — bis heute ungeprüft (`apps/javawelt/ENTWICKLUNG.md`, offener
    Punkt 1).
 
-## 3 Bausteinfolge
+## 3 Sachkontext: die Heldengruppe
 
-Durchgehender Sachkontext: **die Ausleihe der Schulbibliothek** —
-Bücher, Ausleihen, Rückgabestapel, Vormerkungen. Ein Kontext für alle
-neun Stunden, damit Modell und Diagramm mitwachsen und nicht in jeder
-Stunde neu erklärt werden müssen.
+Durchgehender Kontext für alle neun Stunden: **eine Heldengruppe auf
+Questsuche** — Helden mit unterschiedlichen Klassen, ein Inventar mit
+festen Plätzen, eine Reihenfolge, wer als Nächstes handelt, Gegner mit
+Stärkewerten. Anknüpfung an das Spielszenario, das die Lerngruppe aus
+der EF kennt.
+
+Der Kontext ist nicht Dekoration, sondern er liefert für jedes benötigte
+Format einen natürlichen Gegenstand:
+
+| Informatischer Inhalt | Im Szenario |
+|---|---|
+| Klasse, Objekt, Attribut, Methode | `Held` mit Name, Lebenspunkten, Stärke; `greifeAn()`, `nimmAuf(...)` |
+| Vererbung, Spezialisieren/Generalisieren | `Held` → `Kriegerin`, `Magier`, `Bogenschuetzin` |
+| Polymorphie, dynamische Bindung | jede Klasse überschreibt `greifeAn()`; die Gruppe wird als `Held` durchlaufen |
+| **Array mit festen Plätzen** | `Gegenstand[] plaetze` — Inventar mit 6 Fächern: aufnehmen, ablegen, tauschen |
+| **Liste** | `List<Held>` — Reihenfolge, wer handelt (Bezug zu Stack/Queue im Folgeblock) |
+| Assoziationen und Multiplizitäten | Held ↔ Inventar (1:1), Held ↔ Quest (0..n), Gruppe ↔ Held (1..n) |
+| Suchen über Objekteigenschaften | „welcher Gegner passt am besten zu diesem Helden?" — Minimumsuche über eine Differenz |
+| Verfahren beurteilen | zwei Strategien der Gegnerzuteilung vergleichen |
+
+Der letzte Punkt ist die direkte Entsprechung zur ausgewerteten
+Abiturklausur: Dort wird derselbe Algorithmus — Minimum einer
+Punktdifferenz über eine gefilterte Liste — im Turnierkontext geprüft.
+Das Heldenszenario ist damit fachlich klausuridentisch und motivisch
+näher an der Lerngruppe.
+
+**Für JavaWelt passt das besser als jeder Verwaltungskontext:** Die
+Umgebung ist eine Greenfoot-artige Spielwelt mit Figuren. Ein Held, der
+sich bewegt und angreift, ist genau die „sichtbare Konsequenz", die
+`KONZEPT_AUFGABEN.md` als primäres Feedback fordert — die Welt zeigt,
+ob die Vererbung stimmt, ohne dass ein Häkchen es sagen muss.
+
+> **Offen:** Welches Heldenszenario die Lerngruppe aus der EF kennt,
+> weiß ich nicht. Namen und Klassen sind deshalb frei gewählt und
+> überall austauschbar. Wenn du das EF-Szenario schickst oder benennst,
+> ziehe ich Figuren, Bezeichner und Bilder darauf um — Wiedererkennen
+> ist die halbe Anknüpfung.
+
+## 3a Bausteinfolge
 
 | Std | Baustein-ID | Thema | Formate | Prüfung |
 |---|---|---|---|---|
-| 1 | `q1w.oop.grundbegriffe` | Objekt, Klasse, Attribut, Methode, Sichtbarkeit an einem gegebenen Modell wiederfinden | F1, F13 | Zuordnung exakt |
+| 1 | `q1w.oop.grundbegriffe` | Objekt, Klasse, Attribut, Methode, Sichtbarkeit am gegebenen Heldenmodell wiederfinden | F1, F13 | Zuordnung exakt |
 | 2 | `q1w.diagramm.lesen` | Implementationsdiagramm analysieren: Assoziationen und Multiplizitäten im Sachkontext erläutern | **F13**, F1 | Zuordnung + Freitext |
 | 3 | `q1w.diagramm.ueberfuehren` | Diagramm ↔ Code: aus dem Diagramm Klassenrümpfe erzeugen, aus Code das Diagramm ergänzen | F8, F6 | Parser-Fakten |
-| 4 | `q1w.vererbung.modell` | Vererbung modellieren (Spezialisieren/Generalisieren) und implementieren | F10, F9 | Parser + Weltzustand |
-| 5 | `q1w.vererbung.polymorphie` | dynamische Bindung: eigene Fassungen überschreiben, Verhalten erklären | F9, Erläuterung | Weltzustand + Freitext |
-| 6 | `q1w.arrays.durchlaufen` | Array durchlaufen, Belegung nach einer Ereignisfolge verfolgen | **F3**, F2, F6 | Tabelle exakt, Prüffälle |
-| 7 | `q1w.arrays.objektfeld` | Feld von Objekten: undokumentierte Methode analysieren, Rückgabe angeben, Strategie erläutern, Fehlerquelle finden | **F1, F2, F4** | Wert exakt + Zeile exakt + Freitext |
-| 8 | `q1w.algorithmus.entwerfen` | Algorithmus umgangssprachlich entwerfen, **dann** implementieren | **F14**, F6 | Schrittfolge + Prüffälle |
-| 9 | `q1w.gesamt.bibliothek` | klausurnahe Gesamtaufgabe über alles, mit Beurteilung zweier Verfahren | F13, F3, F6, F12 | gemischt |
+| 4 | `q1w.vererbung.modell` | Heldenklassen modellieren (Spezialisieren/Generalisieren) und implementieren | F10, F9 | Parser + Weltzustand |
+| 5 | `q1w.vererbung.polymorphie` | `greifeAn()` überschreiben, Gruppe als `Held` durchlaufen, Verhalten erklären | F9, Erläuterung | Weltzustand + Freitext |
+| 6 | `q1w.arrays.inventar` | Inventar-Array durchlaufen, Belegung nach einer Ereignisfolge verfolgen | **F3**, F2, F6 | Tabelle exakt, Prüffälle |
+| 7 | `q1w.arrays.objektfeld` | undokumentierte Methode über einem Heldenfeld analysieren: Rückgabe angeben, Strategie erläutern, Fehlerquelle finden | **F1, F2, F4** | Wert exakt + Zeile exakt + Freitext |
+| 8 | `q1w.algorithmus.entwerfen` | Algorithmus umgangssprachlich entwerfen, **dann** implementieren, **dann** Prüffälle angeben | **F14**, F6, **F15** | Schrittfolge + Prüffälle + Fehleraufdeckung |
+| 9 | `q1w.gesamt.quest` | klausurnahe Gesamtaufgabe über alles, mit Beurteilung zweier Zuteilungsstrategien | F13, F3, F6, F12 | gemischt |
 
 **Stunde 7 und 8 sind die Klausurformate im Kleinen.** Sie sind
 absichtlich den Teilaufgaben c) und b) der Abiturklausur 2023
-nachgebaut — gleiche Tätigkeit, anderer Kontext. Nach Stunde 9 sollten
-die Lernenden die Aufgabenanatomie einer Informatik-Klausur kennen:
-Kontext, Diagramm, Klassendokumentation, Beispieldaten.
+nachgebaut — gleiche Tätigkeit, anderer Kontext. Stunde 8 ergänzt mit
+F15 den LK-Schwerpunkt „Testanwendungen". Nach Stunde 9 sollten die
+Lernenden die Aufgabenanatomie einer Informatik-Klausur kennen: Kontext,
+Diagramm, Klassendokumentation, Beispieldaten.
+
+**Gebaut wird für den Leistungskurs.** Eine vereinfachte GK-Fassung ist
+vorgesehen, entsteht aber später als *Variante derselben Bausteine*
+(Feld `gk_variante`, siehe `KONZEPT_SELBSTLERNEN.md`, Abschnitt 12) —
+kein zweiter Inhaltssatz. Bei OOP sind die Kompetenzerwartungen für GK
+und LK ohnehin fast wortgleich; der Unterschied liegt in Komplexität und
+Vernetzung, also in Materialumfang und Verschachtelung der
+Teilaufgaben.
 
 ### Pflichtkern und Zusatz
 
@@ -168,8 +214,8 @@ sagt, was zuerst gestrichen wird.
 
 | Woche | Bauen | Inhalte | Deine Aufgabe |
 |---|---|---|---|
-| 1 | Werkbank mit F1, F2, F3 · Lernstand lokal | Bausteine 1, 2, 6, 7 (die werkbank-basierten) | **CheerpJ-Test auf dem Schul-iPad** · Sachkontext bestätigen · vorhandene Wiederholungsmaterialien schicken |
-| 2 | Werkbank F13, F14 · Aufgabenpanel + Checks | Bausteine 3, 4, 5, 8 · Klassendokumentation und Beispieldaten zum Kontext | Bausteine 1–4 gegenlesen und korrigieren |
+| 1 | Werkbank mit F1, F2, F3 · Lernstand lokal | Bausteine 1, 2, 6, 7 (die werkbank-basierten) · Heldenmodell samt Diagramm, Klassendokumentation und Beispieldaten | **EF-Heldenszenario benennen oder schicken** (Figuren, Bezeichner) · Java-Frage aus Abschnitt 7 klären |
+| 2 | Werkbank F13, F14, F15 · Aufgabenpanel + Checks | Bausteine 3, 4, 5, 8 | Bausteine 1–4 gegenlesen und korrigieren |
 | 3 | F6 mit Testgerüst (oder F5 als Rückfall) · Abgabe-Erweiterung · iPad-Durchlauf | Baustein 9 · Hilfestufen 1–4 überall · Wiederholungsfragen für Phase 1 | Bausteine 5–9 gegenlesen · eine Stunde selbst durchspielen |
 
 **Vor jedem Push:** `npm test` und `npm run build` grün, neue
@@ -177,9 +223,21 @@ Java-Quelltexte durch die javac-Prüfung (`CLAUDE.md`).
 
 ## 7 Risiken und was dann passiert
 
+> **Offene Frage, die diese Tabelle betrifft:** „Es wird ein
+> Docker-Container verwendet, Java läuft" lässt zwei Lesarten zu — (a)
+> der CheerpJ-Test auf dem iPad war erfolgreich, echtes Java läuft also
+> im Browser, oder (b) auf dem Schulserver steht ein Container mit
+> JDK bereit, Java läuft also **serverseitig**. Für den Piloten zählt
+> nur (a), weil hier kein Server im Spiel ist. Lesart (b) wäre
+> mittelfristig aber die interessantere Nachricht: Dann könnten
+> Kompilieren und Prüffälle später serverseitig laufen, und das im
+> Technikpapier ausgeschlossene serverseitige Ausführen von Java
+> (Abschnitt 12 dort) wäre neu zu bewerten — mit Sandboxing und
+> Ressourcenlimits als dann zu lösenden Fragen.
+
 | Risiko | Wahrscheinlichkeit | Reaktion |
 |---|---|---|
-| **CheerpJ im Schulnetz blockiert** | unklar, ungeprüft | Stunden 3–5, 8, 9 auf Werkbank-Formate umstellen (F5 statt F6, F8 als Zuordnung statt Implementierung). Sechs von neun Stunden bleiben unverändert |
+| **CheerpJ im Schulnetz blockiert** | unklar, siehe Kasten | Stunden 3–5, 8, 9 auf Werkbank-Formate umstellen (F5 statt F6, F8 als Zuordnung statt Implementierung). Sechs von neun Stunden bleiben unverändert |
 | **Aufgabenpanel wird nicht rechtzeitig fertig** | mittel | Stunden 4, 5 mit den vorhandenen AUFGABE-Kommentaren im Vererbungs-Szenario fahren, Prüfung von Hand im Plenum |
 | **Werkbank-Aufgaben zu leicht oder zu schwer** | hoch (kein Erfahrungswert) | Zusatzteile und Mikroübungen sind der Puffer; nach Stunde 2 nachjustieren |
 | **`localStorage` verloren** | mittel | Abgabe nach jeder Stunde (Abschnitt 5) |
